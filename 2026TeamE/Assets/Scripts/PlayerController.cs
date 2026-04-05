@@ -18,6 +18,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("ドリル設定")]
     [SerializeField] bool drillFlag = false;
+    [SerializeField, Header("ドリル判定開始位置(判定はy軸+に伸びていきます")] GameObject Drill;
+    [SerializeField, Header("ドリル判定距離")] float DrillDistance;
 
     private Vector2 moveInput; // Vector3からVector2に変更（入力値用）
     private Vector3 moveDirection;
@@ -31,44 +33,91 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 実際の移動処理（例）
-        rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
+        // 実際の移動処理（例)
+        if (!drillFlag)
+        {
+            rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
+        }
     }
 
     private void CheckGround()
     {
         // 足元から少し高い位置(0.1f)から下向きに、距離0.2fだけレイを飛ばす
         // ※キャラの原点が足元にある前提です
+
+        //追加．足元の左右端にたつと着地判定が出ないので，レイを飛ばすのを足元の左右端から二本飛ばすように変更．
         float rayDistance = 0.2f;
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f;
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f + new Vector3(0,0,-1);
+        Vector3 rayOrigin2 = transform.position + Vector3.up * 0.1f + new Vector3(0,0,1);
 
         // レイを可視化（デバッグ用）
         Debug.DrawRay(rayOrigin, Vector3.down * rayDistance, Color.red);
+        Debug.DrawRay(rayOrigin2, Vector3.down * rayDistance, Color.red);
 
         // 指定したレイヤー(landLayer)に当たれば接地とみなす
         isGround = Physics.Raycast(rayOrigin, Vector3.down, rayDistance, landLayer);
+        if(!isGround)//１つ目のレイヤーで判定が取れなければ２本目を確認 
+            isGround = Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer);
+    }
+
+    private void DestractBlock()
+    {
+        if (Drill != null && drillFlag)
+        {
+            // 1. 掘る方向（Rayの向き）を計算する
+            Vector3 drillDirection;
+
+            // スティックやキー入力があるかチェック
+            if (moveInput.magnitude > 0.1f)
+            {
+                // 入力がある場合：入力のxをZ軸に、yをY軸に変換して正規化（長さを1にする）
+                drillDirection = new Vector3(0, moveInput.y, moveInput.x).normalized;
+            }
+            else
+            {
+                // 立ち止まっている場合：キャラクターが向いている正面の方向
+                drillDirection = transform.forward;
+            }
+
+            Ray ray = new Ray(Drill.transform.position - drillDirection.normalized , drillDirection);
+            RaycastHit hit;
+
+            // 2. デバッグ用レイの描画
+            Debug.DrawRay(Drill.transform.position, drillDirection * DrillDistance, Color.red);
+
+            // 3. 当たり判定の実行
+            if (Physics.Raycast(ray, out hit, DrillDistance))
+            {
+                if (hit.collider.CompareTag("Block"))
+                {
+                    Destroy(hit.collider.gameObject);
+                }
+            }
+        }
     }
 
     void Update()
     {
         CheckGround();
+        
 
         // 入力の横方向(x)を、ワールド座標のZ軸の動きに変換
         float zMove = moveInput.x;
         moveDirection = new Vector3(0, 0, zMove).normalized;
 
-        // 【追加】向きの回転処理
-        if (moveInput.x > 0)
-        {
-            // 右(+Z)へ移動するとき：0度
-            transform.rotation = Quaternion.Euler(0, 0, 0);
-        }
-        else if (moveInput.x < 0)
-        {
-            // 左(-Z)へ移動するとき：180度
-            transform.rotation = Quaternion.Euler(0, 180, 0);
-        }
+            // 【追加】向きの回転処理
+            if (moveInput.x > 0)
+            {
+                // 右(+Z)へ移動するとき：0度
+                transform.rotation = Quaternion.Euler(0, 0, 0);
+            }
+            else if (moveInput.x < 0)
+            {
+                // 左(-Z)へ移動するとき：180度
+                transform.rotation = Quaternion.Euler(0, 180, 0);
+            }
 
+        DestractBlock();
         UpdateAnimation();
     }
 
