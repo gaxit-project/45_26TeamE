@@ -1,13 +1,18 @@
 using UnityEngine;
 using CriWare;
-using UnityEditor;
+using UnityEngine.UI;
 
 public class SoundManager : MonoBehaviour
 {
     public static SoundManager Instance { get; private set; }
 
+    [Header("CriAtomSource")]
     [SerializeField] private CriAtomSource bgmSource;
     [SerializeField] private CriAtomSource seSource;
+
+    [Header("Slider")]
+    [SerializeField] private Slider bgmSlider;
+    [SerializeField] private Slider seSlider;
 
     // シングルトンの実装
     void Awake()
@@ -16,7 +21,7 @@ public class SoundManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            bgmSource = GetComponent<CriAtomSource>();
+            if(bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
         }
         else
         {
@@ -24,6 +29,23 @@ public class SoundManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        InitSlider();
+    }
+
+    public void InitSlider()
+    {
+        // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
+        bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
+        bgmSlider.value = bgmSource.volume;
+        bgmSlider.onValueChanged.AddListener(SetBGMVolume);
+
+        // SEのスライダーも同様にリセットして更新
+        seSlider.onValueChanged.RemoveListener(SetSEVolume);
+        seSlider.value = seSource.volume;
+        seSlider.onValueChanged.AddListener(SetSEVolume);
+    }
 
     //  BGMを再生するメソッド
     public void PlayBGM(string cueName)
@@ -33,10 +55,22 @@ public class SoundManager : MonoBehaviour
         bgmSource.Play();
     }
 
+    // BGMを停止するメソッド
+    public void StopBGM()
+    {
+        bgmSource.Stop();
+    }
+
     // SEを再生するメソッド
     public void PlaySE(string cueName)
     {
         seSource.Play(cueName);
+    }
+
+    // SEを停止するメソッド
+    public void StopSE()
+    {
+        seSource.Stop();
     }
 
     // BGMの音量を変更するメソッド
@@ -53,7 +87,19 @@ public class SoundManager : MonoBehaviour
         // SEの音量を変更した時はSEを再生する
         if (!seSource.status.ToString().Contains("Playing"))
         {
-            // PlaySE();
+            PlaySE("つるはしで掘る1");
         }
+    }
+
+    // BGMの音量を取得するメソッド
+    public float GetBGMVolume()
+    {
+        return bgmSource.volume;
+    }
+
+    // SEの音量を取得するメソッド
+    public float GetSEVolume()
+    {
+        return seSource.volume;
     }
 }

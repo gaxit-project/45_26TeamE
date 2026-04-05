@@ -7,7 +7,7 @@ public class TitleManager : MonoBehaviour
 
     public void Start()
     {
-        // タイトル画面のBGMを再生
+        CloseOptionPanel();
         SoundManager.Instance.PlayBGM("かえるのピアノ");
     }
 
@@ -15,11 +15,19 @@ public class TitleManager : MonoBehaviour
     public void OpenOptionPanel()
     {
         optionPanel.SetActive(true);
+        SoundManager.Instance.InitSlider();
     }
 
     // オプションパネルを閉じるメソッド
     public void CloseOptionPanel()
     {
         optionPanel.SetActive(false);
+    }
+
+    // ゲーム開始のメソッド
+    public void StartGame()
+    {
+        SoundManager.Instance?.PlaySE("つるはしで掘る1");
+        SceneLoader.Instance.LoadScene("02_Main");
     }
 }

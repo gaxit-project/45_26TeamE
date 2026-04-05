@@ -40,8 +40,6 @@ PlayerSettings:
     width: 1
     height: 1
   m_SplashScreenLogos:
-  - logo: {fileID: 21300000, guid: 42e05c1ecebb8ff4f895af810dc6fb3c, type: 3}
-    duration: 3
   - logo: {fileID: 21300000, guid: 6d0fc130a6f8b7c45bb20459453adcfd, type: 3}
     duration: 3
   - logo: {fileID: 21300000, guid: cab78df1fd271ec4ab223a24c783a509, type: 3}
@@ -150,7 +148,8 @@ PlayerSettings:
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
   bundleVersion: 0.1.0
-  preloadedAssets: []
+  preloadedAssets:
+  - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   xboxOneDisableKinectGpuReservation: 1
