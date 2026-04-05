@@ -14,6 +14,8 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private Slider bgmSlider;
     [SerializeField] private Slider seSlider;
 
+    private bool isInitializing = false;
+
     // シングルトンの実装
     void Awake()
     {
@@ -36,6 +38,8 @@ public class SoundManager : MonoBehaviour
 
     public void InitSlider()
     {
+        isInitializing = true;
+
         // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
         bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
         bgmSlider.value = bgmSource.volume;
@@ -45,6 +49,8 @@ public class SoundManager : MonoBehaviour
         seSlider.onValueChanged.RemoveListener(SetSEVolume);
         seSlider.value = seSource.volume;
         seSlider.onValueChanged.AddListener(SetSEVolume);
+
+        isInitializing = false;
     }
 
     //  BGMを再生するメソッド
@@ -82,6 +88,7 @@ public class SoundManager : MonoBehaviour
     // SEの音量を変更するメソッド
     public void SetSEVolume(float volume)
     {
+        if(isInitializing) return;
         seSource.volume = volume;
     }
 
