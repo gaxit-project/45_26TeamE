@@ -83,12 +83,12 @@ public class SoundManager : MonoBehaviour
     public void SetSEVolume(float volume)
     {
         seSource.volume = volume;
+    }
 
-        // SEの音量を変更した時はSEを再生する
-        if (!seSource.status.ToString().Contains("Playing"))
-        {
-            PlaySE("つるはしで掘る1");
-        }
+    public void PlaySERestart(string cueName)
+    {
+        seSource.Stop();
+        seSource.Play(cueName);
     }
 
     // BGMの音量を取得するメソッド
