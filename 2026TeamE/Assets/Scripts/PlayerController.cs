@@ -21,6 +21,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField, Header("ドリル判定開始位置(判定はy軸+に伸びていきます")] GameObject Drill;
     [SerializeField, Header("ドリル判定距離")] float DrillDistance;
 
+    [SerializeField, Header("採掘の間隔(秒)")] float drillCooldown = 0.3f;
+    private float lastDrillTime = 0f;
+
     private Vector2 moveInput; // Vector3からVector2に変更（入力値用）
     private Vector3 moveDirection;
 
@@ -88,9 +91,15 @@ public class PlayerController : MonoBehaviour
             // 3. 当たり判定の実行
             if (Physics.Raycast(ray, out hit, DrillDistance))
             {
-                if (hit.collider.CompareTag("Block"))
+                if (hit.collider.CompareTag("Block_dirt"))
                 {
-                    Destroy(hit.collider.gameObject);
+                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
+
+                    if (targetBlock != null)
+                    {
+                        // 1ダメージ与える
+                        targetBlock.TakeDamage(1);
+                    }
                 }
             }
         }

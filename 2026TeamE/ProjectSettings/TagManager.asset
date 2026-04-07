@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Block
+  - Block_dirt
   layers:
   - Default
   - TransparentFX
