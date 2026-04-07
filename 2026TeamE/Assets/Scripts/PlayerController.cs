@@ -18,11 +18,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("ドリル設定")]
     [SerializeField] bool drillFlag = false;
-    [SerializeField, Header("ドリル判定開始位置(判定はy軸+に伸びていきます")] GameObject Drill;
     [SerializeField, Header("ドリル判定距離")] float DrillDistance;
-
-    [SerializeField, Header("採掘の間隔(秒)")] float drillCooldown = 0.3f;
-    private float lastDrillTime = 0f;
 
     private Vector2 moveInput; // Vector3からVector2に変更（入力値用）
     private Vector3 moveDirection;
@@ -65,28 +61,16 @@ public class PlayerController : MonoBehaviour
 
     private void DestractBlock()
     {
-        if (Drill != null && drillFlag)
+        if (drillFlag)
         {
             // 1. 掘る方向（Rayの向き）を計算する
-            Vector3 drillDirection;
+            Vector3 drillDirection = new Vector3(0,moveInput.y,moveInput.x);
 
-            // スティックやキー入力があるかチェック
-            if (moveInput.magnitude > 0.1f)
-            {
-                // 入力がある場合：入力のxをZ軸に、yをY軸に変換して正規化（長さを1にする）
-                drillDirection = new Vector3(0, moveInput.y, moveInput.x).normalized;
-            }
-            else
-            {
-                // 立ち止まっている場合：キャラクターが向いている正面の方向
-                drillDirection = transform.forward;
-            }
-
-            Ray ray = new Ray(Drill.transform.position - drillDirection.normalized , drillDirection);
+            Ray ray = new Ray(transform.position + new Vector3(0,2,0), drillDirection);
             RaycastHit hit;
 
             // 2. デバッグ用レイの描画
-            Debug.DrawRay(Drill.transform.position, drillDirection * DrillDistance, Color.red);
+            Debug.DrawRay(transform.position + new Vector3(0, 2, 0), drillDirection * DrillDistance, Color.red);
 
             // 3. 当たり判定の実行
             if (Physics.Raycast(ray, out hit, DrillDistance))
