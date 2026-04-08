@@ -12,9 +12,10 @@ GameObject:
   - component: {fileID: 3181031972849741021}
   - component: {fileID: 8570636483345948399}
   - component: {fileID: 8514191225570150739}
+  - component: {fileID: 4736181696565024698}
   m_Layer: 6
   m_Name: Dirt
-  m_TagString: Block
+  m_TagString: Block_dirt
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -29,8 +30,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 2, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -112,3 +113,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4736181696565024698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3426798563215422781}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38e90fa79a260e644982b0c4d3c5c19e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Block_dirt
+  maxHP: 3
+  currentHP: 0
+  matNormal: {fileID: 2100000, guid: d62923da4fa1f7145bf9b0fe9f57c26f, type: 2}
+  matCracked: {fileID: 2100000, guid: b534245601ad45c44bfa226227f9b486, type: 2}
+  matBroken: {fileID: 2100000, guid: 8d87355da1d07864f95eb9e493a8c4a8, type: 2}

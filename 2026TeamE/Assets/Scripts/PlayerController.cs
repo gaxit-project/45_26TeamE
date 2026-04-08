@@ -18,17 +18,23 @@ public class PlayerController : MonoBehaviour
 
     [Header("ドリル設定")]
     [SerializeField] bool drillFlag = false;
-    [SerializeField, Header("ドリル判定開始位置(判定はy軸+に伸びていきます")] GameObject Drill;
     [SerializeField, Header("ドリル判定距離")] float DrillDistance;
+    [SerializeField, Header("ドリルのCD(1ブロックの体力を1減らす毎のCD)")] float DrillCD;//CDとは「クールダウン」の事
+    private float drillCDstarttime;
+    
 
     private Vector2 moveInput; // Vector3からVector2に変更（入力値用）
     private Vector3 moveDirection;
-
+    void Awake()
+    {
+        Application.targetFrameRate = 60; // 初期状態は-1になっている
+    }
     void Start()
     {
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
+        drillCDstarttime = Time.time;
     }
 
     void FixedUpdate()
@@ -62,35 +68,39 @@ public class PlayerController : MonoBehaviour
 
     private void DestractBlock()
     {
-        if (Drill != null && drillFlag)
+        if (drillFlag)
         {
             // 1. 掘る方向（Rayの向き）を計算する
-            Vector3 drillDirection;
+            Vector3 drillDirection = new Vector3(0,moveInput.y,moveInput.x);
 
-            // スティックやキー入力があるかチェック
             if (moveInput.magnitude > 0.1f)
             {
-                // 入力がある場合：入力のxをZ軸に、yをY軸に変換して正規化（長さを1にする）
                 drillDirection = new Vector3(0, moveInput.y, moveInput.x).normalized;
             }
             else
             {
-                // 立ち止まっている場合：キャラクターが向いている正面の方向
                 drillDirection = transform.forward;
             }
 
-            Ray ray = new Ray(Drill.transform.position - drillDirection.normalized , drillDirection);
+            Ray ray = new Ray(transform.position + new Vector3(0,2,0), drillDirection);
             RaycastHit hit;
 
             // 2. デバッグ用レイの描画
-            Debug.DrawRay(Drill.transform.position, drillDirection * DrillDistance, Color.red);
+            Debug.DrawRay(transform.position + new Vector3(0, 2, 0), drillDirection * DrillDistance, Color.red);
 
             // 3. 当たり判定の実行
-            if (Physics.Raycast(ray, out hit, DrillDistance))
+            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD )
             {
-                if (hit.collider.CompareTag("Block"))
+                if (hit.collider.CompareTag("Block_dirt"))
                 {
-                    Destroy(hit.collider.gameObject);
+                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
+
+                    if (targetBlock != null)
+                    {
+                        // 1ダメージ与える
+                        targetBlock.TakeDamage(1);
+                        drillCDstarttime = Time.time;
+                    }
                 }
             }
         }
