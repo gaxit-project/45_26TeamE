@@ -19,15 +19,22 @@ public class PlayerController : MonoBehaviour
     [Header("ドリル設定")]
     [SerializeField] bool drillFlag = false;
     [SerializeField, Header("ドリル判定距離")] float DrillDistance;
+    [SerializeField, Header("ドリルのCD(1ブロックの体力を1減らす毎のCD)")] float DrillCD;//CDとは「クールダウン」の事
+    private float drillCDstarttime;
+    
 
     private Vector2 moveInput; // Vector3からVector2に変更（入力値用）
     private Vector3 moveDirection;
-
+    void Awake()
+    {
+        Application.targetFrameRate = 60; // 初期状態は-1になっている
+    }
     void Start()
     {
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
+        drillCDstarttime = Time.time;
     }
 
     void FixedUpdate()
@@ -66,6 +73,15 @@ public class PlayerController : MonoBehaviour
             // 1. 掘る方向（Rayの向き）を計算する
             Vector3 drillDirection = new Vector3(0,moveInput.y,moveInput.x);
 
+            if (moveInput.magnitude > 0.1f)
+            {
+                drillDirection = new Vector3(0, moveInput.y, moveInput.x).normalized;
+            }
+            else
+            {
+                drillDirection = transform.forward;
+            }
+
             Ray ray = new Ray(transform.position + new Vector3(0,2,0), drillDirection);
             RaycastHit hit;
 
@@ -73,7 +89,7 @@ public class PlayerController : MonoBehaviour
             Debug.DrawRay(transform.position + new Vector3(0, 2, 0), drillDirection * DrillDistance, Color.red);
 
             // 3. 当たり判定の実行
-            if (Physics.Raycast(ray, out hit, DrillDistance))
+            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD )
             {
                 if (hit.collider.CompareTag("Block_dirt"))
                 {
@@ -83,6 +99,7 @@ public class PlayerController : MonoBehaviour
                     {
                         // 1ダメージ与える
                         targetBlock.TakeDamage(1);
+                        drillCDstarttime = Time.time;
                     }
                 }
             }
