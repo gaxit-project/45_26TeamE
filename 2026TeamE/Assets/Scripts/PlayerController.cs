@@ -1,134 +1,156 @@
 using UnityEngine;
-using UnityEngine.InputSystem; // •K{
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
     Animator animator;
 
-    [Header("ƒvƒŒƒCƒ„[ƒpƒ‰ƒ[ƒ^")]
+    // --- Added: ã‚«ãƒ¡ãƒ©é€£æºç”¨ã®å¤‰æ•° ---
+    [Header("ã‚«ãƒ¡ãƒ©é€£æº")]
+    [SerializeField] Animator cameraAnimator;
+    // -------------------------------
+
+    [Header("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿")]
     [SerializeField] float Speed = 5f;
     [SerializeField] float normalSpeed = 5f;
     [SerializeField] float dashSpeed = 10f;
     [SerializeField] float jumpPower = 5f;
 
-    [Header("Ú’nŒŸ’mİ’è")]
+    [Header("é‡åŠ›ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿")]
+    [SerializeField] float fallMultiplier = 4f;
+    [SerializeField] float lowJumpMultiplier = 3f;
+
+    [Header("æ¥åœ°åˆ¤å®š")]
     [SerializeField] LayerMask landLayer;
     [SerializeField] bool isGround = true;
 
-    [Header("ƒhƒŠƒ‹İ’è")]
+    [Header("ãƒ‰ãƒªãƒ«ã‚¢ã‚¯ã‚·ãƒ§ãƒ³")]
     [SerializeField] bool drillFlag = false;
-    [SerializeField, Header("ƒhƒŠƒ‹”»’è‹——£")] float DrillDistance;
-    [SerializeField, Header("ƒhƒŠƒ‹‚ÌCD(1ƒuƒƒbƒN‚Ì‘Ì—Í‚ğ1Œ¸‚ç‚·–ˆ‚ÌCD)")] float DrillCD;//CD‚Æ‚ÍuƒN[ƒ‹ƒ_ƒEƒ“v‚Ì–
+    [SerializeField] float DrillDistance;
+    [SerializeField] float DrillCD;
     private float drillCDstarttime;
-    
 
-    private Vector2 moveInput; // Vector3‚©‚çVector2‚É•ÏXi“ü—Í’l—pj
+    [Header("ãƒ©ã‚¤ãƒˆ")]
+    [SerializeField] Transform targetLight;
+
+    private Vector2 moveInput;
     private Vector3 moveDirection;
+    private bool isJumpPressed;
+
     void Awake()
     {
-        Application.targetFrameRate = 60; // ‰Šúó‘Ô‚Í-1‚É‚È‚Á‚Ä‚¢‚é
+        Application.targetFrameRate = 60;
     }
+
     void Start()
     {
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         drillCDstarttime = Time.time;
+
+        // --- Added: ã‚¤ãƒ³ã‚¹ãƒšã‚¯ã‚¿ãƒ¼ã§æœªè¨­å®šã®å ´åˆã€ãƒ¡ã‚¤ãƒ³ã‚«ãƒ¡ãƒ©ã‹ã‚‰å–å¾—ã‚’è©¦ã¿ã‚‹ ---
+        if (cameraAnimator == null)
+        {
+            Camera mainCam = Camera.main;
+            if (mainCam != null) cameraAnimator = mainCam.GetComponent<Animator>();
+        }
+        // ------------------------------------------------------------------
     }
 
     void FixedUpdate()
     {
-        // ÀÛ‚ÌˆÚ“®ˆ—i—á)
         if (!drillFlag)
         {
             rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
         }
+
+        ApplyCustomGravity();
     }
 
-    private void CheckGround()
+    private void ApplyCustomGravity()
     {
-        // ‘«Œ³‚©‚ç­‚µ‚‚¢ˆÊ’u(0.1f)‚©‚ç‰ºŒü‚«‚ÉA‹——£0.2f‚¾‚¯ƒŒƒC‚ğ”ò‚Î‚·
-        // ¦ƒLƒƒƒ‰‚ÌŒ´“_‚ª‘«Œ³‚É‚ ‚é‘O’ñ‚Å‚·
-
-        //’Ç‰ÁD‘«Œ³‚Ì¶‰E’[‚É‚½‚Â‚Æ’…’n”»’è‚ªo‚È‚¢‚Ì‚ÅCƒŒƒC‚ğ”ò‚Î‚·‚Ì‚ğ‘«Œ³‚Ì¶‰E’[‚©‚ç“ñ–{”ò‚Î‚·‚æ‚¤‚É•ÏXD
-        float rayDistance = 0.2f;
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f + new Vector3(0,0,-1);
-        Vector3 rayOrigin2 = transform.position + Vector3.up * 0.1f + new Vector3(0,0,1);
-
-        // ƒŒƒC‚ğ‰Â‹‰»iƒfƒoƒbƒO—pj
-        Debug.DrawRay(rayOrigin, Vector3.down * rayDistance, Color.red);
-        Debug.DrawRay(rayOrigin2, Vector3.down * rayDistance, Color.red);
-
-        // w’è‚µ‚½ƒŒƒCƒ„[(landLayer)‚É“–‚½‚ê‚ÎÚ’n‚Æ‚İ‚È‚·
-        isGround = Physics.Raycast(rayOrigin, Vector3.down, rayDistance, landLayer);
-        if(!isGround)//‚P‚Â–Ú‚ÌƒŒƒCƒ„[‚Å”»’è‚ªæ‚ê‚È‚¯‚ê‚Î‚Q–{–Ú‚ğŠm”F 
-            isGround = Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer);
-    }
-
-    private void DestractBlock()
-    {
-        if (drillFlag)
+        if (rb.linearVelocity.y < 0)
         {
-            // 1. Œ@‚é•ûŒüiRay‚ÌŒü‚«j‚ğŒvZ‚·‚é
-            Vector3 drillDirection = new Vector3(0,moveInput.y,moveInput.x);
-
-            if (moveInput.magnitude > 0.1f)
-            {
-                drillDirection = new Vector3(0, moveInput.y, moveInput.x).normalized;
-            }
-            else
-            {
-                drillDirection = transform.forward;
-            }
-
-            Ray ray = new Ray(transform.position + new Vector3(0,2,0), drillDirection);
-            RaycastHit hit;
-
-            // 2. ƒfƒoƒbƒO—pƒŒƒC‚Ì•`‰æ
-            Debug.DrawRay(transform.position + new Vector3(0, 2, 0), drillDirection * DrillDistance, Color.red);
-
-            // 3. “–‚½‚è”»’è‚ÌÀs
-            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD )
-            {
-                if (hit.collider.CompareTag("Block_dirt"))
-                {
-                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
-
-                    if (targetBlock != null)
-                    {
-                        // 1ƒ_ƒ[ƒW—^‚¦‚é
-                        targetBlock.TakeDamage(1);
-                        drillCDstarttime = Time.time;
-                    }
-                }
-            }
+            rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
+        }
+        else if (rb.linearVelocity.y > 0 && !isJumpPressed)
+        {
+            rb.linearVelocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.fixedDeltaTime;
         }
     }
 
     void Update()
     {
         CheckGround();
-        
 
-        // “ü—Í‚Ì‰¡•ûŒü(x)‚ğAƒ[ƒ‹ƒhÀ•W‚ÌZ²‚Ì“®‚«‚É•ÏŠ·
         float zMove = moveInput.x;
         moveDirection = new Vector3(0, 0, zMove).normalized;
 
-            // y’Ç‰ÁzŒü‚«‚Ì‰ñ“]ˆ—
-            if (moveInput.x > 0)
+        if (moveInput.x > 0)
+        {
+            if (transform.rotation.eulerAngles.y != 0)
             {
-                // ‰E(+Z)‚ÖˆÚ“®‚·‚é‚Æ‚«F0“x
                 transform.rotation = Quaternion.Euler(0, 0, 0);
+                FlipLightX();
             }
-            else if (moveInput.x < 0)
+        }
+        else if (moveInput.x < 0)
+        {
+            if (transform.rotation.eulerAngles.y != 180)
             {
-                // ¶(-Z)‚ÖˆÚ“®‚·‚é‚Æ‚«F180“x
                 transform.rotation = Quaternion.Euler(0, 180, 0);
+                FlipLightX();
             }
+        }
 
         DestractBlock();
         UpdateAnimation();
+    }
+
+    private void FlipLightX()
+    {
+        if (targetLight != null)
+        {
+            Vector3 pos = targetLight.localPosition;
+            pos.x *= -1;
+            targetLight.localPosition = pos;
+        }
+    }
+
+    private void CheckGround()
+    {
+        float rayDistance = 0.2f;
+        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, -1);
+        Vector3 rayOrigin2 = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, 1);
+        isGround = Physics.Raycast(rayOrigin, Vector3.down, rayDistance, landLayer) ||
+                   Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer);
+    }
+
+    private void DestractBlock()
+    {
+        if (drillFlag)
+        {
+            Vector3 drillDirection = moveInput.magnitude > 0.1f ?
+                new Vector3(0, moveInput.y, moveInput.x).normalized : transform.forward;
+
+            Ray ray = new Ray(transform.position + new Vector3(0, 2, 0), drillDirection);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD)
+            {
+                if (hit.collider.CompareTag("Block_dirt"))
+                {
+                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
+                    if (targetBlock != null)
+                    {
+                        targetBlock.TakeDamage(1);
+                        drillCDstarttime = Time.time;
+                    }
+                }
+            }
+        }
     }
 
     private void UpdateAnimation()
@@ -140,34 +162,39 @@ public class PlayerController : MonoBehaviour
             animator.SetFloat("Drill_Y", moveInput.y);
         }
         animator.SetBool("isGround", isGround);
+        animator.SetBool("drillFlag", drillFlag);
+        // --- Added: ã‚«ãƒ¡ãƒ©ã®ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚¿ãƒ¼ã«ãƒ•ãƒ©ã‚°ã‚’é€ä¿¡ ---ï¼ˆç¡¬ã„å²©å®Ÿè£…ã—ãŸã‚‰ãƒ•ãƒ©ã‚°ã®åå‰å¤‰ãˆã¦å®Ÿè£…å¯èƒ½ï¼‰
+        //if (cameraAnimator != null)
+        //{
+            //cameraAnimator.SetBool("drillFlag", drillFlag);
+        //}
+        // --------------------------------------------
     }
 
-
-    // Input Action‚©‚çŒÄ‚Î‚ê‚éˆÚ“®“ü—Í—pƒƒ\ƒbƒh
-    public void OnMove(InputAction.CallbackContext context)
-    {
-        moveInput = context.ReadValue<Vector2>();
-    }
+    public void OnMove(InputAction.CallbackContext context) => moveInput = context.ReadValue<Vector2>();
 
     public void OnDrill(InputAction.CallbackContext context)
     {
-        if (context.performed)
-        {
-            drillFlag = true;
-        }
-        else if (context.canceled)
-        {
-            drillFlag = false;
-        }
-        animator.SetBool("drillFlag", drillFlag);
+        if (context.performed) drillFlag = true;
+        else if (context.canceled) drillFlag = false;
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (context.performed && isGround)
+        if (context.performed)
         {
-            rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
-            isGround = false;
+            isJumpPressed = true;
+            if (isGround)
+            {
+                rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
+                isGround = false;
+            }
+        }
+        else if (context.canceled)
+        {
+            isJumpPressed = false;
         }
     }
+
+    
 }
