@@ -12,6 +12,7 @@ public class SettingManager : MonoBehaviour
     [Header("Dropdowns")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     [SerializeField] private TMP_Dropdown screenModeDropdown;
+    [SerializeField] private TMP_Dropdown framerateDropdown;
 
     private readonly List<string> fixedResolutionOptions = new List<string>
     {
@@ -21,6 +22,16 @@ public class SettingManager : MonoBehaviour
         "1366 x 768",
     };
 
+    private readonly List<string> fixedFramerateOptions = new List<string>
+    {
+        "30 FPS",
+        "60 FPS",
+        "120 FPS",
+        "144 FPS",
+        "240 FPS",
+        "無制限"
+    };
+
     private void Awake()
     {
         if (Instance == null)
@@ -28,6 +39,11 @@ public class SettingManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             settingCanvas.SetActive(false);
+
+            if(Application.targetFrameRate <= 0)
+            {
+                Application.targetFrameRate = 60;
+            }
         }
         else
         {
@@ -42,6 +58,7 @@ public class SettingManager : MonoBehaviour
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
         SoundManager.Instance?.InitSlider();
         InitResolutionSettings();
+        InitFrameRateSettings();
     }
 
     // 設定パネルを閉じるメソッド
@@ -74,6 +91,35 @@ public class SettingManager : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
     }
 
+    // フレームレートの選択肢を初期化するメソッド
+    public void InitFrameRateSettings()
+    {
+        framerateDropdown.ClearOptions();
+        framerateDropdown.AddOptions(fixedFramerateOptions);
+        
+        int currentIndex = 0;
+        int currentTarget = Application.targetFrameRate;
+
+        if(currentTarget <= 0)
+        {
+            currentTarget = fixedFramerateOptions.Count - 1;
+        }
+        else
+        {
+            for(int i = 0; i < fixedFramerateOptions.Count; i++)
+            {
+                if(int.TryParse(fixedFramerateOptions[i], out int val) && val == currentTarget)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+        }
+
+        framerateDropdown.value = currentIndex;
+        framerateDropdown.RefreshShownValue();
+    }
+
     // 解像度を変更するメソッド
     public void SetResolution(int index)
     {
@@ -85,6 +131,23 @@ public class SettingManager : MonoBehaviour
             int width = int.Parse(parts[0].Trim());
             int height = int.Parse(parts[1].Trim());
             Screen.SetResolution(width, height, Screen.fullScreenMode);
+        }
+    }
+
+    // フレームレートを変更するメソッド
+    public void SetFrameRate(int index)
+    {
+        if (index == fixedFramerateOptions.Count - 1)
+        {
+            Application.targetFrameRate = -1;
+        }
+        else
+        {
+            string selectedText = fixedFramerateOptions[index];
+            if (int.TryParse(selectedText.Replace(" FPS", "").Trim(), out int targetFPS))
+            {
+                Application.targetFrameRate = targetFPS;
+            }
         }
     }
 
