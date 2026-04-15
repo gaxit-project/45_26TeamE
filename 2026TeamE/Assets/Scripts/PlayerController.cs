@@ -29,10 +29,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] bool drillFlag = false;
     [SerializeField] float DrillDistance;
     [SerializeField] float DrillCD;
+    [SerializeField] Transform miningZoneRoot;
+    [SerializeField] private Transform drillPivot;
+    [SerializeField] private float maxRotationAngle = 60f;
     private float drillCDstarttime;
 
     [Header("ライト")]
     [SerializeField] Transform targetLight;
+
+    [Header("バッテリー")]
+    [SerializeField] float maxBattery = 100f;
+    [SerializeField] float currentBattery = 100f;
+    [SerializeField] float drillConsumption = 1f;
+
+    public bool IsDrilling => drillFlag;
+    public bool HasBattery => currentBattery > 0f;
 
     private Vector2 moveInput;
     private Vector3 moveDirection;
@@ -105,8 +116,45 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        DestractBlock();
+        if (drillFlag && HasBattery)
+        {
+            currentBattery -= drillConsumption * Time.deltaTime;
+            if (currentBattery < 0) currentBattery = 0;
+        }
+
+        if (drillFlag)
+        {
+            float angle = Mathf.Atan2(moveInput.y, Mathf.Abs(moveInput.x)) * Mathf.Rad2Deg;
+            miningZoneRoot.localRotation = Quaternion.Euler(angle, 0, 0);
+        }
+        else
+        {
+            miningZoneRoot.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+
         UpdateAnimation();
+        HandleDrillRotation();
+    }
+
+    private void HandleDrillRotation()
+    {
+        if (drillPivot == null) return;
+
+        if (drillFlag)
+        {
+            // 上下入力(moveInput.y)に基づいて角度を計算
+            // -1 ～ 1 の入力を、指定した最大角度(例: 60度)に変換
+            float targetAngle = moveInput.y * maxRotationAngle;
+
+            // X軸を中心に回転させる（上下に振る）
+            // ローカル回転を使うことで、プレイヤーが左右どちらを向いていても正しく動く
+            drillPivot.localRotation = Quaternion.Euler(-targetAngle, 0, 0);
+        }
+        else
+        {
+            // 掘っていない時は正面(0度)にゆっくり戻す、または即座に戻す
+            drillPivot.localRotation = Quaternion.Slerp(drillPivot.localRotation, Quaternion.identity, Time.deltaTime * 10f);
+        }
     }
 
     private void FlipLightX()

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Block
   - Block_dirt
+  - VoxelTerrain
   layers:
   - Default
   - TransparentFX

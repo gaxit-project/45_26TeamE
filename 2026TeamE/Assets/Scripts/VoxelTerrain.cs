@@ -1,8 +1,9 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
-using UnityEngine.InputSystem;
+using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using static UnityEngine.EventSystems.EventTrigger;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class VoxelTerrain : MonoBehaviour
@@ -28,8 +29,11 @@ public class VoxelTerrain : MonoBehaviour
     byte[,,] mapData;
     Mesh mesh;
     List<Vector3> vertices = new List<Vector3>();
+    List<Vector2> uvs = new List<Vector2>();
     List<int> dirtTriangles = new List<int>();
     List<int> oreTriangles = new List<int>();
+
+    public float BlockSize => blockSize;
 
     // ブロックが変更されたときのイベント
     public event Action<int, int, byte> OnBlockChanged;
@@ -61,35 +65,6 @@ public class VoxelTerrain : MonoBehaviour
         ConstructMesh();
     }
 
-    // --- VoxelTerrain.cs の Update メソッドとして追加 ---
-    void Update()
-    {
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            Vector2 mousePosition = Mouse.current.position.ReadValue();
-            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
-
-            if (Physics.Raycast(ray, out RaycastHit hit))
-            {
-                if (hit.collider.gameObject == gameObject)
-                {
-                    // 判定を 0.1f から 0.5f (ブロックの半分) に変更
-                    Vector3 targetPos = hit.point + ray.direction * 0.5f;
-                    Vector3 localPos = transform.InverseTransformPoint(targetPos);
-
-                    int x = Mathf.FloorToInt(localPos.x / blockSize);
-                    int y = Mathf.FloorToInt(localPos.y / blockSize);
-                    int z = Mathf.FloorToInt(localPos.z / blockSize);
-
-                    // ログを出して、どこを叩いているか確認できるようにする
-                    Debug.Log($"Hit! 配列座標: ({x}, {y}, {z}) ブロック値: {GetBlock(x, y, z)}");
-
-                    ExecuteDig(x, y, z);
-                }
-            }
-        }
-    }
-
     void GenerateLevel()
     {
         mapData = new byte[thicknessX, heightY, widthZ];
@@ -119,21 +94,41 @@ public class VoxelTerrain : MonoBehaviour
     }
 
     // ブロックを掘る（結果を返す）
-    public void ExecuteDig(int x, int y, int z)
+    public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
     {
-        if (!IsInside(x, y, z)) return;
-        byte blockType = mapData[x, y, z];
-        if (blockType == 0) return; // 空の場合
-        if (blockType == 2) { 
-            mapData[x, y, z] = 3; 
-            OnBlockChanged?.Invoke(x, y, 3);
+        // 半径をセル数に換算
+        int r = Mathf.CeilToInt(radius);
+        bool changed = false;
+
+        // 球体の影響範囲（中心から半径rの立方体範囲）をすべてループ
+        for (int x = 0; x < thicknessX; x++)
+        {
+            for (int y = centerY - r; y <= centerY + r; y++)
+            {
+                for (int z = centerZ - r; z <= centerZ + r; z++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+
+                    if (mapData[x, y, z] == 0) continue;
+
+                    float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
+                    if (distSq <= radius * radius)
+                    {
+                        if (y >= minLimit.y && y <= maxLimit.y &&
+                            z >= minLimit.z && z <= maxLimit.z)
+                        {
+                            mapData[x, y, z] = 0;
+                            changed = true;
+                        }
+                    }
+                }
+            }
         }
-        else if (blockType == 3) { return; } // 既に掘られた鉱石は無効
-        else { 
-            mapData[x, y, z] = 0;
-            OnBlockChanged?.Invoke(x, y, 0);
+
+        if (changed)
+        {
+            ConstructMesh();
         }
-        ConstructMesh();
     }
 
     // 外部からの変更を適用（例：ネットワーク同期）
@@ -178,6 +173,7 @@ public class VoxelTerrain : MonoBehaviour
     void ConstructMesh()
     {
         vertices.Clear();
+        uvs.Clear();
         dirtTriangles.Clear();
         oreTriangles.Clear();
 
@@ -201,46 +197,115 @@ public class VoxelTerrain : MonoBehaviour
     // ブロックの種類に応じて面を追加
     void AddCube(int x, int y, int z, byte blockType)
     {
-        Vector3 pos = new Vector3(x, y, z) * blockSize;
-        List<int> tris = (blockType == 3) ? oreTriangles : dirtTriangles;
+        if (x != 0) return;
 
-        // 隣が空気なら面を貼る（最適化）
-        if (GetBlock(x, y + 1, z) == 0) AddFace(pos + Vector3.up, Vector3.forward, Vector3.right, tris); // 上
-        if (GetBlock(x, y - 1, z) == 0) AddFace(pos, Vector3.right, Vector3.forward, tris); // 下
-        if (GetBlock(x, y, z + 1) == 0) AddFace(pos + Vector3.forward, Vector3.right, Vector3.up, tris); // 前
-        if (GetBlock(x, y, z - 1) == 0) AddFace(pos, Vector3.up, Vector3.right, tris); // 後
-        if (GetBlock(x + 1, y, z) == 0) AddFace(pos + Vector3.right, Vector3.up, Vector3.forward, tris); // 右
-        if (GetBlock(x - 1, y, z) == 0) AddFace(pos, Vector3.forward, Vector3.up, tris); // 左
+        Vector3 pos = new Vector3(0, y, z) * blockSize;
+        List<int> tris = (blockType == 3) ? oreTriangles : dirtTriangles;
+        float s = blockSize;
+
+        // 長さ（厚み）を計算
+        float totalThickness = thicknessX * s;
+
+        // 各方向のベクトル
+        Vector3 up = Vector3.up * s;
+        Vector3 forward = Vector3.forward * s;
+        Vector3 rightLong = Vector3.right * totalThickness;
+
+        // 【重要】各面のサイズを指定してAddFaceを呼ぶ
+
+        // 上面（サイズ: 1 x totalThickness）
+        AddFace(pos + up, forward, rightLong, tris, s, totalThickness);
+        // 下面（サイズ: totalThickness x 1）
+        AddFace(pos, rightLong, forward, tris, totalThickness, s);
+        // 正面（サイズ: 1 x 1）
+        AddFace(pos + forward, rightLong, up, tris, s, s);
+        // 背面（サイズ: 1 x 1）
+        AddFace(pos, up, rightLong, tris, s, s);
+        // 右端面（サイズ: 1 x 1）
+        AddFace(pos + rightLong, up, forward, tris, s, s);
+        // 左端面（サイズ: 1 x 1）
+        AddFace(pos, forward, up, tris, s, s);
     }
 
     // 面を追加する関数
-    void AddFace(Vector3 corner, Vector3 w, Vector3 h, List<int> tris)
+    void AddFace(Vector3 corner, Vector3 w, Vector3 h, List<int> tris, float width, float height)
     {
         int v = vertices.Count;
         vertices.Add(corner);
         vertices.Add(corner + w);
         vertices.Add(corner + h);
         vertices.Add(corner + w + h);
+
+        // --- 【重要】UV座標（テクスチャの地図）を計算 ---
+        // 面のサイズ（width, height）に合わせて、UVを(0,0)から(width, height)まで割り当てる
+        // これにより、テクスチャがリピート（タイル状に並ぶ）されます
+        uvs.Add(new Vector2(0, 0));
+        uvs.Add(new Vector2(width, 0));
+        uvs.Add(new Vector2(0, height));
+        uvs.Add(new Vector2(width, height));
+
+        // 三角形の生成（表裏反転対応済み）
         tris.Add(v);
-        tris.Add(v + 2);
-        tris.Add(v + 1);
         tris.Add(v + 1);
         tris.Add(v + 2);
+
+        tris.Add(v + 1);
         tris.Add(v + 3);
+        tris.Add(v + 2);
     }
 
     // メッシュの更新
     void UpdateMesh()
     {
         mesh.Clear();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = vertices.ToArray();
+
+        // --- 【重要】UVをメッシュにセット ---
+        mesh.uv = uvs.ToArray();
+
         mesh.subMeshCount = 2;
         mesh.SetTriangles(dirtTriangles.ToArray(), 0);
         mesh.SetTriangles(oreTriangles.ToArray(), 1);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-        GetComponent<MeshCollider>().sharedMesh = null;
-        GetComponent<MeshCollider>().sharedMesh = mesh;
-        GetComponent<MeshRenderer>().materials = new Material[] { dirtMaterial, oreMaterial };
+
+        // 物理判定の更新
+        MeshCollider mc = GetComponent<MeshCollider>();
+        if (mc != null)
+        {
+            mc.cookingOptions = MeshColliderCookingOptions.UseFastMidphase |
+                                MeshColliderCookingOptions.WeldColocatedVertices;
+            mc.sharedMesh = null;
+            mc.sharedMesh = mesh;
+        }
+    }
+
+    // ステージの生成（外部から呼び出す用）
+    public void CreateStage(int width, int height, float size)
+    {
+        widthZ = width;
+        heightY = height;
+        blockSize = size;
+
+        mapData = new byte[thicknessX, heightY, widthZ];
+
+        var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
+        for (int x = 0; x < thicknessX; x++)
+        {
+            for (int y = 0; y < heightY; y++)
+            {
+                for (int z = 0; z < widthZ; z++)
+                {
+                    if (y > heightY - 3)
+                        mapData[x, y, z] = 0;
+                    else
+                        mapData[x, y, z] = (rnd.NextDouble() * 100.0 < oreProbability) ? (byte)2 : (byte)1;
+                }
+            }
+        }
+
+        ConstructMesh();
+        transform.position = new Vector3(0, -(heightY * blockSize), 0);
     }
 }
