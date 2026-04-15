@@ -39,7 +39,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("バッテリー")]
     [SerializeField] float maxBattery = 100f;
-    [SerializeField] float currentBattery = 100f;
+    [SerializeField] public float currentBattery = 100f;
     [SerializeField] float drillConsumption = 1f;
 
     public bool IsDrilling => drillFlag;
