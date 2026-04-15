@@ -2890,10 +2890,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cfbd86c222c7264eb9d17c6687c68db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
-  width: 50
-  height: 50
-  blockThickness: 2
+  thicknessX: 5
+  heightY: 20
+  widthZ: 30
+  blockSize: 1
   oreProbability: 5
+  dirtMaterial: {fileID: 2100000, guid: d62923da4fa1f7145bf9b0fe9f57c26f, type: 2}
+  oreMaterial: {fileID: 2100000, guid: 8d151ae9cb311834085131176cb7b169, type: 2}
   useDeterministicSeed: 1
   seed: 12345
 --- !u!64 &368941588
