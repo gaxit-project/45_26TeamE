@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
+    public static MainManager Instance { get; private set; }
+
     [Header("‚¨‹à")]
     [SerializeField] private long currentMoney = 0;
     [SerializeField] private int oreValue = 0;
@@ -11,6 +13,17 @@ public class MainManager : MonoBehaviour
     [SerializeField] private int targetWidth = 80;
     [SerializeField] private float blockSize = 0.2f;
 
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
     private void Start()
     {
         SpawnNewLevel();
@@ -18,6 +31,7 @@ public class MainManager : MonoBehaviour
 
     public void SpawnNewLevel()
     {
-        VoxelTerrain.Instance.CreateStage(targetWidth, targetHeight, blockSize);
+        VoxelTerrain vt = VoxelTerrain.Instance;
+        vt.CreateStage(targetWidth, targetHeight, vt.BlockSize);
     }
 }

@@ -21,7 +21,7 @@ public class DrillTip : MonoBehaviour
 
         if (other.CompareTag("VoxelTerrain"))
         {
-            VoxelTerrain terrain = other.GetComponent<VoxelTerrain>();
+            VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
             if (terrain != null)
             {
                 Vector3 localPos = terrain.transform.InverseTransformPoint(transform.position);
@@ -30,10 +30,9 @@ public class DrillTip : MonoBehaviour
                 int y = Mathf.FloorToInt(localPos.y / s);
                 int z = Mathf.FloorToInt(localPos.z / s);
 
-                Bounds bounds = miningZone.GetComponent<BoxCollider>().bounds;
-
-                Vector3 minL = terrain.transform.InverseTransformPoint(bounds.min) / s;
-                Vector3 maxL = terrain.transform.InverseTransformPoint(bounds.max) / s;
+                BoxCollider box = miningZone.GetComponent<BoxCollider>();
+                Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
+                Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
                 terrain.ExecuteDig(x, y, z, drillRadius / s, minL, maxL);
                 lastDrillTime = Time.time;
