@@ -37,6 +37,18 @@ public class MoneyManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
+        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+    }
+
+    private void UpdateMoneyText()
+    {
+        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
+    }
+
+    /*
     void Update()
     {
         MoneyText.text = Money.ToString("NO");
@@ -44,13 +56,15 @@ public class MoneyManager : MonoBehaviour
         TargetAmountText.text = TargetAmount.ToString("NO");
         TargetAmountOnPartText.text = TargetAmountOnPart.ToString("NO");
     }
+    */
     /// <summary>
     /// 手持ちの資金を増加
     /// </summary>
     /// <param name="value">増加する値</param>
-    public void MoneOnHandIncrease(int value)
+    public void MoneyOnHandIncrease(int value)
     {
         MoneyOnHand = MoneyOnHand + value;
+        UpdateMoneyText();
     }
     /// <summary>
     /// 手持ちの資金を減少
@@ -80,6 +94,19 @@ public class MoneyManager : MonoBehaviour
         Money = 0;
     }
 
+    /// <summary>
+    /// Result画面などで、現在のMoneyOnHandを読み取るための関数
+    /// </summary>
+    public int GetMoneyOnHand()
+    {
+        return MoneyOnHand;
+    }
 
-    
-}
+    /// <summary>
+    /// Result画面などで、現在のTargetAmountOnPartを読み取るための関数
+    /// </summary>
+    public int GetTargetAmountOnPart()
+    {
+        return TargetAmountOnPart;
+    }
+} // ←スクリプトの一番最後のカッコ
