@@ -1683,8 +1683,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainManager
   currentMoney: 0
   oreValue: 0
-  targetHeight: 500
-  targetWidth: 500
+  targetHeight: 400
+  targetWidth: 400
   blockSize: 1
 --- !u!4 &1037431501
 Transform:

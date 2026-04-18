@@ -39,7 +39,7 @@ public class TimerManager : MonoBehaviour
 
     void EndTimer()
     {
-        SoundManager.Instance.PlayBGM("メインBGM");
+        SoundManager.Instance.StopBGM();
         // リザルトシーンに遷移する
         SceneManager.LoadScene(resultSceneName);
     }
