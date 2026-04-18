@@ -123,7 +123,7 @@ public class PlayerController : MonoBehaviour
 
         if (drillFlag && HasBattery)
         {
-            currentBattery -= drillConsumption * Time.deltaTime;
+            //currentBattery -= drillConsumption * Time.deltaTime;
             if (currentBattery < 0) currentBattery = 0;
         }
 
