@@ -46,7 +46,7 @@ public class JewelryReaction : MonoBehaviour
 
     void Get()
     {
-        MoneyManager.Instance.MoneyOnHandIncrease(1000000);
+        MoneyManager.Instance.MoneyOnHandIncrease(300000);
         Destroy(gameObject);
     }
 }

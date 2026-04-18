@@ -34,15 +34,13 @@ public class MoneyManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
-        }
-        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
-        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+        }   
     }
 
     void Start()
     {
-
-        
+        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
+        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
     }
 
     private void UpdateMoneyText()
@@ -128,5 +126,18 @@ public class MoneyManager : MonoBehaviour
             MoneyText.text = Money.ToString("0,000,000,000");
         }
     }
+    public void SetMainSceneUI(TextMeshProUGUI onHand, TextMeshProUGUI targetPart)
+    {
+        MoneyOnHandText = onHand;
+        TargetAmountOnPartText = targetPart;
+
+        // 表示を現在の値で更新
+        UpdateMoneyText();
+        if (TargetAmountOnPartText != null)
+        {
+            TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+        }
+    }
+
 
 }

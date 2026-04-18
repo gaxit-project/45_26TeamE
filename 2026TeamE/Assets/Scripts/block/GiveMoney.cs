@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class GiveMoney : MonoBehaviour
 {
-    public MoneyManager moneyManager;
+    public MoneyManager moneyManager; // ※ここはインスペクターで空でも自動で探します
 
     [Header("種類別の金額")]
     [SerializeField] private int dirtValue = 10;
@@ -10,17 +10,30 @@ public class GiveMoney : MonoBehaviour
 
     private int lastDirtIndices = -1;
     private int lastOreIndices = -1;
-    private bool isInitialized = false; // 初期化フラグ
+    private bool isInitialized = false;
+
+    void Start()
+    {
+        // ★シーンを読み直した際、自動で MoneyManager.Instance をセットする
+        if (moneyManager == null)
+        {
+            moneyManager = MoneyManager.Instance;
+        }
+    }
 
     void Update()
     {
-        if (moneyManager == null) return;
+        // マネージャーが見つからなければ何もしない
+        if (moneyManager == null)
+        {
+            moneyManager = MoneyManager.Instance; // 念のためここでもチェック
+            if (moneyManager == null) return;
+        }
 
         int currentDirtIndices;
         int currentOreIndices;
         UpdateCounts(out currentDirtIndices, out currentOreIndices);
 
-        // 最初のフレームは「現在の数」を記録するだけで、お金は増やさない
         if (!isInitialized)
         {
             if (currentDirtIndices > 0 || currentOreIndices > 0)
@@ -32,17 +45,16 @@ public class GiveMoney : MonoBehaviour
             return;
         }
 
-        // --- 土の判定 ---
         if (currentDirtIndices < lastDirtIndices)
         {
-            int diff = lastDirtIndices - currentDirtIndices;
+            int diff = (lastDirtIndices - currentDirtIndices);
+            // 減少を検知したときだけ加算
             if (diff > 0) moneyManager.MoneyOnHandIncrease(dirtValue);
         }
 
-        // --- 鉱石の判定 ---
         if (currentOreIndices < lastOreIndices)
         {
-            int diff = lastOreIndices - currentOreIndices;
+            int diff = (lastOreIndices - currentOreIndices);
             if (diff > 0) moneyManager.MoneyOnHandIncrease(oreValue);
         }
 

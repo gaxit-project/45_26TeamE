@@ -77,10 +77,8 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!drillFlag)
-        {
-            rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
-        }
+        // 「if (!drillFlag)」を削除し、常に移動入力を反映させる
+        rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
 
         ApplyCustomGravity();
     }
