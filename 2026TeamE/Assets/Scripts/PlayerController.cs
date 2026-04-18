@@ -1,11 +1,14 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
 
 public class PlayerController : MonoBehaviour
 {
     Rigidbody rb;
     Animator animator;
 
+    public GameObject sonar;
     // --- Added: カメラ連携用の変数 ---
     [Header("カメラ連携")]
     [SerializeField] Animator cameraAnimator;
@@ -234,6 +237,7 @@ public class PlayerController : MonoBehaviour
             isJumpPressed = true;
             if (isGround)
             {
+                Instantiate(sonar, transform.position, Quaternion.identity);
                 rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 isGround = false;
             }
