@@ -190,7 +190,10 @@ public class VoxelTerrain : MonoBehaviour
             }
         }
 
-        transform.position = new Vector3(0, -(heightY * blockSize), 0);
+        float offsetX = -(thicknessX * blockSize) / 2f;
+        float offsetZ = -(widthZ * blockSize) / 2f;
+
+        transform.position = new Vector3(offsetX, -(heightY * blockSize), offsetZ);
         GenerateChunks();
     }
 
