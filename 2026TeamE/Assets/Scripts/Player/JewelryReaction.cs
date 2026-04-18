@@ -17,6 +17,10 @@ public class JewelryReaction : MonoBehaviour
         {
             ExecuteReaction();
         }
+        if (other.gameObject.CompareTag("Player"))
+        {
+            Get();
+        }
     }
 
     void ExecuteReaction()
@@ -38,5 +42,11 @@ public class JewelryReaction : MonoBehaviour
     {
         isCoolingDown = false;
         Debug.Log("•óÎ‚ªÄ‚ÑŒŸ’m‰Â”\‚É‚È‚è‚Ü‚µ‚½B");
+    }
+
+    void Get()
+    {
+        MoneyManager.Instance.MoneyOnHandIncrease(100000);
+        Destroy(gameObject);
     }
 }

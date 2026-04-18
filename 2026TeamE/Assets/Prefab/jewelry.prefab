@@ -109,7 +109,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -155,3 +155,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JewelryReaction
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
+  cooldownTime: 1

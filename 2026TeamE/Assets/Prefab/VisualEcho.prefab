@@ -190,7 +190,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisualEcho
   currentRadius: 0.5
-  expansionSpeed: 15
-  maxRadius: 5
+  expansionSpeed: 30
+  maxRadius: 10
   segments: 36
   echoColor: {r: 0, g: 0, b: 1, a: 1}

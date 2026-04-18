@@ -97,10 +97,10 @@ public class BatteryManager : MonoBehaviour
     // ========== 追加：現在の点滅対象を数値から取得 ==========
     private int GetTargetIndex()
     {
-        if (playerController.currentBattery > 80) return 0;
-        if (playerController.currentBattery > 60) return 1;
-        if (playerController.currentBattery > 40) return 2;
-        if (playerController.currentBattery > 20) return 3;
+        if (playerController.currentBattery > 800) return 0;
+        if (playerController.currentBattery > 600) return 1;
+        if (playerController.currentBattery > 400) return 2;
+        if (playerController.currentBattery > 200) return 3;
         if (playerController.currentBattery > 0) return 4;
         return -1; // バッテリー0の時は -1
     }

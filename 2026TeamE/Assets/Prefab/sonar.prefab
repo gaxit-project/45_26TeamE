@@ -193,8 +193,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SonarRing
   currentRadius: 1
   expansionSpeed: 20
-  maxRadius: 50
+  maxRadius: 30
   segments: 36
+  holdTime: 0.1
 --- !u!135 &14612502329540224
 SphereCollider:
   m_ObjectHideFlags: 0

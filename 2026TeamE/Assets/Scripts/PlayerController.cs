@@ -41,9 +41,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Transform targetLight;
 
     [Header("バッテリー")]
-    [SerializeField] float maxBattery = 100f;
-    [SerializeField] public float currentBattery = 100f;
+    [SerializeField] float maxBattery = 1000f;
+    [SerializeField] public float currentBattery = 1000f;
     [SerializeField] float drillConsumption = 1f;
+    [SerializeField] float SonarConsuption = 200f;
+
 
     public bool IsDrilling => drillFlag;
     public bool HasBattery => currentBattery > 0f;
@@ -248,7 +250,7 @@ public class PlayerController : MonoBehaviour
             isJumpPressed = true;
             if (isGround)
             {
-                Instantiate(sonar, transform.position, Quaternion.identity);
+                
                 rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 isGround = false;
             }
@@ -259,5 +261,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    
+    public void OnSonar(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            if (currentBattery >= SonarConsuption)
+            {
+                Instantiate(sonar, transform.position, Quaternion.identity);
+                currentBattery -= SonarConsuption;
+            }
+            
+        }
+    }
 }
