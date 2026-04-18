@@ -3,57 +3,64 @@ using UnityEngine;
 public class GiveMoney : MonoBehaviour
 {
     public MoneyManager moneyManager;
-    [SerializeField] private int addValue = 10;
 
-    private VoxelTerrain terrain;
-    private int lastVertexCount = -1;
+    [Header("種類別の金額")]
+    [SerializeField] private int dirtValue = 10; // 土 (SubMesh 0)
+    [SerializeField] private int oreValue = 50;  // 鉱石 (SubMesh 1)
+
+    private int lastDirtIndices = -1;
+    private int lastOreIndices = -1;
 
     void Start()
     {
-        terrain = GetComponent<VoxelTerrain>();
-        // 初期状態の全チャンクの頂点数を取得
-        lastVertexCount = CountTotalVertices();
+        // 初期状態のインデックス数を記録
+        UpdateCounts(out lastDirtIndices, out lastOreIndices);
     }
 
     void Update()
     {
-        if (terrain == null || moneyManager == null) return;
+        if (moneyManager == null) return;
 
-        // 全チャンクの合計頂点数をカウント
-        int currentVertexCount = CountTotalVertices();
+        int currentDirtIndices;
+        int currentOreIndices;
+        UpdateCounts(out currentDirtIndices, out currentOreIndices);
 
-        // 頂点数が減っている（＝ブロックが消えた）場合
-        if (currentVertexCount < lastVertexCount)
+        // --- 土の判定 ---
+        if (currentDirtIndices < lastDirtIndices && lastDirtIndices != -1)
         {
-            // 1ブロックあたり24頂点（またはそれ以上）として計算
-            // メッシュ生成の仕様により、減った頂点数を24で割ることでブロック数を概算します
-            int diff = lastVertexCount - currentVertexCount;
-            int destroyedCount = Mathf.CeilToInt(diff / 24f);
-
-            if (destroyedCount > 0)
-            {
-                int totalAdd = destroyedCount * addValue;
-                moneyManager.MoneyOnHandIncrease(totalAdd);
-            }
+            // インデックス数から減少したブロック数を計算 (1面6枚のインデックス * 最大6面 = 36)
+            // 概算で減少分を判定し、加算
+            int diff = lastDirtIndices - currentDirtIndices;
+            if (diff > 0) moneyManager.MoneyOnHandIncrease(dirtValue);
         }
 
-        lastVertexCount = currentVertexCount;
+        // --- 鉱石の判定 ---
+        if (currentOreIndices < lastOreIndices && lastOreIndices != -1)
+        {
+            int diff = lastOreIndices - currentOreIndices;
+            if (diff > 0) moneyManager.MoneyOnHandIncrease(oreValue);
+        }
+
+        lastDirtIndices = currentDirtIndices;
+        lastOreIndices = currentOreIndices;
     }
 
-    // 子オブジェクト（各チャンク）の全メッシュ頂点数を合計する
-    private int CountTotalVertices()
+    // 全チャンクのSubMeshごとのインデックス数を集計
+    private void UpdateCounts(out int dirtTotal, out int oreTotal)
     {
-        int total = 0;
-        // VoxelTerrainの子要素にある全てのMeshFilterから頂点数を集計
-        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>();
+        dirtTotal = 0;
+        oreTotal = 0;
 
+        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>();
         foreach (var mf in filters)
         {
-            if (mf.sharedMesh != null)
+            if (mf.sharedMesh != null && mf.sharedMesh.subMeshCount >= 2)
             {
-                total += mf.sharedMesh.vertexCount;
+                // SubMesh 0 (Dirt) のインデックス数を加算
+                dirtTotal += (int)mf.sharedMesh.GetIndexCount(0);
+                // SubMesh 1 (Ore) のインデックス数を加算
+                oreTotal += (int)mf.sharedMesh.GetIndexCount(1);
             }
         }
-        return total;
     }
 }

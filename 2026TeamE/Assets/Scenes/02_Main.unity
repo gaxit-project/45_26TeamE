@@ -406,7 +406,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GiveMoney
   moneyManager: {fileID: 1364555375}
-  addValue: 10
+  dirtValue: 1
+  oreValue: 1000
 --- !u!1 &287710162
 GameObject:
   m_ObjectHideFlags: 0
