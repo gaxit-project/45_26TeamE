@@ -578,7 +578,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GiveMoney
   moneyManager: {fileID: 1364555375}
   dirtValue: 1
-  oreValue: 50000
+  oreValue: 5000
 --- !u!1001 &232599743
 PrefabInstance:
   m_ObjectHideFlags: 0

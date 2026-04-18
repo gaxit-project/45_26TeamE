@@ -35,13 +35,14 @@ public class MoneyManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
+        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
     }
 
     void Start()
     {
 
-        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
-        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+        
     }
 
     private void UpdateMoneyText()
