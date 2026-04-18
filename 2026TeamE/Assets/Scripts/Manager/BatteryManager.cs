@@ -132,7 +132,7 @@ public class BatteryManager : MonoBehaviour
             battery[1].SetActive(false);
             battery[0].SetActive(false);
         }
-        else if (playerController.currentBattery <= 20)
+        else if (playerController.currentBattery <= 200)
         {
             battery[4].SetActive(true);
             battery[3].SetActive(false);
@@ -140,7 +140,7 @@ public class BatteryManager : MonoBehaviour
             battery[1].SetActive(false);
             battery[0].SetActive(false);
         }
-        else if (playerController.currentBattery <= 40)
+        else if (playerController.currentBattery <= 400)
         {
             battery[4].SetActive(true);
             battery[3].SetActive(true);
@@ -148,7 +148,7 @@ public class BatteryManager : MonoBehaviour
             battery[1].SetActive(false);
             battery[0].SetActive(false);
         }
-        else if (playerController.currentBattery <= 60)
+        else if (playerController.currentBattery <= 600)
         {
             battery[4].SetActive(true);
             battery[3].SetActive(true);
@@ -156,7 +156,7 @@ public class BatteryManager : MonoBehaviour
             battery[1].SetActive(false);
             battery[0].SetActive(false);
         }
-        else if (playerController.currentBattery <= 80)
+        else if (playerController.currentBattery <= 800)
         {
             battery[4].SetActive(true);
             battery[3].SetActive(true);
@@ -164,7 +164,7 @@ public class BatteryManager : MonoBehaviour
             battery[1].SetActive(true);
             battery[0].SetActive(false);
         }
-        else if (playerController.currentBattery <= 100)
+        else if (playerController.currentBattery <= 1000)
         {
             battery[4].SetActive(true);
             battery[3].SetActive(true);

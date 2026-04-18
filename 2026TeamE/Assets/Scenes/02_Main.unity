@@ -935,8 +935,8 @@ MonoBehaviour:
   drillPivot: {fileID: 2124550676}
   maxRotationAngle: 60
   targetLight: {fileID: 204671884}
-  maxBattery: 100
-  currentBattery: 100
+  maxBattery: 1000
+  currentBattery: 1000
   drillConsumption: 10
 --- !u!114 &548082332
 MonoBehaviour:
