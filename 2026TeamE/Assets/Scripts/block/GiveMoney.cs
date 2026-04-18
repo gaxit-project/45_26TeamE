@@ -6,50 +6,54 @@ public class GiveMoney : MonoBehaviour
     [SerializeField] private int addValue = 10;
 
     private VoxelTerrain terrain;
-    private int lastBlockCount = -1;
+    private int lastVertexCount = -1;
 
     void Start()
     {
         terrain = GetComponent<VoxelTerrain>();
-        // 最初のブロック数を数えておく
-        lastBlockCount = CountCurrentBlocks();
+        // 初期状態の全チャンクの頂点数を取得
+        lastVertexCount = CountTotalVertices();
     }
 
     void Update()
     {
         if (terrain == null || moneyManager == null) return;
 
-        // 現在のブロック数をカウント
-        int currentBlockCount = CountCurrentBlocks();
+        // 全チャンクの合計頂点数をカウント
+        int currentVertexCount = CountTotalVertices();
 
-        // 前回のカウントより減っていたら、その分だけお金を増やす
-        if (currentBlockCount < lastBlockCount)
+        // 頂点数が減っている（＝ブロックが消えた）場合
+        if (currentVertexCount < lastVertexCount)
         {
-            int destroyedCount = lastBlockCount - currentBlockCount;
-            int totalAdd = destroyedCount * addValue;
+            // 1ブロックあたり24頂点（またはそれ以上）として計算
+            // メッシュ生成の仕様により、減った頂点数を24で割ることでブロック数を概算します
+            int diff = lastVertexCount - currentVertexCount;
+            int destroyedCount = Mathf.CeilToInt(diff / 24f);
 
-            moneyManager.MoneyOnHandIncrease(totalAdd);
-
-            Debug.Log($"ブロックが {destroyedCount} 個消えたので {totalAdd} 円加算しました"); //消してもいいです
+            if (destroyedCount > 0)
+            {
+                int totalAdd = destroyedCount * addValue;
+                moneyManager.MoneyOnHandIncrease(totalAdd);
+            }
         }
 
-        lastBlockCount = currentBlockCount;
+        lastVertexCount = currentVertexCount;
     }
 
-    // 現在ステージにある「空（0）じゃないブロック」を全部数える
-    private int CountCurrentBlocks()
+    // 子オブジェクト（各チャンク）の全メッシュ頂点数を合計する
+    private int CountTotalVertices()
     {
-        // Reflectionを使わずに、VoxelTerrainの内部データにアクセスできないため
-        // mapDataを直接参照するか、VoxelTerrainにカウント用関数を追加するのが本来ですが
-        // スクリプトを変えない制約のため、GetComponentのMesh情報から簡易計算します
+        int total = 0;
+        // VoxelTerrainの子要素にある全てのMeshFilterから頂点数を集計
+        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>();
 
-        MeshFilter mf = GetComponent<MeshFilter>();
-        if (mf != null && mf.sharedMesh != null)
+        foreach (var mf in filters)
         {
-            // メッシュの頂点数からブロック数を概算（1ブロック=24頂点前後）
-            // もしくは、より正確に判定するために terrain の Instance 経由でデータを読み取る等の工夫が必要
-            return mf.sharedMesh.vertexCount;
+            if (mf.sharedMesh != null)
+            {
+                total += mf.sharedMesh.vertexCount;
+            }
         }
-        return 0;
+        return total;
     }
 }
