@@ -16,7 +16,7 @@ public class DrillTip : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (player == null || !player.IsDrilling || !player.HasBattery) return;
+        if (player == null || !player.IsDrilling ) return;
         if (Time.time < lastDrillTime + drillInterval) return;
 
         if (other.CompareTag("VoxelTerrain"))
