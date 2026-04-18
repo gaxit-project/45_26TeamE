@@ -226,8 +226,16 @@ public class PlayerController : MonoBehaviour
 
     public void OnDrill(InputAction.CallbackContext context)
     {
-        if (context.performed) drillFlag = true;
-        else if (context.canceled) drillFlag = false;
+        if (context.performed)
+        {
+            drillFlag = true;
+            SoundManager.Instance.PlaySE("ドリル");
+        }
+        else if (context.canceled)
+        {
+            SoundManager.Instance.StopSE();
+            drillFlag = false;
+        }
     }
 
     public void OnJump(InputAction.CallbackContext context)

@@ -917,7 +917,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f813675a4da54f47a45714ebd96aba4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  sonar: {fileID: 0}
+  sonar: {fileID: 7402361784977054135, guid: 2332c79dec665434d84aba3200b1f6ef, type: 3}
   cameraAnimator: {fileID: 548082335}
   Speed: 0
   normalSpeed: 10
