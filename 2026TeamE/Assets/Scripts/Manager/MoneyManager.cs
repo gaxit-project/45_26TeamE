@@ -5,14 +5,14 @@ public class MoneyManager : MonoBehaviour
 {
     public static MoneyManager Instance { get; private set; }
 
-    [SerializeField,Header("所持している資金")]
-    private int Money=0;
+    [SerializeField, Header("所持している資金")]
+    private int Money = 0;
     [SerializeField, Header("換金予定の資金")]
-    private int MoneyOnHand=0;
+    private int MoneyOnHand = 0;
     [SerializeField, Header("目標返済額")]
-    private int TargetAmount=0;
+    private int TargetAmount = 0;
     [SerializeField, Header("今パート目標返済額")]
-    private int TargetAmountOnPart=0;
+    private int TargetAmountOnPart = 0;
 
     [SerializeField, Header("所持している資金の表示場所")]
     private TextMeshProUGUI MoneyText;
@@ -35,15 +35,11 @@ public class MoneyManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        Money = 0;
-        MoneyOnHand = 0;
-        TargetAmount = 0;
-        TargetAmountOnPart = 0;
     }
 
     void Start()
     {
-        
+
         MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
         TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
     }
@@ -53,15 +49,6 @@ public class MoneyManager : MonoBehaviour
         MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
     }
 
-    /*
-    void Update()
-    {
-        MoneyText.text = Money.ToString("NO");
-        MoneyOnHandText.text = MoneyOnHand.ToString("NO");
-        TargetAmountText.text = TargetAmount.ToString("NO");
-        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("NO");
-    }
-    */
     /// <summary>
     /// 手持ちの資金を増加
     /// </summary>
@@ -114,4 +101,31 @@ public class MoneyManager : MonoBehaviour
     {
         return TargetAmountOnPart;
     }
-} // ←スクリプトの一番最後のカッコ
+
+    // MoneyManager.cs 内に追加
+
+    // --- MoneyManager.cs の末尾（最後の } の直前）に追加 ---
+
+    // 外部から現在の「所持金(Money)」を取得するための関数
+    public int GetMoney()
+    {
+        return Money;
+    }
+
+    // 新しいシーンのテキストをマネージャーに登録し直す関数
+    public void SetMoneyText(TextMeshProUGUI newText)
+    {
+        MoneyText = newText;
+        UpdateTotalMoneyText();
+    }
+
+    // 所持金テキストの表示を更新する関数
+    public void UpdateTotalMoneyText()
+    {
+        if (MoneyText != null)
+        {
+            MoneyText.text = Money.ToString("0,000,000,000");
+        }
+    }
+
+}

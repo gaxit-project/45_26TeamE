@@ -1326,7 +1326,7 @@ MonoBehaviour:
   targetResultText: {fileID: 875033566}
   resultStatusText: {fileID: 1496554146}
   countDuration: 2
-  nextSceneName: 01_Title
+  nextSceneName: Money Exchange
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
