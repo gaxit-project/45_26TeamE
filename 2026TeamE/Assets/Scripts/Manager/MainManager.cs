@@ -27,6 +27,7 @@ public class MainManager : MonoBehaviour
     private void Start()
     {
         SpawnNewLevel();
+        SoundManager.Instance.PlayBGM("ƒƒCƒ“BGM");
     }
 
     public void SpawnNewLevel()

@@ -368,8 +368,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
   thicknessX: 7
-  heightY: 100
-  widthZ: 600
+  heightY: 1000
+  widthZ: 6000
   blockSize: 0.5
   oreProbability: 1
   dirtMaterial: {fileID: 2100000, guid: d62923da4fa1f7145bf9b0fe9f57c26f, type: 2}
@@ -917,6 +917,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f813675a4da54f47a45714ebd96aba4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  sonar: {fileID: 0}
   cameraAnimator: {fileID: 548082335}
   Speed: 0
   normalSpeed: 10
@@ -1682,8 +1683,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainManager
   currentMoney: 0
   oreValue: 0
-  targetHeight: 100
-  targetWidth: 600
+  targetHeight: 500
+  targetWidth: 500
   blockSize: 1
 --- !u!4 &1037431501
 Transform:

@@ -109,7 +109,5 @@ public class Chunk : MonoBehaviour
         if (meshCollider == null) meshCollider = GetComponent<MeshCollider>();
         meshCollider.sharedMesh = null;
         meshCollider.sharedMesh = mesh;
-
-        Debug.Log($"{gameObject.name} UpdateMeshŠ®—¹I’¸“_”: {vertices.Count}");
     }
 }
