@@ -26,8 +26,14 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] int chunkSizeY = 16;
     [SerializeField] GameObject chunkPrefab;
 
+    [Header("宝石設定")]
+    [SerializeField] GameObject treasurePrefab;
+    [SerializeField] float baseTreasureChance = 1f;
+
+
     private Chunk[] chunks;
     private HashSet<int> chunksToUpdate = new HashSet<int>();
+    private List<GameObject> spawnedTreasures = new List<GameObject>();
     byte[,,] mapData;
 
     public float BlockSize => blockSize;
@@ -74,17 +80,6 @@ public class VoxelTerrain : MonoBehaviour
                     }
             }
         }
-    }
-    
-    // ローカル入力
-    void Dig(int x, int y, int z)
-    {
-        if(!IsInside(x, y, z)) return;
-
-        if(mapData[x, y, z] == 0) return;
-
-        mapData[x, y, z] = 0;
-        OnBlockChanged?.Invoke(x, y, 0);
     }
 
     // ブロックを掘る（結果を返す）
@@ -135,35 +130,12 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    // 外部からの変更を適用（例：ネットワーク同期）
-    public void ApplyRemoteBlockChange(int x, int y, int z, byte blockType, bool suppressEvent = true)
-    {
-        if (!IsInside(x, y, z)) return;
-        if (mapData[x, y, z] == blockType) return;
-
-        mapData[x, y, z] = blockType;
-        if(!suppressEvent)
-        {
-            OnBlockChanged?.Invoke(x, y, blockType);
-        }
-    }
-
     // ブロックを強制的に削除
     public void RemoveBlockForced(int x, int y, int z)
     {
         if(!IsInside(x, y, z)) return;
         if(mapData[x, y, z] == 0) return;
         mapData[x, y, z] = 0;
-    }
-
-    // ブロックを置く
-    public void SetBlock(int x, int y, int z, byte blockType)
-    {
-        if (x < 0 || x >= thicknessX || y < 0 || y >= heightY || z < 0 || z >= widthZ) return;
-        if (mapData[x, y, z] != blockType)
-        {
-            mapData[x, y, z] = blockType;
-        }
     }
 
     // ステージの生成（外部から呼び出す用）
@@ -213,6 +185,10 @@ public class VoxelTerrain : MonoBehaviour
             chunks[i].Init(dirtMaterial, oreMaterial);
 
             UpdateChunkMesh(i);
+            float depthFactor = (float)(numChunks - i);
+            float finalProbability = baseTreasureChance * depthFactor;
+
+            TrySpawnJewelsInChunk(i, finalProbability);
         }
     }
 
@@ -222,6 +198,38 @@ public class VoxelTerrain : MonoBehaviour
         int startY = index * chunkSizeY;
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
         chunks[index].RebuildMesh(mapData, startY, endY, thicknessX, heightY, widthZ, blockSize);
+    }
+
+    private void TrySpawnJewelsInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+
+        for (int t = 0; t < 3; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                // チャンク内のランダムな座標（ブロックの真ん中）を決める
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+
+                // 土がある場所(1)のときだけ配置
+                if (mapData[rx, ry, rz] == 1)
+                {
+                    // ワールド座標を計算（ブロックの中心に置くため +0.5f）
+                    // VoxelTerrain自体の位置(transform.position)を考慮
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+
+                    GameObject jewel = Instantiate(treasurePrefab, pos, Quaternion.identity, transform);
+                    spawnedTreasures.Add(jewel);
+                }
+            }
+        }
     }
 
     void LateUpdate()
