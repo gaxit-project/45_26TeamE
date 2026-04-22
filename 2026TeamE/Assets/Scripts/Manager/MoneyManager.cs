@@ -39,13 +39,13 @@ public class MoneyManager : MonoBehaviour
 
     void Start()
     {
-        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
-        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+        MoneyOnHandText.text = MoneyOnHand.ToString("0");
+        TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0");
     }
 
     private void UpdateMoneyText()
     {
-        MoneyOnHandText.text = MoneyOnHand.ToString("0,000,000,000");
+        MoneyOnHandText.text = MoneyOnHand.ToString("0");
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public class MoneyManager : MonoBehaviour
     {
         if (MoneyText != null)
         {
-            MoneyText.text = Money.ToString("0,000,000,000");
+            MoneyText.text = Money.ToString("0");
         }
     }
     public void SetMainSceneUI(TextMeshProUGUI onHand, TextMeshProUGUI targetPart)
@@ -135,7 +135,7 @@ public class MoneyManager : MonoBehaviour
         UpdateMoneyText();
         if (TargetAmountOnPartText != null)
         {
-            TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0,000,000,000");
+            TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0");
         }
     }
 
