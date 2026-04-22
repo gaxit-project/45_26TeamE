@@ -224,8 +224,9 @@ public class VoxelTerrain : MonoBehaviour
                         ry * blockSize + (blockSize / 2f),
                         rz * blockSize + (blockSize / 2f)
                     );
+                    Quaternion rotation = Quaternion.Euler(0, 90f,0);
 
-                    GameObject jewel = Instantiate(treasurePrefab, pos, Quaternion.identity, transform);
+                    GameObject jewel = Instantiate(treasurePrefab, pos, rotation, transform);
                     spawnedTreasures.Add(jewel);
                 }
             }
