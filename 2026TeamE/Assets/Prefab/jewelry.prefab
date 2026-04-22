@@ -155,4 +155,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JewelryReaction
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
+  EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
   cooldownTime: 1
