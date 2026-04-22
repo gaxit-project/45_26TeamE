@@ -50,7 +50,7 @@ public class JewelryReaction : MonoBehaviour
     {
         MoneyManager.Instance.MoneyOnHandIncrease(300000);
         Instantiate(EfectPrefab, transform.position, Quaternion.Euler(-90,0,0));
-        //SoundManager.Instance.PlaySE("•óÎ“üè");
+        SoundManager.Instance.PlaySE("•óÎ“üè");
         Destroy(gameObject);
     }
 }
