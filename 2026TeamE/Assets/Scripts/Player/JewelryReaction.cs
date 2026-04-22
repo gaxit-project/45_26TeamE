@@ -4,6 +4,8 @@ public class JewelryReaction : MonoBehaviour
 {
     [Header("発生させるエコー波紋のプレハブ")]
     public GameObject visualEchoPrefab;
+    [Header("入手エフェクトのプレハブ")]
+    public GameObject EfectPrefab;
 
     [Header("一度反応してから次に反応できるようになるまでの時間")]
     public float cooldownTime = 1.0f;
@@ -47,6 +49,8 @@ public class JewelryReaction : MonoBehaviour
     void Get()
     {
         MoneyManager.Instance.MoneyOnHandIncrease(300000);
+        Instantiate(EfectPrefab, transform.position, Quaternion.Euler(-90,0,0));
+        //SoundManager.Instance.PlaySE("宝石入手");
         Destroy(gameObject);
     }
 }
