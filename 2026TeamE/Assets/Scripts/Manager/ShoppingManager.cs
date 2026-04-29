@@ -8,11 +8,12 @@ public class ShoppingManager : MonoBehaviour
     [System.Serializable]
     public class ShopItem
     {
-        public string itemName;
+        public string itemName;           // 識別用（保存キーにも使います）
         public Button buyButton;
         public TextMeshProUGUI levelText;
         public int price = 100;
-        // [HideInInspector] public int currentLevel = 0; // 変数は使わずManagerから都度取る
+
+        [HideInInspector] public int currentLevel = 0;
     }
 
     [Header("ショップ設定")]
@@ -22,8 +23,12 @@ public class ShoppingManager : MonoBehaviour
     {
         foreach (var item in shopItems)
         {
+            // 1. 保存されているレベルを読み込む（なければ0）
+            item.currentLevel = PlayerPrefs.GetInt("Level_" + item.itemName, 0);
+
             ShopItem target = item;
             target.buyButton.onClick.AddListener(() => TryPurchase(target));
+
             RefreshUI(target);
         }
     }
@@ -37,30 +42,32 @@ public class ShoppingManager : MonoBehaviour
         {
             mm.SpendMoney(item.price);
 
-            // MoneyManagerにレベルを保存（アプリ終了で消える）
-            int nextLevel = mm.GetItemLevel(item.itemName) + 1;
-            mm.SetItemLevel(item.itemName, nextLevel);
-
+            item.currentLevel++;
+            PlayerPrefs.SetInt("Level_" + item.itemName, item.currentLevel);
+            PlayerPrefs.Save();
             if (item.itemName == "Drill")
             {
-                PlayerController player = FindFirstObjectByType<PlayerController>();
+                PlayerController player = FindAnyObjectByType<PlayerController>();
                 if (player != null)
                 {
-                    player.SetDrillLevel(nextLevel + 1);
+                    player.SetDrillLevel(item.currentLevel + 1);
                 }
             }
 
             RefreshUI(item);
+            Debug.Log($"{item.itemName} を購入！ 現在Lv: {item.currentLevel}");
+        }
+        else
+        {
+            Debug.Log("所持金が不足しています");
         }
     }
 
     private void RefreshUI(ShopItem item)
     {
-        if (item.levelText != null && MoneyManager.Instance != null)
+        if (item.levelText != null)
         {
-            // Managerから現在のレベルを取って表示
-            int lv = MoneyManager.Instance.GetItemLevel(item.itemName);
-            item.levelText.text = lv.ToString();
+            item.levelText.text = $"{item.currentLevel}";
         }
     }
 }

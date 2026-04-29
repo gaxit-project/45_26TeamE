@@ -4,6 +4,10 @@ public class JewelryReaction : MonoBehaviour
 {
     [Header("発生させるエコー波紋のプレハブ")]
     public GameObject visualEchoPrefab;
+    [Header("このオブジェクト自身の場所")]
+    public Transform ob;
+    [Header("マーカー")]
+    public GameObject marker;
     [Header("入手エフェクトのプレハブ")]
     public GameObject EfectPrefab;
 
@@ -12,6 +16,10 @@ public class JewelryReaction : MonoBehaviour
 
     private bool isCoolingDown = false; // クールダウン中かどうか
 
+    private void Start()
+    {
+        ob = transform;
+    }
     void OnTriggerEnter(Collider other)
     {
         // 名前が "sonar" を含み、かつクールダウン中でない場合のみ反応
@@ -30,10 +38,14 @@ public class JewelryReaction : MonoBehaviour
         isCoolingDown = true;
         Debug.Log("宝石が検知されました！エコーを放ちます。");
 
+
         // エコー波紋を自分自身の位置に生成
         if (visualEchoPrefab != null)
         {
             Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
+            GameObject m = Instantiate(marker, ob);
+            m.transform.localPosition = new Vector3(0, 0, 4);
+            m.transform.localRotation = Quaternion.Euler(0, -90, 0);
         }
 
         // 指定した秒数（cooldownTime）が経過した後に ResetReaction を呼び出す
