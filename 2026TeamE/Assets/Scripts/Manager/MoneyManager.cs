@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
 
 public class MoneyManager : MonoBehaviour
 {
@@ -22,6 +23,8 @@ public class MoneyManager : MonoBehaviour
     private TextMeshProUGUI TargetAmountText;
     [SerializeField, Header("今パート目標返済額の表示場所")]
     private TextMeshProUGUI TargetAmountOnPartText;
+
+    private Dictionary<string, int> itemLevels = new Dictionary<string, int>();
 
 
     private void Awake()
@@ -146,5 +149,15 @@ public class MoneyManager : MonoBehaviour
         UpdateTotalMoneyText(); // 既存の更新関数を呼ぶ
     }
 
+    public int GetItemLevel(string itemName)
+    {
+        if (itemLevels.ContainsKey(itemName)) return itemLevels[itemName];
+        return 1; // まだ買ってなければ0
+    }
+
+    public void SetItemLevel(string itemName, int level)
+    {
+        itemLevels[itemName] = level;
+    }
 
 }
