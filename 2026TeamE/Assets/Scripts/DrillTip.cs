@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class DrillTip : MonoBehaviour
 {
-    [SerializeField] float drillInterval = 0.2f;
+    [SerializeField] float baseDrillInterval = 0.2f;
     [SerializeField] float drillRadius = 1.5f;
     [SerializeField] Transform miningZone;
 
@@ -27,23 +27,28 @@ public class DrillTip : MonoBehaviour
     {
         if (player == null || !player.IsDrilling) return;
 
-        // ★変更：ボクセル地形か、土ブロックに触れていたら「最後に触れた時間」を現在時刻で上書き
         if (other.CompareTag("VoxelTerrain") || other.CompareTag("Block_dirt"))
         {
             lastDirtTouchTime = Time.time;
         }
-
-        if (Time.time < lastDrillTime + drillInterval) return;
 
         if (other.CompareTag("VoxelTerrain"))
         {
             VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
             if (terrain != null)
             {
+                // 現在のドリル先端の座標から、その場所の硬さを取得
                 Vector3 localPos = terrain.transform.InverseTransformPoint(transform.position);
                 float s = terrain.BlockSize;
-                int x = Mathf.FloorToInt(localPos.x / s);
                 int y = Mathf.FloorToInt(localPos.y / s);
+
+                float hardness = terrain.GetHardnessAtDepth(y);
+                // レベル1=等倍、レベル2=1.5倍、レベル3=2倍のパワー
+                float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
+                float currentInterval = baseDrillInterval * (hardness / drillPower);
+                if (Time.time < lastDrillTime + currentInterval) return;
+
+                int x = Mathf.FloorToInt(localPos.x / s);
                 int z = Mathf.FloorToInt(localPos.z / s);
 
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();

@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Transform miningZoneRoot;
     [SerializeField] private Transform drillPivot;
     [SerializeField] private float maxRotationAngle = 60f;
+    [SerializeField] int drillLevel = 1;
     private float drillCDstarttime;
 
     [Header("ライト")]
@@ -45,6 +46,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float currentBattery = 1000f;
     [SerializeField] float drillConsumption = 1f;
     [SerializeField] float SonarConsuption = 200f;
+
+    public int DrillLevel => drillLevel;
+    public void UpgradeDrill() => drillLevel++;
 
 
     public bool IsDrilling => drillFlag;
@@ -262,6 +266,11 @@ public class PlayerController : MonoBehaviour
         {
             isJumpPressed = false;
         }
+    }
+
+    public void SetDrillLevel(int newLevel)
+    {
+        drillLevel = newLevel;
     }
 
     public void OnSonar(InputAction.CallbackContext context)

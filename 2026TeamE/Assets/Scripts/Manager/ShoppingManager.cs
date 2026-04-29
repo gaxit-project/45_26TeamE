@@ -42,10 +42,17 @@ public class ShoppingManager : MonoBehaviour
         {
             mm.SpendMoney(item.price);
 
-            // 2. レベルアップして保存
             item.currentLevel++;
             PlayerPrefs.SetInt("Level_" + item.itemName, item.currentLevel);
-            PlayerPrefs.Save(); // 念のため即時保存
+            PlayerPrefs.Save();
+            if (item.itemName == "Drill")
+            {
+                PlayerController player = FindAnyObjectByType<PlayerController>();
+                if (player != null)
+                {
+                    player.SetDrillLevel(item.currentLevel + 1);
+                }
+            }
 
             RefreshUI(item);
             Debug.Log($"{item.itemName} を購入！ 現在Lv: {item.currentLevel}");

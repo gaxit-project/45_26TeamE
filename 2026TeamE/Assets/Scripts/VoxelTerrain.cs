@@ -30,6 +30,9 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject treasurePrefab;
     [SerializeField] float baseTreasureChance = 1f;
 
+    [Header("çdìxê›íË")]
+    [SerializeField] float hardnessScale = 0.5f;
+
 
     private Chunk[] chunks;
     private HashSet<int> chunksToUpdate = new HashSet<int>();
@@ -231,6 +234,12 @@ public class VoxelTerrain : MonoBehaviour
                 }
             }
         }
+    }
+
+    public float GetHardnessAtDepth(int y)
+    {
+        float depth = heightY - y;
+        return 1.0f + Mathf.Max(0, depth * hardnessScale * 0.1f);
     }
 
     void LateUpdate()
