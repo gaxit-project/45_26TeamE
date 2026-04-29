@@ -942,12 +942,12 @@ MonoBehaviour:
   miningZoneRoot: {fileID: 820273196}
   drillPivot: {fileID: 2124550676}
   maxRotationAngle: 60
+  drillLevel: 1
   targetLight: {fileID: 204671884}
   maxBattery: 1000
   currentBattery: 1000
   drillConsumption: 10
   SonarConsuption: 200
-  drillLevel: 1
 --- !u!114 &548082332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2251,6 +2251,63 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1001 &1253121673
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -63.07937
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 3.15642
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 908611584529629484, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
+      propertyPath: m_Name
+      value: background
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
 --- !u!198 &1260612913 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 785267109977566880, guid: 1351e98b89c7cdb40b5e96bf41d73c25, type: 3}
@@ -3516,3 +3573,4 @@ SceneRoots:
   - {fileID: 1364555376}
   - {fileID: 625732639}
   - {fileID: 334186086}
+  - {fileID: 1253121673}
