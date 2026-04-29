@@ -54,6 +54,8 @@ public class PlayerController : MonoBehaviour
     private Vector3 moveDirection;
     private bool isJumpPressed;
 
+    private PoseManager poseManager;
+
     void Awake()
     {
         Application.targetFrameRate = 60;
@@ -65,6 +67,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         drillCDstarttime = Time.time;
+        poseManager = GetComponent<PoseManager>();
 
         // --- Added: インスペクターで未設定の場合、メインカメラから取得を試みる ---
         if (cameraAnimator == null)
@@ -77,6 +80,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
         // 「if (!drillFlag)」を削除し、常に移動入力を反映させる
         rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
 
@@ -97,6 +101,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
         CheckGround();
 
         float zMove = moveInput.x;

@@ -15,15 +15,20 @@ public class CameraController : MonoBehaviour
     {
         if (player == null) return;
 
-        // 目標地点 = プレイヤーの現在地 + オフセット
         Vector3 targetPosition = player.position + offset;
 
-        // 現在地から目標地点まで「のんびり」追従
-        transform.position = Vector3.SmoothDamp(
+        // 1. 全体的に「のんびり」追従させる
+        Vector3 nextPosition = Vector3.SmoothDamp(
             transform.position,
             targetPosition,
             ref currentVelocity,
             smoothTime
         );
+
+        // 2. Y軸だけは「のんびり」を無視して、目標地点に即座に合わせる
+        nextPosition.y = targetPosition.y;
+
+        transform.position = nextPosition;
     }
+
 }

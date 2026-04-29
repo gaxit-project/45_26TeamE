@@ -139,5 +139,12 @@ public class MoneyManager : MonoBehaviour
         }
     }
 
+    // MoneyManager.cs “à‚É’Ç‰Á
+    public void SpendMoney(int amount)
+    {
+        Money -= amount;
+        UpdateTotalMoneyText(); // Šù‘¶‚ÌXVŠÖ”‚ğŒÄ‚Ô
+    }
+
 
 }
