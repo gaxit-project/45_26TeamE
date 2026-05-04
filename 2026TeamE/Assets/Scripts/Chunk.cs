@@ -7,23 +7,24 @@ public class Chunk : MonoBehaviour
     Mesh mesh;
     MeshFilter meshFilter;
     MeshCollider meshCollider;
+    MeshRenderer meshRenderer;
 
     List<Vector3> vertices = new List<Vector3>();
     List<Vector2> uvs = new List<Vector2>();
     List<int> dirtTriangles = new List<int>();
     List<int> oreTriangles = new List<int>();
+    List<int> bedrockTriangles = new List<int>();
 
-    public void Init(Material dirtMat, Material oreMat)
+    public void Init(Material dirtMat, Material oreMat, Material bedRockMat)
     {
         meshFilter = GetComponent<MeshFilter>();
+        meshRenderer = GetComponent<MeshRenderer>();
         meshCollider = GetComponent<MeshCollider>();
+
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         meshFilter.mesh = mesh;
-        meshFilter.sharedMesh = mesh;
-
-        MeshRenderer renderer = GetComponent<MeshRenderer>();
-        renderer.materials = new Material[] { dirtMat, oreMat };
+        meshRenderer.materials = new Material[] { dirtMat, oreMat, bedRockMat };
     }
 
     public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize)
@@ -32,10 +33,11 @@ public class Chunk : MonoBehaviour
         uvs.Clear();
         dirtTriangles.Clear();
         oreTriangles.Clear();
+        bedrockTriangles.Clear();
 
         for (int x = 0; x < thicknessX; x++)
         {
-            for (int y = startY; y < endY; y++) // このチャンクの担当範囲だけループ
+            for (int y = startY; y < endY; y++)
             {
                 for (int z = 0; z < widthZ; z++)
                 {
@@ -53,7 +55,12 @@ public class Chunk : MonoBehaviour
         if (x != 0) return;
         float worldY = y * blockSize;
         Vector3 pos = new Vector3(0, worldY, z * blockSize);
-        List<int> tris = (blockType == 2) ? oreTriangles : dirtTriangles;
+
+        List<int> tris;
+        if (blockType == 3) tris = bedrockTriangles;
+        else if (blockType == 2) tris = oreTriangles;
+        else tris = dirtTriangles;
+
         float s = blockSize;
         float totalThickness = thicknessX * s;
 
@@ -70,6 +77,7 @@ public class Chunk : MonoBehaviour
         if (isTransparent(x, y - 1, z)) AddFace(pos, rightLong, forward, tris, totalThickness, s);
         if (isTransparent(x, y, z + 1)) AddFace(pos + forward, rightLong, up, tris, s, s);
         if (isTransparent(x, y, z - 1)) AddFace(pos, up, rightLong, tris, s, s);
+
         AddFace(pos + rightLong, up, forward, tris, s, s);
         AddFace(pos, forward, up, tris, s, s);
     }
@@ -79,13 +87,14 @@ public class Chunk : MonoBehaviour
         int v = vertices.Count;
         vertices.Add(corner); vertices.Add(corner + w);
         vertices.Add(corner + h); vertices.Add(corner + w + h);
+
         uvs.Add(new Vector2(0, 0)); uvs.Add(new Vector2(width, 0));
         uvs.Add(new Vector2(0, height)); uvs.Add(new Vector2(width, height));
+
         tris.Add(v); tris.Add(v + 1); tris.Add(v + 2);
         tris.Add(v + 1); tris.Add(v + 3); tris.Add(v + 2);
     }
 
-    // メッシュとコライダーを更新
     void UpdateMesh()
     {
         mesh.Clear();
@@ -95,11 +104,15 @@ public class Chunk : MonoBehaviour
             meshCollider.sharedMesh = null;
             return;
         }
+
         mesh.vertices = vertices.ToArray();
         mesh.uv = uvs.ToArray();
-        mesh.subMeshCount = 2;
+
+        mesh.subMeshCount = 3;
         mesh.SetTriangles(dirtTriangles.ToArray(), 0);
         mesh.SetTriangles(oreTriangles.ToArray(), 1);
+        mesh.SetTriangles(bedrockTriangles.ToArray(), 2);
+
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 

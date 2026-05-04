@@ -7,21 +7,18 @@ public class DrillTip : MonoBehaviour
     [SerializeField] Transform miningZone;
 
     [Header("エフェクト")]
-    [SerializeField] private ParticleSystem dirtEffect; // ドリル先端から出続ける土のエフェクト
-    [SerializeField] private float effectKeepTime = 0.2f; // ★追加：地形から離れた後にエフェクトを残す時間（秒）
+    [SerializeField] private ParticleSystem dirtEffect;
+    [SerializeField] private float effectKeepTime = 0.2f;
 
     private float lastDrillTime;
     private PlayerController player;
 
-    // ★追加：最後に地形に触れた時間を記録する変数
     private float lastDirtTouchTime = -1f;
 
     void Start()
     {
         player = GetComponentInParent<PlayerController>();
     }
-
-    // ※Update()にあった isTouchingDirt = false; は不要になったので削除しました
 
     private void OnTriggerStay(Collider other)
     {
@@ -37,19 +34,21 @@ public class DrillTip : MonoBehaviour
             VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
             if (terrain != null)
             {
-                // 現在のドリル先端の座標から、その場所の硬さを取得
                 Vector3 localPos = terrain.transform.InverseTransformPoint(transform.position);
                 float s = terrain.BlockSize;
+                int x = Mathf.FloorToInt(localPos.x / s);
                 int y = Mathf.FloorToInt(localPos.y / s);
+                int z = Mathf.FloorToInt(localPos.z / s);
+
+                if(IsBedrock(terrain, x, y, z))
+                {
+                    terrain.OnPlayerReachRelayPoint(y);
+                }
 
                 float hardness = terrain.GetHardnessAtDepth(y);
-                // レベル1=等倍、レベル2=1.5倍、レベル3=2倍のパワー
                 float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
                 float currentInterval = baseDrillInterval * (hardness / drillPower);
                 if (Time.time < lastDrillTime + currentInterval) return;
-
-                int x = Mathf.FloorToInt(localPos.x / s);
-                int z = Mathf.FloorToInt(localPos.z / s);
 
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
@@ -63,10 +62,8 @@ public class DrillTip : MonoBehaviour
 
     void LateUpdate()
     {
-        // ★追加：現在時刻が「最後に触れた時間 + 0.2秒」以内かどうかを判定
         bool isRecentlyTouching = (Time.time <= lastDirtTouchTime + effectKeepTime);
 
-        // ドリルが回転していて、かつ「現在または最近(0.2秒以内)地形に触れていた」なら再生
         if (player != null && player.IsDrilling && isRecentlyTouching)
         {
             if (dirtEffect != null && !dirtEffect.isPlaying)
@@ -76,7 +73,6 @@ public class DrillTip : MonoBehaviour
         }
         else
         {
-            // ドリルボタンを離したか、0.2秒以上空振りしている時はエフェクトを停止
             if (dirtEffect != null && dirtEffect.isPlaying)
             {
                 dirtEffect.Stop();
@@ -84,7 +80,6 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    // エディタのSceneビューにデバッグ用の図形を表示する
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
@@ -99,5 +94,10 @@ public class DrillTip : MonoBehaviour
                 Gizmos.DrawCube(miningZone.TransformPoint(box.center), Vector3.Scale(miningZone.lossyScale, box.size));
             }
         }
+    }
+
+    private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
+    {
+        return y > 0 && (y % (16 * 10) == 0);
     }
 }

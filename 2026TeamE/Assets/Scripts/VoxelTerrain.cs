@@ -17,6 +17,7 @@ public class VoxelTerrain : MonoBehaviour
     [Header("マテリアル")]
     [SerializeField] Material dirtMaterial;
     [SerializeField] Material oreMaterial;
+    [SerializeField] Material bedrockMaterial;
 
     [Header("同期オプション")]
     [SerializeField] bool useDeterministicSeed = true;
@@ -44,11 +45,12 @@ public class VoxelTerrain : MonoBehaviour
     // ブロックが変更されたときのイベント
     public event Action<int, int, byte> OnBlockChanged;
 
-    public enum DigResult
+    public enum BlockType : byte
     {
-        Empty,
-        Dirt,
-        Ore
+        Air = 0,
+        Dirt = 1,
+        Ore = 2,
+        Bedrock = 3
     }
 
     void Awake()
@@ -99,7 +101,7 @@ public class VoxelTerrain : MonoBehaviour
                 for (int z = centerZ - r; z <= centerZ + r; z++)
                 {
                     if (!IsInside(x, y, z)) continue;
-                    if (mapData[x, y, z] == 0) continue;
+                    if (mapData[x, y, z] == (byte)BlockType.Air || mapData[x, y, z] == (byte)BlockType.Bedrock) continue;
 
                     float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
                     if (distSq <= radius * radius)
@@ -118,7 +120,6 @@ public class VoxelTerrain : MonoBehaviour
 
         if (changed)
         {
-            // 変更されたY座標から、更新が必要なチャンクを予約
             foreach (var yIndex in changedYRows)
             {
                 int cIndex = yIndex / chunkSizeY;
@@ -158,9 +159,17 @@ public class VoxelTerrain : MonoBehaviour
                 for (int z = 0; z < widthZ; z++)
                 {
                     if (y > heightY - 3)
-                        mapData[x, y, z] = 0;
+                    {
+                        mapData[x, y, z] = (byte)BlockType.Air;
+                    }
+                    else if (y > 0 && y % (chunkSizeY * 10) == 0)
+                    {
+                        mapData[x, y, z] = (byte)BlockType.Bedrock;
+                    }
                     else
-                        mapData[x, y, z] = (rnd.NextDouble() * 100.0 < oreProbability) ? (byte)2 : (byte)1;
+                    {
+                        mapData[x, y, z] = (rnd.NextDouble() * 100.0 < oreProbability) ? (byte)BlockType.Ore : (byte)BlockType.Dirt;
+                    }
                 }
             }
         }
@@ -185,7 +194,7 @@ public class VoxelTerrain : MonoBehaviour
             go.name = $"Chunk_{i}";
             go.transform.localPosition = new Vector3(0, 0, 0);
             chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial);
+            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial);
 
             UpdateChunkMesh(i);
             float depthFactor = (float)(numChunks - i);
@@ -212,16 +221,12 @@ public class VoxelTerrain : MonoBehaviour
         {
             if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
             {
-                // チャンク内のランダムな座標（ブロックの真ん中）を決める
                 int rx = UnityEngine.Random.Range(0, thicknessX);
                 int ry = UnityEngine.Random.Range(startY, endY);
                 int rz = UnityEngine.Random.Range(0, widthZ);
 
-                // 土がある場所(1)のときだけ配置
                 if (mapData[rx, ry, rz] == 1)
                 {
-                    // ワールド座標を計算（ブロックの中心に置くため +0.5f）
-                    // VoxelTerrain自体の位置(transform.position)を考慮
                     Vector3 pos = transform.position + new Vector3(
                         rx * blockSize,
                         ry * blockSize + (blockSize / 2f),
@@ -240,6 +245,11 @@ public class VoxelTerrain : MonoBehaviour
     {
         float depth = heightY - y;
         return 1.0f + Mathf.Max(0, depth * hardnessScale * 0.1f);
+    }
+
+    public void OnPlayerReachRelayPoint(int y)
+    {
+        Debug.Log($"中継地点到達.深度：{y}");
     }
 
     void LateUpdate()
