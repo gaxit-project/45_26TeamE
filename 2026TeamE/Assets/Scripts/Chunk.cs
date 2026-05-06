@@ -13,9 +13,11 @@ public class Chunk : MonoBehaviour
     List<Vector2> uvs = new List<Vector2>();
     List<int> dirtTriangles = new List<int>();
     List<int> oreTriangles = new List<int>();
+    List<int> stoneTriangles = new List<int>();
+    List<int> hardRockTriangles = new List<int>();
     List<int> bedrockTriangles = new List<int>();
 
-    public void Init(Material dirtMat, Material oreMat, Material bedRockMat)
+    public void Init(Material dirtMat, Material oreMat, Material stoneMat, Material hardRockMat, Material bedRockMat)
     {
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
@@ -24,7 +26,7 @@ public class Chunk : MonoBehaviour
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         meshFilter.mesh = mesh;
-        meshRenderer.materials = new Material[] { dirtMat, oreMat, bedRockMat };
+        meshRenderer.materials = new Material[] { dirtMat, oreMat, stoneMat, hardRockMat, bedRockMat };
     }
 
     public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize)
@@ -33,6 +35,8 @@ public class Chunk : MonoBehaviour
         uvs.Clear();
         dirtTriangles.Clear();
         oreTriangles.Clear();
+        stoneTriangles.Clear();
+        hardRockTriangles.Clear();
         bedrockTriangles.Clear();
 
         for (int x = 0; x < thicknessX; x++)
@@ -52,34 +56,48 @@ public class Chunk : MonoBehaviour
 
     void AddCube(int x, int y, int z, byte blockType, byte[,,] mapData, int thicknessX, int heightY, int widthZ, float blockSize)
     {
-        if (x != 0) return;
+        //if (x != 0) return;
         float worldY = y * blockSize;
-        Vector3 pos = new Vector3(0, worldY, z * blockSize);
+        Vector3 pos = new Vector3(x * blockSize, worldY, z * blockSize);
 
         List<int> tris;
-        if (blockType == 3) tris = bedrockTriangles;
-        else if (blockType == 2) tris = oreTriangles;
-        else tris = dirtTriangles;
+        switch ((VoxelTerrain.BlockType)blockType)
+        {
+            case VoxelTerrain.BlockType.Bedrock:
+                tris = bedrockTriangles;
+                break;
+            case VoxelTerrain.BlockType.Ore:
+                tris = oreTriangles;
+                break;
+            case VoxelTerrain.BlockType.Stone:
+                tris = stoneTriangles;
+                break;
+            case VoxelTerrain.BlockType.HardRock:
+                tris = hardRockTriangles;
+                break;
+            default:
+                tris = dirtTriangles;
+                break;
+        }
 
         float s = blockSize;
-        float totalThickness = thicknessX * s;
+        float totalThickness = s;
 
         Vector3 up = Vector3.up * s;
         Vector3 forward = Vector3.forward * s;
-        Vector3 rightLong = Vector3.right * totalThickness;
+        Vector3 right = Vector3.right * s;
 
         System.Func<int, int, int, bool> isTransparent = (tx, ty, tz) => {
             if (tx < 0 || tx >= thicknessX || ty < 0 || ty >= heightY || tz < 0 || tz >= widthZ) return true;
             return mapData[tx, ty, tz] == 0;
         };
 
-        if (isTransparent(x, y + 1, z)) AddFace(pos + up, forward, rightLong, tris, s, totalThickness);
-        if (isTransparent(x, y - 1, z)) AddFace(pos, rightLong, forward, tris, totalThickness, s);
-        if (isTransparent(x, y, z + 1)) AddFace(pos + forward, rightLong, up, tris, s, s);
-        if (isTransparent(x, y, z - 1)) AddFace(pos, up, rightLong, tris, s, s);
-
-        AddFace(pos + rightLong, up, forward, tris, s, s);
-        AddFace(pos, forward, up, tris, s, s);
+        if (isTransparent(x, y + 1, z)) AddFace(pos + up, forward, right, tris, s, s);
+        if (isTransparent(x, y - 1, z)) AddFace(pos, right, forward, tris, s, s);
+        if (isTransparent(x, y, z + 1)) AddFace(pos + forward, right, up, tris, s, s);
+        if (isTransparent(x, y, z - 1)) AddFace(pos, up, right, tris, s, s);
+        if (isTransparent(x + 1, y, z)) AddFace(pos + right, up, forward, tris, s, s);
+        if (isTransparent(x - 1, y, z)) AddFace(pos, forward, up, tris, s, s);
     }
 
     void AddFace(Vector3 corner, Vector3 w, Vector3 h, List<int> tris, float width, float height)
@@ -108,10 +126,13 @@ public class Chunk : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.uv = uvs.ToArray();
 
-        mesh.subMeshCount = 3;
+        mesh.subMeshCount = 5; // マテリアルの数を変えたらここも忘れずに変える！
+
         mesh.SetTriangles(dirtTriangles.ToArray(), 0);
         mesh.SetTriangles(oreTriangles.ToArray(), 1);
         mesh.SetTriangles(bedrockTriangles.ToArray(), 2);
+        mesh.SetTriangles(stoneTriangles.ToArray(), 3);
+        mesh.SetTriangles(hardRockTriangles.ToArray(), 4);
 
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
