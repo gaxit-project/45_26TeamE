@@ -38,6 +38,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] int drillLevel = 1;
     private float drillCDstarttime;
 
+    [Header("Dash Settings")]
+    [SerializeField] private int dashPower = 5;
+    [SerializeField] private float dashCooldown = 1.0f;
+    [SerializeField] private float dashDistance = 10.0f;
+    [SerializeField] private float dashDuration = 0.3f;
+    private float lastDashTime = -100f;
+    private float dashEndTime = -100f;
+    private Vector3 dashDirection;
+    private bool wasDashing = false;
+
     [Header("ライト")]
     [SerializeField] Transform targetLight;
 
@@ -50,9 +60,9 @@ public class PlayerController : MonoBehaviour
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
-
     public bool IsDrilling => drillFlag;
     public bool HasBattery => currentBattery > 0f;
+    public bool IsDashing => Time.time < dashEndTime;
 
     private Vector2 moveInput;
     private Vector3 moveDirection;
@@ -85,10 +95,25 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
-        // 「if (!drillFlag)」を削除し、常に移動入力を反映させる
-        rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
+        
+        if (Time.time < dashEndTime)
+        {
+            wasDashing = true;
+            // ダッシュ中は重力を無視して一定速度を代入
+            rb.linearVelocity = dashDirection * dashDistance;
+        }
+        else
+        {
+            if (wasDashing)
+            {
+                wasDashing = false;
+                // ダッシュ終了時に慣性を消してピタッと止める
+                rb.linearVelocity = Vector3.zero;
+            }
 
-        ApplyCustomGravity();
+            rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
+            ApplyCustomGravity();
+        }
     }
 
     private void ApplyCustomGravity()
@@ -154,8 +179,8 @@ public class PlayerController : MonoBehaviour
 
         if (drillFlag)
         {
-            // 上下入力(moveInput.y)に基づいて角度を計算
-            // -1 ～ 1 の入力を、指定した最大角度(例: 60度)に変換
+            // 上下入力(moveInput.y)に基づいた角度を計算
+            // -1 〜 1 の入力を、指定した最大角度(例: 60度)に変換
             float targetAngle = moveInput.y * maxRotationAngle;
 
             // X軸を中心に回転させる（上下に振る）
@@ -213,6 +238,32 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void PerformDash()
+    {
+        dashEndTime = Time.time + dashDuration;
+
+        dashDirection = moveInput.magnitude > 0.1f ?
+            new Vector3(0, moveInput.y, moveInput.x).normalized : transform.forward;
+
+        // 即座に速度を代入（FixedUpdateでも継続して代入される）
+        rb.linearVelocity = dashDirection * dashDistance;
+
+        Ray ray = new Ray(transform.position + new Vector3(0, 2, 0), dashDirection);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, DrillDistance))
+        {
+            if (hit.collider.CompareTag("Block_dirt"))
+            {
+                Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
+                if (targetBlock != null)
+                {
+                    targetBlock.TakeDamage(dashPower);
+                }
+            }
+        }
+    }
+
     private void UpdateAnimation()
     {
         animator.SetFloat("Move_X", Mathf.Abs(moveInput.x));
@@ -223,7 +274,7 @@ public class PlayerController : MonoBehaviour
         }
         animator.SetBool("isGround", isGround);
         animator.SetBool("drillFlag", drillFlag);
-        // --- Added: カメラのアニメーターにフラグを送信 ---（硬い岩実装したらフラグの名前変えて実装可能）
+        // --- Added: カメラのアニメーターにフラグを送信 ---
         //if (cameraAnimator != null)
         //{
             //cameraAnimator.SetBool("drillFlag", drillFlag);
@@ -242,6 +293,12 @@ public class PlayerController : MonoBehaviour
         {
             drillFlag = true;
             SoundManager.Instance.PlaySE("ドリル");
+
+            if (Time.time >= lastDashTime + dashCooldown)
+            {
+                lastDashTime = Time.time;
+                PerformDash();
+            }
         }
         else if (context.canceled)
         {

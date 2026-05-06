@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DrillTip : MonoBehaviour
 {
@@ -6,7 +6,7 @@ public class DrillTip : MonoBehaviour
     [SerializeField] float drillRadius = 1.5f;
     [SerializeField] Transform miningZone;
 
-    [Header("�G�t�F�N�g")]
+    [Header("エフェクト")]
     [SerializeField] private ParticleSystem dirtEffect;
     [SerializeField] private float effectKeepTime = 0.2f;
 
@@ -48,7 +48,9 @@ public class DrillTip : MonoBehaviour
                 float hardness = terrain.GetHardnessAtDepth(y);
                 float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
                 float currentInterval = baseDrillInterval * (hardness / drillPower);
-                if (Time.time < lastDrillTime + currentInterval) return;
+                
+                // --- 変更点: ダッシュ中は硬さ（インターバル）を無視して即座に掘削する ---
+                if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
