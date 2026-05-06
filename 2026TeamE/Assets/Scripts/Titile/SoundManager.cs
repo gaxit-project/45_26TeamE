@@ -73,6 +73,13 @@ public class SoundManager : MonoBehaviour
         seSource.Play(cueName);
     }
 
+    public void PlayLoopSE(string cueName)
+    {
+        if(seSource.cueName == cueName && IsSEPlaying()) return;
+        seSource.cueName = cueName;
+        seSource.Play();
+    }
+
     // SEを停止するメソッド
     public void StopSE()
     {
@@ -108,5 +115,11 @@ public class SoundManager : MonoBehaviour
     public float GetSEVolume()
     {
         return seSource.volume;
+    }
+
+    // BGMが再生中かどうかを確認するメソッド
+    public bool IsSEPlaying()
+    {
+        return seSource.status == CriAtomSourceBase.Status.Playing;
     }
 }

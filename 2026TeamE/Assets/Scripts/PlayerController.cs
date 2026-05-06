@@ -136,6 +136,15 @@ public class PlayerController : MonoBehaviour
         float zMove = moveInput.x;
         moveDirection = new Vector3(0, 0, zMove).normalized;
 
+        if(drillFlag && HasBattery)
+        {
+            SoundManager.Instance.PlayLoopSE("ドリル");
+        }
+        else
+        {
+            SoundManager.Instance.StopSE();
+        }
+
         if (moveInput.x > 0)
         {
             if (transform.rotation.eulerAngles.y != 0)
@@ -292,7 +301,6 @@ public class PlayerController : MonoBehaviour
         if (context.performed)
         {
             drillFlag = true;
-            SoundManager.Instance.PlaySE("ドリル");
 
             if (Time.time >= lastDashTime + dashCooldown)
             {
@@ -302,7 +310,6 @@ public class PlayerController : MonoBehaviour
         }
         else if (context.canceled)
         {
-            SoundManager.Instance.StopSE();
             drillFlag = false;
         }
     }
