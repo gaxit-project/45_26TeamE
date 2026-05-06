@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using UnityEngine.InputSystem;
 using UnityEngine;
 
 public class VoxelTerrain : MonoBehaviour
@@ -92,7 +92,16 @@ public class VoxelTerrain : MonoBehaviour
         }
     }*/
 
-    // ブロックを掘る（結果を返す）
+    void Update()
+    {
+        // デバッグ用：1キーが押されたら周囲の中継地点を消去
+        if (Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
+        {
+            RemoveBedrockAroundPlayer();
+        }
+    }
+
+    // ブロックを掘る
     public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
     {
         int r = Mathf.CeilToInt(radius);
@@ -312,6 +321,48 @@ public class VoxelTerrain : MonoBehaviour
     public void OnPlayerReachRelayPoint(int y)
     {
         Debug.Log($"中継地点到達.深度：{y}");
+    }
+
+    // デバッグ用：プレイヤー周辺の中継地点を削除
+    private void RemoveBedrockAroundPlayer()
+    {
+        GameObject playerObj = GameObject.FindWithTag("Player");
+        if (playerObj == null) return;
+
+        Vector3 localPos = transform.InverseTransformPoint(playerObj.transform.position);
+        int px = Mathf.FloorToInt(localPos.x / blockSize);
+        int py = Mathf.FloorToInt(localPos.y / blockSize);
+        int pz = Mathf.FloorToInt(localPos.z / blockSize);
+
+        bool changed = false;
+        int searchRange = 5;
+
+        for (int x = 0; x < thicknessX; x++)
+        {
+            for (int y = py - 2; y <= py + 2; y++)
+            {
+                for (int z = pz - searchRange; z <= pz + searchRange; z++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+
+                    if (mapData[x, y, z] == (byte)BlockType.Bedrock)
+                    {
+                        mapData[x, y, z] = (byte)BlockType.Air;
+                        changed = true;
+
+                        int cIndex = y / chunkSizeY;
+                        chunksToUpdate.Add(cIndex);
+                        if (y % chunkSizeY == 0 && cIndex > 0) chunksToUpdate.Add(cIndex - 1);
+                        if (y % chunkSizeY == chunkSizeY - 1 && cIndex < chunks.Length - 1) chunksToUpdate.Add(cIndex + 1);
+                    }
+                }
+            }
+        }
+
+        if (changed)
+        {
+            Debug.Log("デバッグ：周囲の中継地点を削除しました。");
+        }
     }
 
     void LateUpdate()
