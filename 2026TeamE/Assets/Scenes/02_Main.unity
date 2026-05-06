@@ -611,8 +611,10 @@ MonoBehaviour:
   blockSize: 0.5
   oreProbability: 0.5
   dirtMaterial: {fileID: 2100000, guid: d62923da4fa1f7145bf9b0fe9f57c26f, type: 2}
-  oreMaterial: {fileID: 2100000, guid: 8d151ae9cb311834085131176cb7b169, type: 2}
-  bedrockMaterial: {fileID: 0}
+  oreMaterial: {fileID: 2100000, guid: 139c6cea25946b9459eb1a398eadb720, type: 2}
+  bedrockMaterial: {fileID: 2100000, guid: 907626f5dd9d531498838400c6644151, type: 2}
+  stoneMaterial: {fileID: 2100000, guid: c9515a36a0139694ea13eb83d33e99b7, type: 2}
+  hardRockMaterial: {fileID: 2100000, guid: 0da0cccadecc8664e9e0f15f08c865ad, type: 2}
   useDeterministicSeed: 1
   seed: 12345
   chunkSizeY: 20
@@ -1471,7 +1473,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DrillTip
   baseDrillInterval: 0.2
-  drillRadius: 2
+  drillRadius: 3
   miningZone: {fileID: 820273196}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2
