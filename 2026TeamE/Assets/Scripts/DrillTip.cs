@@ -43,9 +43,10 @@ public class DrillTip : MonoBehaviour
                 if(IsBedrock(terrain, x, y, z))
                 {
                     terrain.OnPlayerReachRelayPoint(y);
+                    return;
                 }
 
-                float hardness = terrain.GetHardnessAtDepth(y);
+                float hardness = terrain.GetHardnessAtPosition(x, y, z);
                 float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
                 float currentInterval = baseDrillInterval * (hardness / drillPower);
                 
@@ -100,6 +101,7 @@ public class DrillTip : MonoBehaviour
 
     private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
     {
-        return y > 0 && (y % (16 * 10) == 0);
+        int interval = terrain.ChunkSizeY * 10;
+        return y > 0 && (y % interval == 0);
     }
 }

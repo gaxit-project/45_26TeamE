@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class VoxelTerrain : MonoBehaviour
@@ -18,6 +19,8 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] Material dirtMaterial;
     [SerializeField] Material oreMaterial;
     [SerializeField] Material bedrockMaterial;
+    [SerializeField] Material stoneMaterial;
+    [SerializeField] Material hardRockMaterial;
 
     [Header("同期オプション")]
     [SerializeField] bool useDeterministicSeed = true;
@@ -41,6 +44,7 @@ public class VoxelTerrain : MonoBehaviour
     byte[,,] mapData;
 
     public float BlockSize => blockSize;
+    public int ChunkSizeY => chunkSizeY;
 
     // ブロックが変更されたときのイベント
     public event Action<int, int, byte> OnBlockChanged;
@@ -50,7 +54,9 @@ public class VoxelTerrain : MonoBehaviour
         Air = 0,
         Dirt = 1,
         Ore = 2,
-        Bedrock = 3
+        Bedrock = 3,
+        Stone = 4,
+        HardRock = 5
     }
 
     void Awake()
@@ -67,11 +73,10 @@ public class VoxelTerrain : MonoBehaviour
 
     void Start()
     {
-        GenerateLevel();
         CreateStage(widthZ, heightY, blockSize);
     }
 
-    void GenerateLevel()
+    /*void GenerateLevel()
     {
         mapData = new byte[thicknessX, heightY, widthZ];
         var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
@@ -85,7 +90,7 @@ public class VoxelTerrain : MonoBehaviour
                     }
             }
         }
-    }
+    }*/
 
     // ブロックを掘る（結果を返す）
     public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
@@ -142,22 +147,25 @@ public class VoxelTerrain : MonoBehaviour
         mapData[x, y, z] = 0;
     }
 
-    // ステージの生成（外部から呼び出す用）
     public void CreateStage(int width, int height, float size)
     {
         widthZ = width;
         heightY = height;
         blockSize = size;
-
         mapData = new byte[thicknessX, heightY, widthZ];
 
         var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
-        for (int x = 0; x < thicknessX; x++)
+        float layerNoiseScale = 0.2f; // 境界のガタガタ具合
+        float layerBumpyIntensity = 12f; // 境界のガタガタの流れの強さ
+        for (int y = 0; y < heightY; y++)
         {
-            for (int y = 0; y < heightY; y++)
+            for (int x = 0; x < thicknessX; x++)
             {
                 for (int z = 0; z < widthZ; z++)
                 {
+                    float scale = 0.8f;
+                    float noise = Mathf.PerlinNoise(x * scale, y * scale + (seed * 0.1f));
+
                     if (y > heightY - 3)
                     {
                         mapData[x, y, z] = (byte)BlockType.Air;
@@ -168,7 +176,30 @@ public class VoxelTerrain : MonoBehaviour
                     }
                     else
                     {
-                        mapData[x, y, z] = (rnd.NextDouble() * 100.0 < oreProbability) ? (byte)BlockType.Ore : (byte)BlockType.Dirt;
+                        if (rnd.NextDouble() * 100.0 < oreProbability)
+                        {
+                            mapData[x, y, z] = (byte)BlockType.Ore;
+                        }
+                        else
+                        {
+                            float bumpyNoise = Mathf.PerlinNoise(x * layerNoiseScale, z * layerNoiseScale + (seed * 0.1f));
+                            float yOffset = (bumpyNoise - 0.5f) * layerBumpyIntensity;
+                            float bumpyY = y + yOffset;
+                            float depthRatio = bumpyY / heightY;
+
+                            if (depthRatio < 0.2f)
+                            {
+                                mapData[x, y, z] = (byte)BlockType.HardRock;
+                            }
+                            else if (depthRatio < 0.6f)
+                            {
+                                mapData[x, y, z] = (byte)BlockType.Stone;
+                            }
+                            else
+                            {
+                                mapData[x, y, z] = (byte)BlockType.Dirt;
+                            }
+                        }
                     }
                 }
             }
@@ -194,7 +225,7 @@ public class VoxelTerrain : MonoBehaviour
             go.name = $"Chunk_{i}";
             go.transform.localPosition = new Vector3(0, 0, 0);
             chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial);
+            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial);
 
             UpdateChunkMesh(i);
             float depthFactor = (float)(numChunks - i);
@@ -245,6 +276,37 @@ public class VoxelTerrain : MonoBehaviour
     {
         float depth = heightY - y;
         return 1.0f + Mathf.Max(0, depth * hardnessScale * 0.1f);
+    }
+
+    public float GetHardnessAtPosition(int x, int y, int z)
+    {
+        if (!IsInside(x, y, z)) return 1.0f;
+        byte blockType = mapData[x, y, z];
+        float baseHardness = 1.0f;
+
+        switch((BlockType)blockType)
+        {
+            case BlockType.Dirt:
+                baseHardness = 1.0f;
+                break;
+            case BlockType.Ore:
+                baseHardness = 1.5f;
+                break;
+            case BlockType.Bedrock:
+                baseHardness = float.MaxValue;
+                break;
+            case BlockType.Stone:
+                baseHardness = 2.5f;
+                break;
+            case BlockType.HardRock:
+                baseHardness = 5.0f;
+                break;
+            default:
+                baseHardness = 1.0f;
+                break;
+        }
+        float depthFactor = (heightY - y) * hardnessScale * 0.05f;
+        return baseHardness + depthFactor;
     }
 
     public void OnPlayerReachRelayPoint(int y)
