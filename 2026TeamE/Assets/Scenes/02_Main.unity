@@ -129,15 +129,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalScale.x
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.8334825
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.02816229
+      value: 1.25
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalPosition.x
@@ -145,11 +145,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 9
+      value: 12.5
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 1.5
+      value: 1.38
       objectReference: {fileID: 0}
     - target: {fileID: 212208134520828107, guid: 670d4c3269e278f4688232a22fdf8239, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1366,6 +1366,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UICursor
   scrollSpeed: 10
   cursor: {fileID: 414437787}
+  autoResize: 1
+  sizePadding: {x: 20, y: 20}
   moveSE: Select
 --- !u!114 &414437790
 MonoBehaviour:
