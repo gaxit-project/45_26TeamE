@@ -34,30 +34,60 @@ public class DrillTip : MonoBehaviour
             VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
             if (terrain != null)
             {
-                Vector3 localPos = terrain.transform.InverseTransformPoint(transform.position);
                 float s = terrain.BlockSize;
-                int x = Mathf.FloorToInt(localPos.x / s);
-                int y = Mathf.FloorToInt(localPos.y / s);
-                int z = Mathf.FloorToInt(localPos.z / s);
+                float maxHardness = 0f;
 
-                if(IsBedrock(terrain, x, y, z))
+                Vector3[] checkOffsets = {
+                    transform.forward * 0.7f,
+                    transform.forward * 0.5f + transform.right * 0.3f,
+                    transform.forward * 0.5f - transform.right * 0.3f,
+                    transform.forward * 0.5f + transform.up * 0.3f
+    };
+
+                foreach (Vector3 offset in checkOffsets)
                 {
-                    terrain.OnPlayerReachRelayPoint(y);
-                    return;
+                    Vector3 checkPos = transform.position + offset;
+                    Vector3 lp = terrain.transform.InverseTransformPoint(checkPos);
+                    int tx = Mathf.FloorToInt(lp.x / s);
+                    int ty = Mathf.FloorToInt(lp.y / s);
+                    int tz = Mathf.FloorToInt(lp.z / s);
+
+                    float h = terrain.GetHardnessAtPosition(tx, ty, tz);
+                    if (h > maxHardness)
+                    {
+                        maxHardness = h;
+                    }
+                    if (IsBedrock(terrain, tx, ty, tz))
+                    {
+                        terrain.OnPlayerReachRelayPoint(ty);
+                        return;
+                    }
                 }
 
-                float hardness = terrain.GetHardnessAtPosition(x, y, z);
+                float hardness = maxHardness;
+
+                float dot = Mathf.Abs(Vector3.Dot(transform.forward, Vector3.up));
+                if (dot > 0.1f && dot < 0.9f)
+                {
+                    hardness *= 1.8f;
+                }
+
                 float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
                 float currentInterval = baseDrillInterval * (hardness / drillPower);
-                
+
                 // --- 変更点: ダッシュ中は硬さ（インターバル）を無視して即座に掘削する ---
                 if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
+                Vector3 digLocal = terrain.transform.InverseTransformPoint(transform.position);
+                int dx = Mathf.FloorToInt(digLocal.x / s);
+                int dy = Mathf.FloorToInt(digLocal.y / s);
+                int dz = Mathf.FloorToInt(digLocal.z / s);
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
-                terrain.ExecuteDig(x, y, z, drillRadius / s, minL, maxL);
+                float currentRadius = player.IsDashing ? drillRadius : drillRadius * 0.8f;
+                terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
                 lastDrillTime = Time.time;
             }
         }

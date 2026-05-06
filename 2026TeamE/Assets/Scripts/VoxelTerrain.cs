@@ -293,27 +293,29 @@ public class VoxelTerrain : MonoBehaviour
         byte blockType = mapData[x, y, z];
         float baseHardness = 1.0f;
 
-        switch((BlockType)blockType)
+        // ƒuƒƒbƒN‚É‰‚¶‚½d“xİ’è
+        switch ((BlockType)blockType)
         {
             case BlockType.Dirt:
                 baseHardness = 1.0f;
                 break;
             case BlockType.Ore:
-                baseHardness = 1.5f;
+                baseHardness = 3.0f;
                 break;
             case BlockType.Bedrock:
                 baseHardness = float.MaxValue;
                 break;
             case BlockType.Stone:
-                baseHardness = 2.5f;
+                baseHardness = 5.0f;
                 break;
             case BlockType.HardRock:
-                baseHardness = 5.0f;
+                baseHardness = 10.0f;
                 break;
             default:
                 baseHardness = 1.0f;
                 break;
         }
+        // [‚³‚É‰‚¶‚Äd‚³‚ğ‘‰Á‚³‚¹‚é
         float depthFactor = (heightY - y) * hardnessScale * 0.05f;
         return baseHardness + depthFactor;
     }
