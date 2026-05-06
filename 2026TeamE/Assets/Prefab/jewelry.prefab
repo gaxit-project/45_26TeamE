@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7780117687900619292}
   - component: {fileID: 4569835451768528063}
   - component: {fileID: 3047343684742328082}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: jewelry
   m_TagString: VoxelTerrain
   m_Icon: {fileID: 0}
