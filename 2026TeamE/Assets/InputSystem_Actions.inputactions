@@ -513,6 +513,17 @@
                     "action": "Sonar",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ed5e314e-d3be-4d87-a83a-ed48c420dc75",
+                    "path": "<Keyboard>/shift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Sonar",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
