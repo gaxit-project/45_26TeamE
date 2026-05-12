@@ -1,20 +1,22 @@
+ï»¿using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class JewelryReaction : MonoBehaviour
 {
-    [Header("”­¶‚³‚¹‚éƒGƒR[”g–ä‚ÌƒvƒŒƒnƒu")]
+    [Header("ã‚¨ã‚³ãƒ¼ãƒ—ãƒ¬ãƒãƒ–")]
     public GameObject visualEchoPrefab;
-    [Header("‚±‚ÌƒIƒuƒWƒFƒNƒg©g‚ÌêŠ")]
+    [Header("å¯¾è±¡")]
     public Transform ob;
-    [Header("ƒ}[ƒJ[")]
+    [Header("ãƒãƒ¼ã‚«ãƒ¼")]
     public GameObject marker;
-    [Header("“üèƒGƒtƒFƒNƒg‚ÌƒvƒŒƒnƒu")]
+    [Header("ã‚¨ãƒ•ã‚§ã‚¯ãƒˆãƒ—ãƒ¬ãƒãƒ–")]
     public GameObject EfectPrefab;
 
-    [Header("ˆê“x”½‰‚µ‚Ä‚©‚çŸ‚É”½‰‚Å‚«‚é‚æ‚¤‚É‚È‚é‚Ü‚Å‚ÌŠÔ")]
+    [Header("ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³")]
     public float cooldownTime = 1.0f;
 
-    private bool isCoolingDown = false; // ƒN[ƒ‹ƒ_ƒEƒ“’†‚©‚Ç‚¤‚©
+    private bool isCoolingDown = false;
 
     private void Start()
     {
@@ -22,7 +24,6 @@ public class JewelryReaction : MonoBehaviour
     }
     void OnTriggerEnter(Collider other)
     {
-        // –¼‘O‚ª "sonar" ‚ğŠÜ‚İA‚©‚ÂƒN[ƒ‹ƒ_ƒEƒ“’†‚Å‚È‚¢ê‡‚Ì‚İ”½‰
         if (other.gameObject.name.Contains("sonar") && !isCoolingDown)
         {
             ExecuteReaction();
@@ -36,10 +37,7 @@ public class JewelryReaction : MonoBehaviour
     void ExecuteReaction()
     {
         isCoolingDown = true;
-        Debug.Log("•óÎ‚ªŒŸ’m‚³‚ê‚Ü‚µ‚½IƒGƒR[‚ğ•ú‚¿‚Ü‚·B");
 
-
-        // ƒGƒR[”g–ä‚ğ©•ª©g‚ÌˆÊ’u‚É¶¬
         if (visualEchoPrefab != null)
         {
             Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
@@ -48,21 +46,63 @@ public class JewelryReaction : MonoBehaviour
             m.transform.localRotation = Quaternion.Euler(0, -90, 0);
         }
 
-        // w’è‚µ‚½•b”icooldownTimej‚ªŒo‰ß‚µ‚½Œã‚É ResetReaction ‚ğŒÄ‚Ño‚·
         Invoke("ResetReaction", cooldownTime);
     }
 
     void ResetReaction()
     {
         isCoolingDown = false;
-        Debug.Log("•óÎ‚ªÄ‚ÑŒŸ’m‰Â”\‚É‚È‚è‚Ü‚µ‚½B");
     }
 
     void Get()
     {
         MoneyManager.Instance.MoneyOnHandIncrease(300000);
-        Instantiate(EfectPrefab, transform.position+new Vector3(5,0,0), Quaternion.Euler(-90,-90,0));
-        SoundManager.Instance.PlaySE("•óÎ“üè");
+        StartCoroutine(GetAnime());
+    }
+
+    IEnumerator GetAnime()
+    {
+        // æœ€åˆã®ä½ç½®ã‚’è¨˜éŒ²ï¼ˆXã®ã¿5ã«å¤‰æ›´ã—ã¦ç”»é¢æ‰‹å‰ã«å‡ºã™ï¼‰
+        Vector3 startPos = new Vector3(5, transform.position.y, transform.position.z);
+        
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        
+        float animDuration = 0.5f; // ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã®é•·ã•ï¼ˆç§’ï¼‰
+        float flashInterval = 0.05f; // ç‚¹æ»…ã®ã‚¹ãƒ”ãƒ¼ãƒ‰
+        float popHeight = 1.5f; // ãƒãƒƒãƒ—ã‚¢ãƒƒãƒ—ã§æµ®ãä¸ŠãŒã‚‹é«˜ã•
+        float elapsedTime = 0f;
+
+        while (elapsedTime < animDuration)
+        {
+            // 0 ã‹ã‚‰ 1 ã«å‘ã‹ã£ã¦é€²ã‚€é€²è¡Œåº¦
+            float t = elapsedTime / animDuration;
+            
+            // å¾ã€…ã«æ¸›é€Ÿã—ãªãŒã‚‰ä¸Šã«æµ®ãä¸ŠãŒã‚‹è¨ˆç®—ï¼ˆEase Out Cubicï¼‰
+            float easeOut = 1f - Mathf.Pow(1f - t, 3f);
+            float currentY = startPos.y + (popHeight * easeOut);
+            
+            // Xã¨Zã¯å›ºå®šã—ã€Yã ã‘å‹•ã‹ã™
+            transform.position = new Vector3(startPos.x, currentY, startPos.z);
+
+            // çµŒéæ™‚é–“ã‚’ä½¿ã£ã¦ç‚¹æ»…ã‚’è¨ˆç®—ã™ã‚‹
+            bool isVisible = (elapsedTime % (flashInterval * 2)) < flashInterval;
+            foreach (Renderer r in renderers)
+            {
+                if (r != null) r.enabled = isVisible;
+            }
+
+            elapsedTime += Time.deltaTime; // 1ãƒ•ãƒ¬ãƒ¼ãƒ åˆ†ã®æ™‚é–“ã‚’é€²ã‚ã‚‹
+            yield return null; // 1ãƒ•ãƒ¬ãƒ¼ãƒ å¾…ã¤ï¼ˆãªã‚ã‚‰ã‹ã«å‹•ã‹ã™ãŸã‚ã«å¿…é ˆï¼‰
+        }
+
+        // ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ãŒçµ‚ã‚ã£ãŸã‚‰ã‚¨ãƒ•ã‚§ã‚¯ãƒˆã‚’å‡ºã™
+        Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("å®çŸ³ç²å¾—");
+        }
+        
         Destroy(gameObject);
     }
 }

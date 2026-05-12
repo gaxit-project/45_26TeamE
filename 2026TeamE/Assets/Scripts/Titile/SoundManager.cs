@@ -39,16 +39,21 @@ public class SoundManager : MonoBehaviour
     public void InitSlider()
     {
         isInitializing = true;
+        if (bgmSlider != null)
+        {
+            // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
+            bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
+            bgmSlider.value = bgmSource.volume;
+            bgmSlider.onValueChanged.AddListener(SetBGMVolume);
+        }
 
-        // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
-        bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
-        bgmSlider.value = bgmSource.volume;
-        bgmSlider.onValueChanged.AddListener(SetBGMVolume);
-
-        // SEのスライダーも同様にリセットして更新
-        seSlider.onValueChanged.RemoveListener(SetSEVolume);
-        seSlider.value = seSource.volume;
-        seSlider.onValueChanged.AddListener(SetSEVolume);
+        if (seSlider != null)
+        {
+            // SEのスライダーも同様にリセットして更新
+            seSlider.onValueChanged.RemoveListener(SetSEVolume);
+            seSlider.value = seSource.volume;
+            seSlider.onValueChanged.AddListener(SetSEVolume);
+        }
 
         isInitializing = false;
     }

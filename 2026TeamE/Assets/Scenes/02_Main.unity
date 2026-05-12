@@ -2086,6 +2086,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9652a21359f3a654fbc1ff069a22b0d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GemRadar
+  mode: 1
   segments: 60
   baseRadius: 3
   waveSpeed: 30
@@ -2093,7 +2094,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   searchInterval: 0.5
-  maxDistance: 100
+  maxDistance: 50
   minAmplitude: 0.3
   maxAmplitude: 2
 --- !u!1 &557181760
