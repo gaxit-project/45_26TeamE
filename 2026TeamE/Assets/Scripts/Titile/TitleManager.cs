@@ -20,7 +20,7 @@ public class TitleManager : MonoBehaviour
     public void Start()
     {
         SettingManager.Instance?.CloseSettingPanel(false);
-        SoundManager.Instance.PlayBGM("‚©‚¦‚é‚ÌƒsƒAƒm");
+        SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
     }
 
