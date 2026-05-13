@@ -27,6 +27,9 @@ public class PlayerController : MonoBehaviour
     [Header("接地判定")]
     [SerializeField] LayerMask landLayer;
     [SerializeField] bool isGround = true;
+    [SerializeField] Vector3 groundBoxExtents = new Vector3(0.35f, 0.15f, 0.35f);
+    [SerializeField] Vector3 groundBoxOffset = new Vector3(0, 0.1f, 0);
+
 
     [Header("ドリルアクション")]
     [SerializeField] bool drillFlag = false;
@@ -217,13 +220,9 @@ public class PlayerController : MonoBehaviour
 
     private void CheckGround()
     {
-        float rayDistance = 0.2f;
-        Vector3 rayOrigin = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, -1);
-        Vector3 rayOrigin2 = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, 1);
-        Vector3 rayOrigin3 = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, 0.5f);
-        isGround = Physics.Raycast(rayOrigin, Vector3.down, rayDistance, landLayer) ||
-                   Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer)||
-                   Physics.Raycast(rayOrigin3, Vector3.down, rayDistance, landLayer);
+        // ブロック地形（Voxel）の角に最適化するため、四角い箱（Box）の判定を使う
+        Vector3 boxCenter = transform.position + groundBoxOffset;
+        isGround = Physics.CheckBox(boxCenter, groundBoxExtents, Quaternion.identity, landLayer);
     }
 
     private void DestractBlock()
@@ -352,5 +351,21 @@ public class PlayerController : MonoBehaviour
             }
             
         }
+    }
+
+    private void OnDrawGizmos()
+    {
+        // 着地判定（CheckBox）の形をシーンビューに表示する
+        // 地面についている時は緑、浮いている時は赤にする
+        Gizmos.color = isGround ? new Color(0, 1, 0, 0.3f) : new Color(1, 0, 0, 0.3f);
+        Vector3 boxCenter = transform.position + groundBoxOffset;
+        Vector3 size = groundBoxExtents * 2f; // extentsを2倍にしてSizeにする
+        
+        // 半透明の箱を描画
+        Gizmos.DrawCube(boxCenter, size);
+        
+        // はっきりとした枠線を描画
+        Gizmos.color = isGround ? Color.green : Color.red;
+        Gizmos.DrawWireCube(boxCenter, size);
     }
 }
