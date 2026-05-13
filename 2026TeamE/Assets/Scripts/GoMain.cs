@@ -7,4 +7,9 @@ public class GoMain : MonoBehaviour
     {
         SceneManager.LoadScene("02_Main");
     }
+
+    public void Sound()
+    {
+        SoundManager.Instance.PlaySE("ƒhƒŠƒ‹‚ÅŒ@‚é1");
+    }
 }

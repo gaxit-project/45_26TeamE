@@ -6,9 +6,10 @@
 public class Sonar : MonoBehaviour
 {
     public float currentRadius = 1.0f; // 現在の半径
-    public float expansionSpeed = 5.0f; // 広がるスピード
-    public float maxRadius = 10.0f; // 消えるまでの最大半径
+    public float expansionSpeed = 20f; // 広がるスピード
+    public float maxRadius = 30.0f; // 消えるまでの最大半径
     public int segments = 36; // 円を構成する点の数
+    public int sonarLV = 1;
 
     // 【追加】最大サイズで止めておく時間
     public float holdTime = 0.3f;
@@ -20,6 +21,7 @@ public class Sonar : MonoBehaviour
 
     void Start()
     {
+        sonarLV = UpgradeManager.GetLevel("Soner");
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.useWorldSpace = false;
 
@@ -38,6 +40,7 @@ public class Sonar : MonoBehaviour
         {
             currentRadius += expansionSpeed * Time.deltaTime;
 
+            maxRadius = CurrentMaxSonarRadius;
             // 最大サイズに到達した瞬間の処理
             if (currentRadius >= maxRadius)
             {
@@ -56,8 +59,20 @@ public class Sonar : MonoBehaviour
         sphereCollider.radius = currentRadius;
     }
 
+    public float CurrentMaxSonarRadius
+    {
+        get
+        {
+            int sonarLevel = UpgradeManager.GetLevel(UpgradeManager.SONAR); //ここでソナーのレベルを拾ってくる
+            float radiusBonus = (sonarLevel - 1) * 1.5f; // 1レベルごとに 1.5m 範囲が広がる
+            return maxRadius + radiusBonus;　//インスペクターの値に加算
+        }
+    }
+
     void DrawCircle()
     {
+
+
         lineRenderer.positionCount = segments;
         for (int i = 0; i < segments; i++)
         {

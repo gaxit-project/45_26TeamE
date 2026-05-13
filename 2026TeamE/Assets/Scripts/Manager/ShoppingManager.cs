@@ -49,15 +49,24 @@ public class ShoppingManager : MonoBehaviour
     // --- ShoppingManager.cs の TryPurchase内を変更 ---
     private void TryPurchase(ShopItem item)
     {
-        if (item.currentLevel >= item.maxLevel) return;
+        if (item.currentLevel >= item.maxLevel)
+        {
+            SoundManager.Instance.PlaySE("つるはしで掘る3");
+            return;
+        }
 
         MoneyManager mm = MoneyManager.Instance;
-        if (mm == null) return;
+        if (mm == null)
+        {
+            SoundManager.Instance.PlaySE("つるはしで掘る3");
+            return;
+        }
 
         int cost = item.CurrentPrice;
 
         if (mm.GetMoney() >= cost)
         {
+            SoundManager.Instance.PlaySE("つるはしで掘る4");
             mm.SpendMoney(cost);
 
             // 修正点：一元管理クラスを通じてレベルアップとセーブを実行
@@ -66,6 +75,7 @@ public class ShoppingManager : MonoBehaviour
 
             RefreshUI(item);
         }
+        else SoundManager.Instance.PlaySE("つるはしで掘る3");
     }
 
 

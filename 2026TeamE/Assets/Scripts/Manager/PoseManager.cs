@@ -67,10 +67,10 @@ public class PoseManager : MonoBehaviour
     private IEnumerator ReturnToTitleCoroutine()
     {
         IsTransitioning = true; // 遷移開始（入力をブロック）
-        Time.timeScale = 1f; // 時間の進行を元に戻す（重要）
 
         if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSecondsRealtime(0.1f);
+        Time.timeScale = 1f; // 時間の進行を元に戻す
 
         // 進行状況（ショップの強化状態など）を初期化
         PlayerPrefs.DeleteAll();
@@ -85,7 +85,7 @@ public class PoseManager : MonoBehaviour
         {
             Destroy(MoneyManager.Instance.gameObject);
         }
-
+        
         SceneManager.LoadScene("01_Title"); // タイトルシーンを読み込む
     }
 
@@ -98,7 +98,6 @@ public class PoseManager : MonoBehaviour
     private IEnumerator GoToResultCoroutine()
     {
         IsTransitioning = true; // 遷移開始（入力をブロック）
-        Time.timeScale = 1f; // 時間の進行を元に戻す
 
         // BGMを止める（リザルト画面での重複再生を防ぐため）
         if (SoundManager.Instance != null)
@@ -107,8 +106,10 @@ public class PoseManager : MonoBehaviour
             SoundManager.Instance.StopBGM();
         }
 
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSecondsRealtime(0.1f);
+        Time.timeScale = 1f; // 時間の進行を元に戻す
 
         SceneManager.LoadScene("Result"); // リザルトシーンを読み込む
+        
     }
 }
