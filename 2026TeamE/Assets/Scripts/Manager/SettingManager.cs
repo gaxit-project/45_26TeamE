@@ -1,6 +1,14 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
+
+[System.Serializable]
+public class FrameRateOption
+{
+    public string Label;
+    public int Value;
+}
 
 public class SettingManager : MonoBehaviour
 {
@@ -14,23 +22,27 @@ public class SettingManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown screenModeDropdown;
     [SerializeField] private TMP_Dropdown framerateDropdown;
 
+    [Header("FPS Options")]
+    [SerializeField]
+    private List<FrameRateOption> fpsOptions = new List<FrameRateOption>
+    {
+        new FrameRateOption { Label = "30 FPS", Value = 30 },
+        new FrameRateOption { Label = "60 FPS", Value = 60 },
+        new FrameRateOption { Label = "120 FPS", Value = 120 },
+        new FrameRateOption { Label = "144 FPS", Value = 144 },
+        new FrameRateOption { Label = "240 FPS", Value = 240 },
+        new FrameRateOption { Label = "無制限", Value = -1 }
+    };
+    [SerializeField] private int defaultFramerateIndex = 1;
+
     private readonly List<string> fixedResolutionOptions = new List<string>
     {
-        "3840 x 2160",
-        "2560 x 1440",
-        "1920 x 1080",
         "1366 x 768",
+        "1920 x 1080",
+        "2560 x 1440",
+        "3840 x 2160",
     };
-
-    private readonly List<string> fixedFramerateOptions = new List<string>
-    {
-        "30 FPS",
-        "60 FPS",
-        "120 FPS",
-        "144 FPS",
-        "240 FPS",
-        "無制限"
-    };
+    private const string FPS_SAVE_KEY = "SavedFPSIndex";
 
     private void Awake()
     {
@@ -38,12 +50,9 @@ public class SettingManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            int savedFPSIndex = PlayerPrefs.GetInt(FPS_SAVE_KEY, defaultFramerateIndex);
             settingCanvas.SetActive(false);
-
-            if(Application.targetFrameRate <= 0)
-            {
-                Application.targetFrameRate = 60;
-            }
+            SetFrameRate(savedFPSIndex);
         }
         else
         {
@@ -95,28 +104,14 @@ public class SettingManager : MonoBehaviour
     public void InitFrameRateSettings()
     {
         framerateDropdown.ClearOptions();
-        framerateDropdown.AddOptions(fixedFramerateOptions);
         
-        int currentIndex = 0;
-        int currentTarget = Application.targetFrameRate;
+        List<string> labels = fpsOptions.Select(x => x.Label).ToList();
+        framerateDropdown.AddOptions(labels);
+        
+        int currentFPS = Application.targetFrameRate;
+        int currentIndex = fpsOptions.FindIndex(x => x.Value == currentFPS);
 
-        if(currentTarget <= 0)
-        {
-            currentTarget = fixedFramerateOptions.Count - 1;
-        }
-        else
-        {
-            for(int i = 0; i < fixedFramerateOptions.Count; i++)
-            {
-                if(int.TryParse(fixedFramerateOptions[i], out int val) && val == currentTarget)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-        }
-
-        framerateDropdown.value = currentIndex;
+        framerateDropdown.value = (currentIndex != -1) ? currentIndex : defaultFramerateIndex;
         framerateDropdown.RefreshShownValue();
     }
 
@@ -137,18 +132,15 @@ public class SettingManager : MonoBehaviour
     // フレームレートを変更するメソッド
     public void SetFrameRate(int index)
     {
-        if (index == fixedFramerateOptions.Count - 1)
+        if(index < 0 || index >= fpsOptions.Count)
         {
-            Application.targetFrameRate = -1;
+            Debug.LogWarning("Invalid FPS index: " + index);
+            return;
         }
-        else
-        {
-            string selectedText = fixedFramerateOptions[index];
-            if (int.TryParse(selectedText.Replace(" FPS", "").Trim(), out int targetFPS))
-            {
-                Application.targetFrameRate = targetFPS;
-            }
-        }
+        int targetFPS = fpsOptions[index].Value;
+        Application.targetFrameRate = targetFPS;
+        PlayerPrefs.SetInt(FPS_SAVE_KEY, index);
+        PlayerPrefs.Save();
     }
 
     // 画面モードを変更するメソッド
