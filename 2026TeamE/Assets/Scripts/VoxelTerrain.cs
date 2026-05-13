@@ -64,7 +64,6 @@ public class VoxelTerrain : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // ← これ追加
         }
         else
         {
@@ -74,10 +73,7 @@ public class VoxelTerrain : MonoBehaviour
 
     void Start()
     {
-        if (mapData == null)
-        {
-            CreateStage(widthZ, heightY, blockSize);
-        }
+        CreateStage(widthZ, heightY, blockSize);
     }
 
     /*void GenerateLevel()
@@ -323,15 +319,10 @@ public class VoxelTerrain : MonoBehaviour
         float depthFactor = (heightY - y) * hardnessScale * 0.05f;
         return baseHardness + depthFactor;
     }
+
     public void OnPlayerReachRelayPoint(int y)
     {
         Debug.Log($"中継地点到達.深度：{y}");
-
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player == null) return;
-
-        // プレイヤー位置をチェックポイントとして保存
-        CheckpointManager.Instance.SaveCheckpoint(player.transform.position);
     }
 
     // デバッグ用：プレイヤー周辺の中継地点を削除

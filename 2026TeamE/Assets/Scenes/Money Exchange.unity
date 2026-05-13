@@ -2654,15 +2654,15 @@ MonoBehaviour:
     buyButton: {fileID: 45655458}
     levelText: {fileID: 871600731}
     priceText: {fileID: 778086495}
-    basePrice: 1000
-    maxLevel: 5
+    basePrice: 2000
+    maxLevel: 3
     currentLevel: 0
   - itemName: Light
     buyButton: {fileID: 750758769}
     levelText: {fileID: 2081092542}
     priceText: {fileID: 322847008}
-    basePrice: 1000
-    maxLevel: 2
+    basePrice: 3000
+    maxLevel: 3
     currentLevel: 0
 --- !u!1 &871600729
 GameObject:

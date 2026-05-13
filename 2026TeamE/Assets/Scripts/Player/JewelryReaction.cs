@@ -64,7 +64,7 @@ public class JewelryReaction : MonoBehaviour
     {
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("決定");
+            SoundManager.Instance.PlaySE("決定_1");
         }
 
         // 最初の位置を記録（Xのみ5に変更して画面手前に出す）

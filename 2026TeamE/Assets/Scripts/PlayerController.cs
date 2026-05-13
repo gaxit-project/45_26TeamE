@@ -301,6 +301,8 @@ public class PlayerController : MonoBehaviour
 
     public void OnDrill(InputAction.CallbackContext context)
     {
+        if (poseManager != null && poseManager.IsInputBlocked) return;
+
         if (context.performed)
         {
             drillFlag = true;
@@ -319,6 +321,8 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (poseManager != null && poseManager.IsInputBlocked) return;
+
         if (context.performed)
         {
             isJumpPressed = true;
@@ -342,6 +346,8 @@ public class PlayerController : MonoBehaviour
 
     public void OnSonar(InputAction.CallbackContext context)
     {
+        if (poseManager != null && poseManager.IsInputBlocked) return;
+
         if (context.performed)
         {
             if (currentBattery >= SonarConsuption)

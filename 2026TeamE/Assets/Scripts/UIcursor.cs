@@ -37,7 +37,7 @@ public class UICursor : MonoBehaviour
 
         if (selected != lastSelected)
         {
-            SoundManager.Instance?.PlaySE("つるはしで掘る1");
+            SoundManager.Instance?.PlaySE("つるはしで掘る2");
             lastSelected = selected;
         }
 
