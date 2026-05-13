@@ -82,12 +82,11 @@ public class SoundManager : MonoBehaviour
 
     public void PlayLoopSE(string cueName)
     {
-        if(currentLoopCueName == cueName && loopPlayback.status == CriAtomExPlayback.Status.Playing) return;
+        // 既に同じ音が鳴っている（または準備中）なら何もしない
+        if(currentLoopCueName == cueName) return;
         
-        if (loopPlayback.status == CriAtomExPlayback.Status.Playing)
-        {
-            loopPlayback.Stop();
-        }
+        // 別のループ音が鳴っていれば確実に止める
+        loopPlayback.Stop();
         
         currentLoopCueName = cueName;
         loopPlayback = seSource.Play(cueName);
@@ -95,10 +94,8 @@ public class SoundManager : MonoBehaviour
 
     public void StopLoopSE()
     {
-        if (loopPlayback.status == CriAtomExPlayback.Status.Playing)
-        {
-            loopPlayback.Stop();
-        }
+        // 状態に関わらず確実に止める
+        loopPlayback.Stop();
         currentLoopCueName = "";
     }
 
