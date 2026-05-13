@@ -28,7 +28,7 @@ public class ResultManager : MonoBehaviour
             finalAmount = mm.GetMoneyOnHand();
             targetAmount = mm.GetTargetAmountOnPart();
             onHandResultText.text = "0";
-            targetResultText.text = targetAmount.ToString("0,000,000,000");
+            targetResultText.text = targetAmount.ToString("0");
             resultStatusText.text = "";
             StartCoroutine(CountUpRoutine());
         }
@@ -65,11 +65,11 @@ public class ResultManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float progress = elapsed / countDuration;
             int currentDisplayValue = (int)(finalAmount * progress);
-            onHandResultText.text = currentDisplayValue.ToString("0,000,000,000");
+            onHandResultText.text = currentDisplayValue.ToString("0");
             yield return null;
         }
 
-        onHandResultText.text = finalAmount.ToString("0,000,000,000");
+        onHandResultText.text = finalAmount.ToString("0");
         CheckSuccess(finalAmount, targetAmount);
 
         yield return new WaitForSeconds(0.2f);
