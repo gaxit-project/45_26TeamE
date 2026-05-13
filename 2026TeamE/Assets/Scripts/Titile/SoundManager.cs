@@ -15,8 +15,10 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private Slider seSlider;
 
     private bool isInitializing = false;
+    private CriAtomExPlayback loopPlayback;
+    private string currentLoopCueName = "";
 
-    // �V���O���g���̎���
+    // シングルトンの実装
     void Awake()
     {
         if (Instance == null)
@@ -41,7 +43,7 @@ public class SoundManager : MonoBehaviour
         isInitializing = true;
         if (bgmSlider != null)
         {
-            // �X���C�_�[�̃C�x���g���X�i�[�����Z�b�g���āA���݂̉��ʂɍ��킹�ăX���C�_�[�̒l���X�V
+            // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
             bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
             bgmSlider.value = bgmSource.volume;
             bgmSlider.onValueChanged.AddListener(SetBGMVolume);
@@ -49,7 +51,7 @@ public class SoundManager : MonoBehaviour
 
         if (seSlider != null)
         {
-            // SE�̃X���C�_�[�����l�Ƀ��Z�b�g���čX�V
+            // SEのスライダーも同様にリセットして更新
             seSlider.onValueChanged.RemoveListener(SetSEVolume);
             seSlider.value = seSource.volume;
             seSlider.onValueChanged.AddListener(SetSEVolume);
@@ -58,7 +60,7 @@ public class SoundManager : MonoBehaviour
         isInitializing = false;
     }
 
-    //  BGM���Đ����郁�\�b�h
+    //  BGMを再生するメソッド
     public void PlayBGM(string cueName)
     {
         bgmSource.Stop();
@@ -66,13 +68,13 @@ public class SoundManager : MonoBehaviour
         bgmSource.Play();
     }
 
-    // BGM���~���郁�\�b�h
+    // BGMを停止するメソッド
     public void StopBGM()
     {
         bgmSource.Stop();
     }
 
-    // SE���Đ����郁�\�b�h
+    // SEを再生するメソッド
     public void PlaySE(string cueName)
     {
         seSource.Play(cueName);
@@ -80,24 +82,39 @@ public class SoundManager : MonoBehaviour
 
     public void PlayLoopSE(string cueName)
     {
-        if(seSource.cueName == cueName && IsSEPlaying()) return;
-        seSource.cueName = cueName;
-        seSource.Play();
+        if(currentLoopCueName == cueName && loopPlayback.status == CriAtomExPlayback.Status.Playing) return;
+        
+        if (loopPlayback.status == CriAtomExPlayback.Status.Playing)
+        {
+            loopPlayback.Stop();
+        }
+        
+        currentLoopCueName = cueName;
+        loopPlayback = seSource.Play(cueName);
     }
 
-    // SE���~���郁�\�b�h
+    public void StopLoopSE()
+    {
+        if (loopPlayback.status == CriAtomExPlayback.Status.Playing)
+        {
+            loopPlayback.Stop();
+        }
+        currentLoopCueName = "";
+    }
+
+    // SEを停止するメソッド
     public void StopSE()
     {
         seSource.Stop();
     }
 
-    // BGM�̉��ʂ�ύX���郁�\�b�h
+    // BGMの音量を変更するメソッド
     public void SetBGMVolume(float volume)
     {
         bgmSource.volume = volume;
     }
 
-    // SE�̉��ʂ�ύX���郁�\�b�h
+    // SEの音量を変更するメソッド
     public void SetSEVolume(float volume)
     {
         if(isInitializing) return;
@@ -110,19 +127,19 @@ public class SoundManager : MonoBehaviour
         seSource.Play(cueName);
     }
 
-    // BGM�̉��ʂ��擾���郁�\�b�h
+    // BGMの音量を取得するメソッド
     public float GetBGMVolume()
     {
         return bgmSource.volume;
     }
 
-    // SE�̉��ʂ��擾���郁�\�b�h
+    // SEの音量を取得するメソッド
     public float GetSEVolume()
     {
         return seSource.volume;
     }
 
-    // BGM���Đ������ǂ������m�F���郁�\�b�h
+    // BGMが再生中かどうかを確認するメソッド
     public bool IsSEPlaying()
     {
         return seSource.status == CriAtomSourceBase.Status.Playing;

@@ -79,6 +79,7 @@ public class PlayerController : MonoBehaviour
     {
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         animator = GetComponent<Animator>();
         drillCDstarttime = Time.time;
         poseManager = GetComponent<PoseManager>();
@@ -111,7 +112,8 @@ public class PlayerController : MonoBehaviour
                 rb.linearVelocity = Vector3.zero;
             }
 
-            rb.MovePosition(rb.position + moveDirection * Speed * Time.fixedDeltaTime);
+            Vector3 targetVelocity = moveDirection * Speed;
+            rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
             ApplyCustomGravity();
         }
     }
@@ -142,7 +144,7 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            SoundManager.Instance.StopSE();
+            SoundManager.Instance.StopLoopSE();
         }
 
         if (moveInput.x > 0)
@@ -218,8 +220,10 @@ public class PlayerController : MonoBehaviour
         float rayDistance = 0.2f;
         Vector3 rayOrigin = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, -1);
         Vector3 rayOrigin2 = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, 1);
+        Vector3 rayOrigin3 = transform.position + Vector3.up * 0.1f + new Vector3(0, 0, 0.5f);
         isGround = Physics.Raycast(rayOrigin, Vector3.down, rayDistance, landLayer) ||
-                   Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer);
+                   Physics.Raycast(rayOrigin2, Vector3.down, rayDistance, landLayer)||
+                   Physics.Raycast(rayOrigin3, Vector3.down, rayDistance, landLayer);
     }
 
     private void DestractBlock()

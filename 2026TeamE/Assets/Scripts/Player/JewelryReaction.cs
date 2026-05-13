@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -62,6 +62,11 @@ public class JewelryReaction : MonoBehaviour
 
     IEnumerator GetAnime()
     {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("決定");
+        }
+
         // 最初の位置を記録（Xのみ5に変更して画面手前に出す）
         Vector3 startPos = new Vector3(5, transform.position.y, transform.position.z);
         
@@ -97,11 +102,6 @@ public class JewelryReaction : MonoBehaviour
 
         // アニメーションが終わったらエフェクトを出す
         Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
-        
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySE("宝石獲得");
-        }
         
         Destroy(gameObject);
     }
