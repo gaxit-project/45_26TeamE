@@ -31,18 +31,13 @@ public class ShoppingManager : MonoBehaviour
 
     private static Dictionary<string, int> savedLevels = new Dictionary<string, int>();
 
+    // --- ShoppingManager.cs の Start内を変更 ---
     void Start()
     {
         foreach (var item in shopItems)
         {
-            if (savedLevels.ContainsKey(item.itemName))
-            {
-                item.currentLevel = savedLevels[item.itemName];
-            }
-            else
-            {
-                item.currentLevel = 1;
-            }
+            // 修正点：一元管理クラスからレベルをロード
+            item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             ShopItem target = item;
             target.buyButton.onClick.AddListener(() => TryPurchase(target));
@@ -51,9 +46,9 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
+    // --- ShoppingManager.cs の TryPurchase内を変更 ---
     private void TryPurchase(ShopItem item)
     {
-        // ★重要：上限に達していたら、ボタンは「押せる状態」でも処理を中断する
         if (item.currentLevel >= item.maxLevel) return;
 
         MoneyManager mm = MoneyManager.Instance;
@@ -64,18 +59,15 @@ public class ShoppingManager : MonoBehaviour
         if (mm.GetMoney() >= cost)
         {
             mm.SpendMoney(cost);
-            item.currentLevel++;
-            savedLevels[item.itemName] = item.currentLevel;
 
-            if (item.itemName == "Drill")
-            {
-                PlayerController player = FindAnyObjectByType<PlayerController>();
-                if (player != null) player.SetDrillLevel(item.currentLevel);
-            }
+            // 修正点：一元管理クラスを通じてレベルアップとセーブを実行
+            UpgradeManager.IncreaseLevel(item.itemName);
+            item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             RefreshUI(item);
         }
     }
+
 
     private void RefreshUI(ShopItem item)
     {

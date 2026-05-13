@@ -1475,7 +1475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DrillTip
   baseDrillInterval: 0.2
-  drillRadius: 3
+  baseDrillRadius: 3
   miningZone: {fileID: 820273196}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2

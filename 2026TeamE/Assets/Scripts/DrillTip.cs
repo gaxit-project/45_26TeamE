@@ -2,8 +2,8 @@
 
 public class DrillTip : MonoBehaviour
 {
-    [SerializeField] float baseDrillInterval = 0.2f;
-    [SerializeField] float drillRadius = 1.5f;
+    [SerializeField] float baseDrillInterval = 0.2f; // インスペクターで設定した初期の速度間隔
+    [SerializeField] float baseDrillRadius = 1.5f;   // インスペクターで設定した初期の範囲大きさ
     [SerializeField] Transform miningZone;
 
     [Header("エフェクト")]
@@ -14,6 +14,31 @@ public class DrillTip : MonoBehaviour
     private PlayerController player;
 
     private float lastDirtTouchTime = -1f;
+
+    // ★現在のレベルに応じた掘削半径（初期値に加算）
+    private float CurrentDrillRadius
+    {
+        get
+        {
+            int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
+            float bonusRadius = (drillLevel - 1) * 0.2f; // 1レベルごとに 0.2m 拡大
+            return baseDrillRadius + bonusRadius;
+        }
+    }
+
+    // ★現在のレベルに応じたベースインターバル（初期値から減算して高速化）
+    private float CurrentDrillInterval
+    {
+        get
+        {
+            int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
+            // 1レベルごとに 0.02秒 ずつ間隔を短縮（Lv.1=0.2s, Lv.2=0.18s, Lv.3=0.16s...）
+            float speedBonus = (drillLevel - 1) * 0.02f;
+
+            // 計算結果がマイナス（0秒以下）にならないように下限（0.02秒）を設定
+            return Mathf.Max(0.02f, baseDrillInterval - speedBonus);
+        }
+    }
 
     void Start()
     {
@@ -42,7 +67,7 @@ public class DrillTip : MonoBehaviour
                     transform.forward * 0.5f + transform.right * 0.3f,
                     transform.forward * 0.5f - transform.right * 0.3f,
                     transform.forward * 0.5f + transform.up * 0.3f
-    };
+                };
 
                 foreach (Vector3 offset in checkOffsets)
                 {
@@ -53,10 +78,7 @@ public class DrillTip : MonoBehaviour
                     int tz = Mathf.FloorToInt(lp.z / s);
 
                     float h = terrain.GetHardnessAtPosition(tx, ty, tz);
-                    if (h > maxHardness)
-                    {
-                        maxHardness = h;
-                    }
+                    if (h > maxHardness) { maxHardness = h; }
                     if (IsBedrock(terrain, tx, ty, tz))
                     {
                         terrain.OnPlayerReachRelayPoint(ty);
@@ -66,16 +88,17 @@ public class DrillTip : MonoBehaviour
 
                 float hardness = maxHardness;
 
+                // 斜め掘りの時の硬さ補正
                 float dot = Mathf.Abs(Vector3.Dot(transform.forward, Vector3.up));
                 if (dot > 0.1f && dot < 0.9f)
                 {
                     hardness *= 1.8f;
                 }
 
-                float drillPower = 1.0f + (player.DrillLevel - 1) * 0.5f;
-                float currentInterval = baseDrillInterval * (hardness / drillPower);
+                // ★強化されたベースインターバルを元に、ブロックの硬さ（hardness）を計算する
+                float currentInterval = CurrentDrillInterval * hardness;
 
-                // --- 変更点: ダッシュ中は硬さ（インターバル）を無視して即座に掘削する ---
+                // --- ダッシュ中は硬さ（インターバル）を無視して即座に掘削する ---
                 if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
                 Vector3 digLocal = terrain.transform.InverseTransformPoint(transform.position);
@@ -86,7 +109,7 @@ public class DrillTip : MonoBehaviour
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
-                float currentRadius = player.IsDashing ? drillRadius : drillRadius * 0.8f;
+                float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
                 terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
                 lastDrillTime = Time.time;
             }
@@ -116,7 +139,7 @@ public class DrillTip : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, drillRadius);
+        Gizmos.DrawWireSphere(transform.position, CurrentDrillRadius);
 
         if (miningZone != null)
         {
