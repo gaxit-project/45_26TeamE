@@ -4776,6 +4776,20 @@ MonoBehaviour:
   resolutionDropdown: {fileID: 1777283635}
   screenModeDropdown: {fileID: 865720369}
   framerateDropdown: {fileID: 571124545}
+  fpsOptions:
+  - Label: 30 FPS
+    Value: 30
+  - Label: 60 FPS
+    Value: 60
+  - Label: 120 FPS
+    Value: 120
+  - Label: 144 FPS
+    Value: 144
+  - Label: 240 FPS
+    Value: 240
+  - Label: "\u7121\u5236\u9650"
+    Value: -1
+  defaultFramerateIndex: 1
 --- !u!4 &1243058452
 Transform:
   m_ObjectHideFlags: 0
