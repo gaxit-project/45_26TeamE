@@ -97,4 +97,12 @@ public class TitleManager : MonoBehaviour
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
         SceneLoader.Instance.LoadScene("02_Main");
     }
+
+    // ゲーム終了のメソッド
+    public void QuitGame()
+    {
+        SoundManager.Instance?.PlaySE("つるはしで掘る1");
+        UnityEditor.EditorApplication.isPlaying = false;
+        Application.Quit();
+    }
 }
