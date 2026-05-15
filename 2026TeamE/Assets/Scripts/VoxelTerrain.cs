@@ -369,6 +369,12 @@ public class VoxelTerrain : MonoBehaviour
 
         // プレイヤー位置をチェックポイントとして保存
         CheckpointManager.Instance.SaveCheckpoint(player.transform.position);
+
+        // 同じオブジェクト（または子要素）から SelectPoint を取得
+        if (TryGetComponent<SelectPoint>(out var selectPoint) || TryGetComponent<SelectPoint>(out selectPoint))
+        {
+            selectPoint.ShowButton();
+        }
     }
 
     // デバッグ用：プレイヤー周辺の中継地点を削除

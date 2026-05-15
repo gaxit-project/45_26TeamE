@@ -8,6 +8,7 @@ TagManager:
   - Block_dirt
   - VoxelTerrain
   - jewelry
+  - SelectPanel
   layers:
   - Default
   - TransparentFX
