@@ -2073,7 +2073,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   searchInterval: 0.5
-  maxDistance: 50
+  baseMaxDistance: 60
+  baseWaveAngle: 45
   minAmplitude: 0.3
   maxAmplitude: 2
 --- !u!65 &548082339

@@ -9,7 +9,7 @@ public class GemRadar : MonoBehaviour
         Omnidirectional // 全方位が波打ち＋鼓動（ダブルビート）する
     }
 
-    [Header("レーダー設定")]
+    [Header("レーダー基本設定")]
     public RadarMode mode = RadarMode.Directional; 
     public int segments = 60;           
     public float baseRadius = 2f;       
@@ -19,14 +19,23 @@ public class GemRadar : MonoBehaviour
     public LayerMask gemLayer;          
     public float searchInterval = 0.5f; 
 
+    [Header("レーダー性能の基準値（レベル2相当）")]
+    [Tooltip("ここに入力した数値を基準にして、レベルに応じて自動で掛け算・割り算されます")]
+    public float baseMaxDistance = 30f; 
+    public float baseWaveAngle = 45f;   
+    
     [Header("距離による波の高さ（Amplitude）")]
-    public float maxDistance = 30f;     
     public float minAmplitude = 0.3f;   
     public float maxAmplitude = 2.0f;   
 
     private LineRenderer lineRenderer;
     private Transform nearestGem;
     private float searchTimer = 0f;
+
+    // レベル計算用の実際のパラメータ
+    private float currentMaxDistance;
+    private float currentMaxAngle;
+    private float maxInaccuracyRange; // 方向のブレの最大範囲
 
     void Start()
     {
@@ -36,6 +45,8 @@ public class GemRadar : MonoBehaviour
         
         lineRenderer.startWidth = 0.05f;
         lineRenderer.endWidth = 0.05f;
+
+        UpdateRadarParameters();
     }
 
     void Update()
@@ -54,10 +65,17 @@ public class GemRadar : MonoBehaviour
         if (hasTarget)
         {
             Vector3 dir = nearestGem.position - transform.position;
-            targetAngle = Mathf.Atan2(dir.y, dir.z);
+            
+            // パーリンノイズを使って、-1.0 ～ 1.0 の間をフワフワと滑らかに遷移させる
+            // 0.5f はブレが変化するスピード（大きいほど素早くブレる）
+            float noise = Mathf.PerlinNoise(Time.time * 0.5f, 0f) * 2f - 1f;
+            float smoothOffset = noise * maxInaccuracyRange;
+
+            // 宝石への実際の角度に、滑らかに変化する誤差（ブレ）を足す
+            targetAngle = Mathf.Atan2(dir.y, dir.z) + (smoothOffset * Mathf.Deg2Rad);
 
             float distance = dir.magnitude;
-            float t = 1f - Mathf.Clamp01(distance / maxDistance);
+            float t = 1f - Mathf.Clamp01(distance / currentMaxDistance);
             currentWaveAmplitude = Mathf.Lerp(minAmplitude, maxAmplitude, t);
         }
 
@@ -72,36 +90,29 @@ public class GemRadar : MonoBehaviour
                 {
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg));
 
-                    if (angleDiff < 45f)
+                    if (angleDiff < currentMaxAngle)
                     {
                         float wave = Mathf.Sin(Time.time * waveSpeed - angle * 20f) * currentWaveAmplitude;
-                        float falloff = 1f - (angleDiff / 45f);
+                        float falloff = 1f - (angleDiff / currentMaxAngle);
                         currentRadius += wave * falloff;
                     }
                 }
                 else if (mode == RadarMode.Omnidirectional)
                 {
-                    // ① これまでの波打ち（ウネウネ）効果
                     float wavyEdge = Mathf.Sin(Time.time * waveSpeed - angle * 20f) * (currentWaveAmplitude * 0.5f);
 
-                    // ② 鼓動効果（2回伸び縮みして、2拍休む）
-                    float cycleLength = 1.5f; // 全体の周期（0.5秒で2回動き、1秒休む）
+                    float cycleLength = 1.5f; 
                     float timeInCycle = Time.time % cycleLength;
                     float heartbeatPulse = 0f;
 
-                    // 1回目の伸び縮み (0.0秒 ～ 0.2秒)
                     if (timeInCycle < 0.2f) {
                         heartbeatPulse = Mathf.Sin((timeInCycle / 0.2f) * Mathf.PI);
                     } 
-                    // 2回目の伸び縮み (0.3秒 ～ 0.5秒)
                     else if (timeInCycle > 0.3f && timeInCycle < 0.5f) {
                         heartbeatPulse = Mathf.Sin(((timeInCycle - 0.3f) / 0.2f) * Mathf.PI);
                     }
 
-                    // 鼓動の強さも距離によって変える
                     float pulseEffect = heartbeatPulse * currentWaveAmplitude;
-
-                    // 波打ちと鼓動を両方足す
                     currentRadius += wavyEdge + pulseEffect;
                 }
             }
@@ -116,7 +127,9 @@ public class GemRadar : MonoBehaviour
 
     void FindNearestGem()
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position, maxDistance, gemLayer);
+        UpdateRadarParameters();
+
+        Collider[] colliders = Physics.OverlapSphere(transform.position, currentMaxDistance, gemLayer);
         
         float minDistance = float.MaxValue;
         nearestGem = null;
@@ -129,6 +142,31 @@ public class GemRadar : MonoBehaviour
                 minDistance = dist;
                 nearestGem = col.transform;
             }
+        }
+    }
+
+    void UpdateRadarParameters()
+    {
+        int radarLevel = UpgradeManager.GetLevel(UpgradeManager.RADER);
+        if (radarLevel <= 0) radarLevel = 1;
+
+        if (radarLevel == 1)
+        {
+            currentMaxDistance = baseMaxDistance * 0.5f; 
+            currentMaxAngle = baseWaveAngle * 2.0f;     
+            maxInaccuracyRange = 45f; // 最大で±45度までフワフワずれる
+        }
+        else if (radarLevel == 2)
+        {
+            currentMaxDistance = baseMaxDistance * 1.0f;
+            currentMaxAngle = baseWaveAngle * 1.0f;
+            maxInaccuracyRange = 15f; // 最大で±15度までフワフワずれる
+        }
+        else
+        {
+            currentMaxDistance = baseMaxDistance * 1.5f;
+            currentMaxAngle = baseWaveAngle * 0.5f;
+            maxInaccuracyRange = 0f;  // 全くずれない
         }
     }
 }

@@ -40,11 +40,10 @@ public class Sonar : MonoBehaviour
         {
             currentRadius += expansionSpeed * Time.deltaTime;
 
-            maxRadius = CurrentMaxSonarRadius;
             // 最大サイズに到達した瞬間の処理
-            if (currentRadius >= maxRadius)
+            if (currentRadius >= CurrentMaxSonarRadius)
             {
-                currentRadius = maxRadius; // サイズを最大値にピタッと固定する
+                currentRadius = CurrentMaxSonarRadius; // サイズを最大値にピタッと固定する
                 isHolding = true;          // 「ホールド中」状態にする
 
                 // 【ここがポイント！】Destroyの第2引数に秒数を指定すると、その時間待機してから消去してくれます

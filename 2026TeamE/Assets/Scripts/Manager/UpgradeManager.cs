@@ -6,6 +6,7 @@ public static class UpgradeManager
     public const string DRILL = "Drill";
     public const string SONAR = "Sonar";
     public const string ENGINE = "Engine";
+    public const string RADER = "Rader";
 
     // メモリ上だけでレベルを保持する辞書（ゲームを閉じると消える）
     private static Dictionary<string, int> currentLevels = new Dictionary<string, int>();
@@ -20,6 +21,7 @@ public static class UpgradeManager
         PlayerPrefs.DeleteKey($"Upgrade_{DRILL}");
         PlayerPrefs.DeleteKey($"Upgrade_{SONAR}");
         PlayerPrefs.DeleteKey($"Upgrade_{ENGINE}");
+        PlayerPrefs.DeleteKey($"Upgrade_{RADER}");
         PlayerPrefs.Save();
 
         Debug.Log("【UpgradeManager】ゲーム起動に伴い、すべての強化レベルを初期化しました。");
