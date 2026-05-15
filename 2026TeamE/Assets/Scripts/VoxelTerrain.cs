@@ -71,6 +71,43 @@ public class VoxelTerrain : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    private void OnEnable()
+    {
+        // シーン切り替えイベントを購読
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        // オブジェクト破棄・無効化時にイベント購読を解除
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        // アクティブなシーン名が "02_Main" の時だけ表示(true)、それ以外は非表示(false)
+        if (scene.name == "02_Main")
+        {
+            SetActiveAllChildren(true);
+        }
+        else
+        {
+            SetActiveAllChildren(false);
+        }
+    }
+
+    // 自身（コライダーなど）と子要素（チャンクや宝石など）の表示・非表示を一括切り替え
+    private void SetActiveAllChildren(bool isActive)
+    {
+        // 自身のレンダラーやコライダーがあれば無効化/有効化
+        if (TryGetComponent<Collider>(out var col)) col.enabled = isActive;
+
+        // 子オブジェクト（Chunkや宝石）をすべてループで切り替え
+        foreach (Transform child in transform)
+        {
+            child.gameObject.SetActive(isActive);
+        }
+    }
 
     void Start()
     {

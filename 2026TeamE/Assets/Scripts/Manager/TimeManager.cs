@@ -1,6 +1,5 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.SceneManagement; // シーン遷移に必要
 
 public class TimerManager : MonoBehaviour
 {
@@ -8,7 +7,9 @@ public class TimerManager : MonoBehaviour
     private float totalTime = 120f;
     private bool isTimerEnded = false; // 終了判定フラグ
 
-    [SerializeField] private string resultSceneName = "Result"; // リザルトシーンの名前
+    [Header("演出用コンポーネント")]
+    [SerializeField] private Animator canvasAnimator; // CanvasのAnimatorをインスペクターから割り当て
+    [SerializeField] private Animator PlayerAnimator; // タイトルのAnimatorをインスペクターから割り当て
 
     void Update()
     {
@@ -37,10 +38,11 @@ public class TimerManager : MonoBehaviour
         timerText.text = string.Format("{0} : {1:00}", minutes, seconds);
     }
 
-    void EndTimer()
+    void EndTimer() //Canvasのアニメーションを再生し，タイトルに戻る
     {
-        SoundManager.Instance.StopBGM();
-        // リザルトシーンに遷移する
-        SceneManager.LoadScene(resultSceneName);
+        canvasAnimator.SetBool("isTimeUp", true);
+        PlayerAnimator.SetBool("isTimeUp", true);
     }
+
+
 }
