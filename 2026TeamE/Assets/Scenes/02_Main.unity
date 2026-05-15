@@ -606,7 +606,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
   thicknessX: 7
-  heightY: 400
+  heightY: 800
   widthZ: 400
   blockSize: 0.5
   oreProbability: 0.5
@@ -3055,7 +3055,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainManager
   currentMoney: 0
   oreValue: 0
-  targetHeight: 400
+  targetHeight: 800
   targetWidth: 400
   blockSize: 1
 --- !u!4 &1037431501
