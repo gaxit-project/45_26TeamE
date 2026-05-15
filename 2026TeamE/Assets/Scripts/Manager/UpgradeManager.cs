@@ -7,6 +7,7 @@ public static class UpgradeManager
     public const string SONAR = "Sonar";
     public const string ENGINE = "Engine";
     public const string RADER = "Rader";
+    public const string LIGHT = "Light";
 
     // メモリ上だけでレベルを保持する辞書（ゲームを閉じると消える）
     private static Dictionary<string, int> currentLevels = new Dictionary<string, int>();
@@ -21,6 +22,7 @@ public static class UpgradeManager
         PlayerPrefs.DeleteKey($"Upgrade_{DRILL}");
         PlayerPrefs.DeleteKey($"Upgrade_{SONAR}");
         PlayerPrefs.DeleteKey($"Upgrade_{ENGINE}");
+        PlayerPrefs.DeleteKey($"Upgrade_{LIGHT}");
         PlayerPrefs.DeleteKey($"Upgrade_{RADER}");
         PlayerPrefs.Save();
 
@@ -36,7 +38,7 @@ public static class UpgradeManager
         {
             return currentLevels[itemName];
         }
-        return 0; // 初期値
+        return 1; // 初期値
     }
 
     /// <summary>

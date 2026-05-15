@@ -112,4 +112,10 @@ public class PoseManager : MonoBehaviour
         SceneManager.LoadScene("Result"); // リザルトシーンを読み込む
         
     }
+
+    public void QuitGame()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
+        Application.Quit(); // ゲームを終了
+    }
 }
