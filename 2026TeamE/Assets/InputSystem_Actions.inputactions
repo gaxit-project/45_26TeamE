@@ -505,6 +505,17 @@
                 },
                 {
                     "name": "",
+                    "id": "55c8f227-9900-4ad6-91a9-62f11f8ec25d",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pose",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "56ede43d-6c7f-4b14-8f08-fc79a6d830a2",
                     "path": "<Gamepad>/rightShoulder",
                     "interactions": "",
