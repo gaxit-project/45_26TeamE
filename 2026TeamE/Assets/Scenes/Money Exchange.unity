@@ -2746,28 +2746,28 @@ MonoBehaviour:
     buyButton: {fileID: 668649652}
     levelText: {fileID: 1303174628}
     priceText: {fileID: 566739183}
-    basePrice: 10000
+    basePrice: 50000
     maxLevel: 10
     currentLevel: 0
   - itemName: Sonar
     buyButton: {fileID: 45655458}
     levelText: {fileID: 871600731}
     priceText: {fileID: 778086495}
-    basePrice: 20000
+    basePrice: 80000
     maxLevel: 3
     currentLevel: 0
   - itemName: Light
     buyButton: {fileID: 750758769}
     levelText: {fileID: 2081092542}
     priceText: {fileID: 322847008}
-    basePrice: 30000
+    basePrice: 50000
     maxLevel: 5
     currentLevel: 0
   - itemName: Rader
     buyButton: {fileID: 285529347}
     levelText: {fileID: 824114531}
     priceText: {fileID: 2020540948}
-    basePrice: 100000
+    basePrice: 700000
     maxLevel: 3
     currentLevel: 0
 --- !u!1 &824114528
