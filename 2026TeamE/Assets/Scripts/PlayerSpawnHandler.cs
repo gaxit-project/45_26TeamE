@@ -9,7 +9,7 @@ public class PlayerSpawnHandler : MonoBehaviour
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
         {
-            player.transform.position = CheckpointManager.Instance.GetCheckpointPosition();
+            player.transform.position = CheckpointManager.Instance.GetLastCheckpoint();
             Debug.Log("チェックポイントから再開");
         }
         else

@@ -15,6 +15,12 @@ public class VoxelTerrain : MonoBehaviour
     [Range(0, 100)]
     [SerializeField] float oreProbability = 5f;
 
+    [Header("プレイヤー開始位置設定")]
+    [SerializeField] int startOffsetX = 0;
+    [SerializeField] int startDepthFromSurface = 30;
+    [SerializeField] float startHoleRadius = 5f;
+    [SerializeField] float startShaftRadius = 3.0f;
+
     [Header("マテリアル")]
     [SerializeField] Material dirtMaterial;
     [SerializeField] Material oreMaterial;
@@ -115,6 +121,15 @@ public class VoxelTerrain : MonoBehaviour
         {
             CreateStage(widthZ, heightY, blockSize);
         }
+
+        if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
+        {
+            RestartFromCheckpoint();
+        }
+        else
+        {
+            Debug.Log("初回スタートまたはチェックポイントなし");
+        }
     }
 
     /*void GenerateLevel()
@@ -205,25 +220,53 @@ public class VoxelTerrain : MonoBehaviour
         mapData = new byte[thicknessX, heightY, widthZ];
 
         var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
-        float layerNoiseScale = 0.2f; // 境界のガタガタ具合
-        float layerBumpyIntensity = 12f; // 境界のガタガタの流れの強さ
+        float layerNoiseScale = 0.2f;
+        float layerBumpyIntensity = 12f;
+
+        int startX = (thicknessX / 2) + startOffsetX;
+        int startY = heightY - startDepthFromSurface;
+        int startZ = widthZ / 2;
+
+        int goalThresholdY = 480;
+        int relayThickness = 3;
+
         for (int y = 0; y < heightY; y++)
         {
             for (int x = 0; x < thicknessX; x++)
             {
                 for (int z = 0; z < widthZ; z++)
                 {
-                    float scale = 0.8f;
-                    float noise = Mathf.PerlinNoise(x * scale, y * scale + (seed * 0.1f));
+                    // --- A. スタート地点の小部屋と縦穴 ---
+                    float dx = x - startX;
+                    float dz = z - startZ;
+                    float distXZ = Mathf.Sqrt(dx * dx + dz * dz);
+                    float dy = y - startY;
+                    float distSphere = Mathf.Sqrt(dx * dx + dy * dy + dz * dz);
 
+                    if (distSphere < startHoleRadius || (y > startY && distXZ < startShaftRadius))
+                    {
+                        mapData[x, y, z] = (byte)BlockType.Air;
+                        continue;
+                    }
+
+                    // 1. 地表付近の空気層
                     if (y > heightY - 3)
                     {
                         mapData[x, y, z] = (byte)BlockType.Air;
                     }
-                    else if (y > 0 && y % (chunkSizeY * 10) == 0)
+                    // 2. ゴールエリアの空洞化
+                    else if (y < goalThresholdY)
+                    {
+                        if (y <= 5) mapData[x, y, z] = (byte)BlockType.Bedrock;
+                        else if (y == 6 && x == startX && z == startZ) mapData[x, y, z] = (byte)BlockType.Stone;
+                        else mapData[x, y, z] = (byte)BlockType.Air;
+                    }
+                    // 3. 中継地点 (Bedrock) の判定
+                    else if (y > 0 && IsRelayZone(y, relayThickness))
                     {
                         mapData[x, y, z] = (byte)BlockType.Bedrock;
                     }
+                    // 4. 通常のブロック生成
                     else
                     {
                         if (rnd.NextDouble() * 100.0 < oreProbability)
@@ -237,18 +280,9 @@ public class VoxelTerrain : MonoBehaviour
                             float bumpyY = y + yOffset;
                             float depthRatio = bumpyY / heightY;
 
-                            if (depthRatio < 0.2f)
-                            {
-                                mapData[x, y, z] = (byte)BlockType.HardRock;
-                            }
-                            else if (depthRatio < 0.6f)
-                            {
-                                mapData[x, y, z] = (byte)BlockType.Stone;
-                            }
-                            else
-                            {
-                                mapData[x, y, z] = (byte)BlockType.Dirt;
-                            }
+                            if (depthRatio < 0.2f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                            else if (depthRatio < 0.6f) mapData[x, y, z] = (byte)BlockType.Stone;
+                            else mapData[x, y, z] = (byte)BlockType.Dirt;
                         }
                     }
                 }
@@ -257,9 +291,65 @@ public class VoxelTerrain : MonoBehaviour
 
         float offsetX = -(thicknessX * blockSize) / 2f;
         float offsetZ = -(widthZ * blockSize) / 2f;
-
         transform.position = new Vector3(offsetX, -(heightY * blockSize), offsetZ);
+
         GenerateChunks();
+        TeleportPlayerToStart(startX, startY, startZ);
+    }
+
+    private bool IsRelayZone(int y, int thickness)
+    {
+        int interval = chunkSizeY * 10;
+        for (int i = 1; i <= (heightY / interval); i++)
+        {
+            int targetY = interval * i;
+            if (targetY >= heightY) continue;
+            if (y >= targetY - thickness && y <= targetY + thickness) return true;
+        }
+        return false;
+    }
+
+    public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(worldCenter);
+        int centerX = Mathf.RoundToInt(localPos.x / blockSize);
+        int centerY = Mathf.RoundToInt(localPos.y / blockSize);
+        int centerZ = Mathf.RoundToInt(localPos.z / blockSize);
+
+        int r = Mathf.CeilToInt(radius / blockSize);
+
+        for (int x = centerX - r; x <= centerX + r; x++)
+        {
+            for (int y = centerY - r; y <= centerY + r; y++)
+            {
+                for (int z = centerZ - r; z <= centerZ + r; z++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+                    float distSq = (x - centerX) * (x - centerX) + (y - centerY) * (y - centerY) + (z - centerZ) * (z - centerZ);
+                    if (distSq <= (radius / blockSize) * (radius / blockSize))
+                    {
+                        if (mapData[x, y, z] != (byte)BlockType.Air)
+                        {
+                            mapData[x, y, z] = (byte)BlockType.Air;
+                            int cIndex = y / chunkSizeY;
+                            chunksToUpdate.Add(cIndex);
+                            if (y % chunkSizeY == 0 && cIndex > 0) chunksToUpdate.Add(cIndex - 1);
+                            if (y % chunkSizeY == chunkSizeY - 1 && cIndex < chunks.Length - 1) chunksToUpdate.Add(cIndex + 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void TeleportPlayerToStart(int x, int y, int z)
+    {
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            Vector3 worldPos = transform.position + new Vector3(x * blockSize, y * blockSize + 1.5f, z * blockSize);
+            player.transform.position = worldPos;
+        }
     }
 
     void GenerateChunks()
@@ -362,16 +452,18 @@ public class VoxelTerrain : MonoBehaviour
     }
     public void OnPlayerReachRelayPoint(int y)
     {
-        Debug.Log($"中継地点到達.深度：{y}");
+        Debug.Log($"中継地点到達. 深度：{y}");
 
         GameObject player = GameObject.FindWithTag("Player");
         if (player == null) return;
 
-        // プレイヤー位置をチェックポイントとして保存
-        CheckpointManager.Instance.SaveCheckpoint(player.transform.position);
-
-        // 同じオブジェクト（または子要素）から SelectPoint を取得
-        if (TryGetComponent<SelectPoint>(out var selectPoint) || TryGetComponent<SelectPoint>(out selectPoint))
+        // --- 修正ポイント ---
+        // 現在のBedrockの層を確実に抜けるため、少し下の位置を保存する
+        // relayThicknessが3なら、中心から-4くらいすれば層の下に出られます
+        Vector3 checkpointPos = player.transform.position;
+        checkpointPos.y -= (blockSize * 5f);
+        CheckpointManager.Instance.SaveCheckpoint(checkpointPos);
+        if (TryGetComponent<SelectPoint>(out var selectPoint))
         {
             selectPoint.ShowButton();
         }
@@ -387,8 +479,6 @@ public class VoxelTerrain : MonoBehaviour
         int px = Mathf.FloorToInt(localPos.x / blockSize);
         int py = Mathf.FloorToInt(localPos.y / blockSize);
         int pz = Mathf.FloorToInt(localPos.z / blockSize);
-
-        bool changed = false;
         int searchRange = 5;
 
         for (int x = 0; x < thicknessX; x++)
@@ -402,8 +492,6 @@ public class VoxelTerrain : MonoBehaviour
                     if (mapData[x, y, z] == (byte)BlockType.Bedrock)
                     {
                         mapData[x, y, z] = (byte)BlockType.Air;
-                        changed = true;
-
                         int cIndex = y / chunkSizeY;
                         chunksToUpdate.Add(cIndex);
                         if (y % chunkSizeY == 0 && cIndex > 0) chunksToUpdate.Add(cIndex - 1);
@@ -412,10 +500,17 @@ public class VoxelTerrain : MonoBehaviour
                 }
             }
         }
+    }
 
-        if (changed)
+    public void RestartFromCheckpoint()
+    {
+        Vector3 lastPos = CheckpointManager.Instance.GetLastCheckpoint();
+        GameObject player = GameObject.FindWithTag("Player");
+
+        if (player != null)
         {
-            Debug.Log("デバッグ：周囲の中継地点を削除しました。");
+            player.transform.position = lastPos;
+            VoxelTerrain.Instance.ClearBlocksAroundPoint(lastPos, 4.0f);
         }
     }
 

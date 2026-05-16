@@ -30,14 +30,15 @@ public class CheckpointManager : MonoBehaviour
         Debug.Log("チェックポイント保存: " + position);
     }
 
-    // 復元用
-    public bool HasCheckpoint()
-    {
-        return hasCheckpoint;
-    }
+    public bool HasCheckpoint() => hasCheckpoint;
 
-    public Vector3 GetCheckpointPosition()
+    public Vector3 GetLastCheckpoint()
     {
         return savedPosition;
+    }
+
+    public void ResetCheckpoint()
+    {
+        hasCheckpoint = false;
     }
 }
