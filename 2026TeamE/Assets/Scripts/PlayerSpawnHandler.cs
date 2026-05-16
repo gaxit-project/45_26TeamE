@@ -9,8 +9,12 @@ public class PlayerSpawnHandler : MonoBehaviour
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
         {
-            player.transform.position = CheckpointManager.Instance.GetLastCheckpoint();
-            Debug.Log("チェックポイントから再開");
+            Vector3 restartPos = CheckpointManager.Instance.GetLastCheckpoint();
+            player.transform.position = restartPos;
+            if (VoxelTerrain.Instance != null)
+            {
+                VoxelTerrain.Instance.ClearBlocksAroundPoint(restartPos, 4.0f);
+            }
         }
         else
         {

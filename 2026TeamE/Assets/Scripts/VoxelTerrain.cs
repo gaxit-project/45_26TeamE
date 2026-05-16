@@ -18,7 +18,7 @@ public class VoxelTerrain : MonoBehaviour
     [Header("プレイヤー開始位置設定")]
     [SerializeField] int startOffsetX = 0;
     [SerializeField] int startDepthFromSurface = 30;
-    [SerializeField] float startHoleRadius = 5f;
+    [SerializeField] float startHoleRadius = 8f;
     [SerializeField] float startShaftRadius = 3.0f;
 
     [Header("マテリアル")]
@@ -121,14 +121,16 @@ public class VoxelTerrain : MonoBehaviour
         {
             CreateStage(widthZ, heightY, blockSize);
         }
+        StartCoroutine(RestartRoutine());
+    }
+
+    private System.Collections.IEnumerator RestartRoutine()
+    {
+        yield return null;
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
         {
             RestartFromCheckpoint();
-        }
-        else
-        {
-            Debug.Log("初回スタートまたはチェックポイントなし");
         }
     }
 
