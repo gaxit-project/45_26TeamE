@@ -102,7 +102,7 @@ public class TitleManager : MonoBehaviour
     public void QuitGame()
     {
         SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é1");
-        UnityEditor.EditorApplication.isPlaying = false;
+        //UnityEditor.EditorApplication.isPlaying = false;
         Application.Quit();
     }
 }
