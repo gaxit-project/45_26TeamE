@@ -1,24 +1,26 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerSpawnHandler : MonoBehaviour
 {
-    void Start()
+    IEnumerator Start()
     {
+        yield return null;
+
         GameObject player = GameObject.FindWithTag("Player");
-        if (player == null) return;
+        if (player == null) yield break;
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
         {
-            Vector3 restartPos = CheckpointManager.Instance.GetLastCheckpoint();
-            player.transform.position = restartPos;
+            Vector3 pos = CheckpointManager.Instance.GetLastCheckpoint();
+            player.transform.position = pos;
+
             if (VoxelTerrain.Instance != null)
             {
-                VoxelTerrain.Instance.ClearBlocksAroundPoint(restartPos, 4.0f);
+                VoxelTerrain.Instance.ClearBlocksAroundPoint(pos, 4.0f);
             }
-        }
-        else
-        {
-            Debug.Log("初期スポーン位置");
+
+            CheckpointManager.Instance.MarkCheckpointAsUsed();
         }
     }
 }

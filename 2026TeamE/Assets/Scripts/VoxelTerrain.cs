@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
@@ -7,7 +7,7 @@ public class VoxelTerrain : MonoBehaviour
 {
     public static VoxelTerrain Instance { get; private set; }
 
-    [Header("¶¬İ’è")]
+    [Header("ç”Ÿæˆè¨­å®š")]
     [SerializeField] int thicknessX = 5;
     [SerializeField] int heightY = 20;
     [SerializeField] int widthZ = 30;
@@ -15,32 +15,32 @@ public class VoxelTerrain : MonoBehaviour
     [Range(0, 100)]
     [SerializeField] float oreProbability = 5f;
 
-    [Header("ƒvƒŒƒCƒ„[ŠJnˆÊ’uİ’è")]
+    [Header("ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼é–‹å§‹ä½ç½®è¨­å®š")]
     [SerializeField] int startOffsetX = 0;
     [SerializeField] int startDepthFromSurface = 30;
     [SerializeField] float startHoleRadius = 8f;
     [SerializeField] float startShaftRadius = 3.0f;
 
-    [Header("ƒ}ƒeƒŠƒAƒ‹")]
+    [Header("ãƒãƒ†ãƒªã‚¢ãƒ«")]
     [SerializeField] Material dirtMaterial;
     [SerializeField] Material oreMaterial;
     [SerializeField] Material bedrockMaterial;
     [SerializeField] Material stoneMaterial;
     [SerializeField] Material hardRockMaterial;
 
-    [Header("“¯ŠúƒIƒvƒVƒ‡ƒ“")]
+    [Header("åŒæœŸã‚ªãƒ—ã‚·ãƒ§ãƒ³")]
     [SerializeField] bool useDeterministicSeed = true;
     [SerializeField] int seed = 12345;
 
-    [Header("ƒ`ƒƒƒ“ƒNİ’è")]
+    [Header("ãƒãƒ£ãƒ³ã‚¯è¨­å®š")]
     [SerializeField] int chunkSizeY = 16;
     [SerializeField] GameObject chunkPrefab;
 
-    [Header("•óÎİ’è")]
+    [Header("å®çŸ³è¨­å®š")]
     [SerializeField] GameObject treasurePrefab;
     [SerializeField] float baseTreasureChance = 1f;
 
-    [Header("d“xİ’è")]
+    [Header("ç¡¬åº¦è¨­å®š")]
     [SerializeField] float hardnessScale = 0.5f;
 
 
@@ -52,7 +52,7 @@ public class VoxelTerrain : MonoBehaviour
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
 
-    // ƒuƒƒbƒN‚ª•ÏX‚³‚ê‚½‚Æ‚«‚ÌƒCƒxƒ“ƒg
+    // ãƒ–ãƒ­ãƒƒã‚¯ãŒå¤‰æ›´ã•ã‚ŒãŸã¨ãã®ã‚¤ãƒ™ãƒ³ãƒˆ
     public event Action<int, int, byte> OnBlockChanged;
 
     public enum BlockType : byte
@@ -70,7 +70,7 @@ public class VoxelTerrain : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // © ‚±‚ê’Ç‰Á
+            DontDestroyOnLoad(gameObject); // â† ã“ã‚Œè¿½åŠ 
         }
         else
         {
@@ -79,19 +79,19 @@ public class VoxelTerrain : MonoBehaviour
     }
     private void OnEnable()
     {
-        // ƒV[ƒ“Ø‚è‘Ö‚¦ƒCƒxƒ“ƒg‚ğw“Ç
+        // ã‚·ãƒ¼ãƒ³åˆ‡ã‚Šæ›¿ãˆã‚¤ãƒ™ãƒ³ãƒˆã‚’è³¼èª­
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
-        // ƒIƒuƒWƒFƒNƒg”jŠüE–³Œø‰»‚ÉƒCƒxƒ“ƒgw“Ç‚ğ‰ğœ
+        // ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆç ´æ£„ãƒ»ç„¡åŠ¹åŒ–æ™‚ã«ã‚¤ãƒ™ãƒ³ãƒˆè³¼èª­ã‚’è§£é™¤
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
-        // ƒAƒNƒeƒBƒu‚ÈƒV[ƒ“–¼‚ª "02_Main" ‚Ì‚¾‚¯•\¦(true)A‚»‚êˆÈŠO‚Í”ñ•\¦(false)
+        // ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ãªã‚·ãƒ¼ãƒ³åãŒ "02_Main" ã®æ™‚ã ã‘è¡¨ç¤º(true)ã€ãã‚Œä»¥å¤–ã¯éè¡¨ç¤º(false)
         if (scene.name == "02_Main")
         {
             SetActiveAllChildren(true);
@@ -102,13 +102,13 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    // ©giƒRƒ‰ƒCƒ_[‚È‚Çj‚Æq—v‘fiƒ`ƒƒƒ“ƒN‚â•óÎ‚È‚Çj‚Ì•\¦E”ñ•\¦‚ğˆêŠ‡Ø‚è‘Ö‚¦
+    // è‡ªèº«ï¼ˆã‚³ãƒ©ã‚¤ãƒ€ãƒ¼ãªã©ï¼‰ã¨å­è¦ç´ ï¼ˆãƒãƒ£ãƒ³ã‚¯ã‚„å®çŸ³ãªã©ï¼‰ã®è¡¨ç¤ºãƒ»éè¡¨ç¤ºã‚’ä¸€æ‹¬åˆ‡ã‚Šæ›¿ãˆ
     private void SetActiveAllChildren(bool isActive)
     {
-        // ©g‚ÌƒŒƒ“ƒ_ƒ‰[‚âƒRƒ‰ƒCƒ_[‚ª‚ ‚ê‚Î–³Œø‰»/—LŒø‰»
+        // è‡ªèº«ã®ãƒ¬ãƒ³ãƒ€ãƒ©ãƒ¼ã‚„ã‚³ãƒ©ã‚¤ãƒ€ãƒ¼ãŒã‚ã‚Œã°ç„¡åŠ¹åŒ–/æœ‰åŠ¹åŒ–
         if (TryGetComponent<Collider>(out var col)) col.enabled = isActive;
 
-        // qƒIƒuƒWƒFƒNƒgiChunk‚â•óÎj‚ğ‚·‚×‚Äƒ‹[ƒv‚ÅØ‚è‘Ö‚¦
+        // å­ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆï¼ˆChunkã‚„å®çŸ³ï¼‰ã‚’ã™ã¹ã¦ãƒ«ãƒ¼ãƒ—ã§åˆ‡ã‚Šæ›¿ãˆ
         foreach (Transform child in transform)
         {
             child.gameObject.SetActive(isActive);
@@ -152,14 +152,14 @@ public class VoxelTerrain : MonoBehaviour
 
     void Update()
     {
-        // ƒfƒoƒbƒO—pF1ƒL[‚ª‰Ÿ‚³‚ê‚½‚çüˆÍ‚Ì’†Œp’n“_‚ğÁ‹
+        // ãƒ‡ãƒãƒƒã‚°ç”¨ï¼š1ã‚­ãƒ¼ãŒæŠ¼ã•ã‚ŒãŸã‚‰å‘¨å›²ã®ä¸­ç¶™åœ°ç‚¹ã‚’æ¶ˆå»
         if (Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             RemoveBedrockAroundPlayer();
         }
     }
 
-    // ƒuƒƒbƒN‚ğŒ@‚é
+    // ãƒ–ãƒ­ãƒƒã‚¯ã‚’æ˜ã‚‹
     public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
     {
         int r = Mathf.CeilToInt(radius);
@@ -206,7 +206,7 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    // ƒuƒƒbƒN‚ğ‹­§“I‚Éíœ
+    // ãƒ–ãƒ­ãƒƒã‚¯ã‚’å¼·åˆ¶çš„ã«å‰Šé™¤
     public void RemoveBlockForced(int x, int y, int z)
     {
         if(!IsInside(x, y, z)) return;
@@ -238,7 +238,7 @@ public class VoxelTerrain : MonoBehaviour
             {
                 for (int z = 0; z < widthZ; z++)
                 {
-                    // --- A. ƒXƒ^[ƒg’n“_‚Ì¬•”‰®‚ÆcŒŠ ---
+                    // --- A. ã‚¹ã‚¿ãƒ¼ãƒˆåœ°ç‚¹ã®å°éƒ¨å±‹ã¨ç¸¦ç©´ ---
                     float dx = x - startX;
                     float dz = z - startZ;
                     float distXZ = Mathf.Sqrt(dx * dx + dz * dz);
@@ -251,24 +251,24 @@ public class VoxelTerrain : MonoBehaviour
                         continue;
                     }
 
-                    // 1. ’n•\•t‹ß‚Ì‹ó‹C‘w
+                    // 1. åœ°è¡¨ä»˜è¿‘ã®ç©ºæ°—å±¤
                     if (y > heightY - 3)
                     {
                         mapData[x, y, z] = (byte)BlockType.Air;
                     }
-                    // 2. ƒS[ƒ‹ƒGƒŠƒA‚Ì‹ó“´‰»
+                    // 2. ã‚´ãƒ¼ãƒ«ã‚¨ãƒªã‚¢ã®ç©ºæ´åŒ–
                     else if (y < goalThresholdY)
                     {
                         if (y <= 5) mapData[x, y, z] = (byte)BlockType.Bedrock;
                         else if (y == 6 && x == startX && z == startZ) mapData[x, y, z] = (byte)BlockType.Stone;
                         else mapData[x, y, z] = (byte)BlockType.Air;
                     }
-                    // 3. ’†Œp’n“_ (Bedrock) ‚Ì”»’è
+                    // 3. ä¸­ç¶™åœ°ç‚¹ (Bedrock) ã®åˆ¤å®š
                     else if (y > 0 && IsRelayZone(y, relayThickness))
                     {
                         mapData[x, y, z] = (byte)BlockType.Bedrock;
                     }
-                    // 4. ’Êí‚ÌƒuƒƒbƒN¶¬
+                    // 4. é€šå¸¸ã®ãƒ–ãƒ­ãƒƒã‚¯ç”Ÿæˆ
                     else
                     {
                         if (rnd.NextDouble() * 100.0 < oreProbability)
@@ -426,7 +426,7 @@ public class VoxelTerrain : MonoBehaviour
         byte blockType = mapData[x, y, z];
         float baseHardness = 1.0f;
 
-        // ƒuƒƒbƒN‚É‰‚¶‚½d“xİ’è
+        // ãƒ–ãƒ­ãƒƒã‚¯ã«å¿œã˜ãŸç¡¬åº¦è¨­å®š
         switch ((BlockType)blockType)
         {
             case BlockType.Dirt:
@@ -448,30 +448,48 @@ public class VoxelTerrain : MonoBehaviour
                 baseHardness = 1.0f;
                 break;
         }
-        // [‚³‚É‰‚¶‚Äd‚³‚ğ‘‰Á‚³‚¹‚é
+        // æ·±ã•ã«å¿œã˜ã¦ç¡¬ã•ã‚’å¢—åŠ ã•ã›ã‚‹
         float depthFactor = (heightY - y) * hardnessScale * 0.05f;
         return baseHardness + depthFactor;
     }
+
+    private int GetRelayID(int y)
+    {
+        int interval = chunkSizeY * 10;
+        return y / interval;
+    }
     public void OnPlayerReachRelayPoint(int y)
     {
-        Debug.Log($"’†Œp’n“_“’B. [“xF{y}");
+        Debug.Log($"ä¸­ç¶™åœ°ç‚¹åˆ°é”. æ·±åº¦ï¼š{y}");
+
+        if (CheckpointManager.Instance == null) return;
+
+        int currentID = GetRelayID(y);
+
+        // â— åŒã˜ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆãªã‚‰UIå‡ºã•ãªã„
+        if (currentID == CheckpointManager.Instance.GetUsedCheckpointID())
+        {
+            Debug.Log("åŒã˜ãƒã‚§ãƒƒã‚¯ãƒã‚¤ãƒ³ãƒˆã®ãŸã‚ã‚¹ã‚­ãƒƒãƒ—");
+            return;
+        }
 
         GameObject player = GameObject.FindWithTag("Player");
         if (player == null) return;
 
-        // --- C³ƒ|ƒCƒ“ƒg ---
-        // Œ»İ‚ÌBedrock‚Ì‘w‚ğŠmÀ‚É”²‚¯‚é‚½‚ßA­‚µ‰º‚ÌˆÊ’u‚ğ•Û‘¶‚·‚é
-        // relayThickness‚ª3‚È‚çA’†S‚©‚ç-4‚­‚ç‚¢‚·‚ê‚Î‘w‚Ì‰º‚Éo‚ç‚ê‚Ü‚·
         Vector3 checkpointPos = player.transform.position;
         checkpointPos.y -= (blockSize * 5f);
-        CheckpointManager.Instance.SaveCheckpoint(checkpointPos);
+
+        // ä¿å­˜ï¼ˆIDä»˜ãï¼‰
+        CheckpointManager.Instance.SaveCheckpoint(checkpointPos, currentID);
+
+        // UIè¡¨ç¤º
         if (TryGetComponent<SelectPoint>(out var selectPoint))
         {
             selectPoint.ShowButton();
         }
     }
 
-    // ƒfƒoƒbƒO—pFƒvƒŒƒCƒ„[ü•Ó‚Ì’†Œp’n“_‚ğíœ
+    // ãƒ‡ãƒãƒƒã‚°ç”¨ï¼šãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼å‘¨è¾ºã®ä¸­ç¶™åœ°ç‚¹ã‚’å‰Šé™¤
     private void RemoveBedrockAroundPlayer()
     {
         GameObject playerObj = GameObject.FindWithTag("Player");
@@ -512,7 +530,11 @@ public class VoxelTerrain : MonoBehaviour
         if (player != null)
         {
             player.transform.position = lastPos;
-            VoxelTerrain.Instance.ClearBlocksAroundPoint(lastPos, 4.0f);
+
+            ClearBlocksAroundPoint(lastPos, 4.0f);
+
+            // â—ã“ã“é‡è¦
+            CheckpointManager.Instance.MarkCheckpointAsUsed();
         }
     }
 
