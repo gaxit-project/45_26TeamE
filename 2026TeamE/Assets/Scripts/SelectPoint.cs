@@ -68,9 +68,4 @@ public class SelectPoint : MonoBehaviour
             Debug.LogError($"新しいシーンでタグ '{panelTag}' が設定されたオブジェクトが見つかりませんでした。");
         }
     }
-
-    public void ClosePanel()
-    {
-        if (selectPanel != null) selectPanel.SetActive(false);
-    }
 }
