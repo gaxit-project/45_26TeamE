@@ -33,4 +33,9 @@ public class ScaleOnSelect : MonoBehaviour, ISelectHandler, IDeselectHandler
     {
         transform.localScale = initialScale;
     }
+
+    public void GoExchange()
+    {
+
+    }
 }

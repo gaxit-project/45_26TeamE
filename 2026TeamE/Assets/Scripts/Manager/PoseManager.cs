@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -115,7 +115,23 @@ public class PoseManager : MonoBehaviour
 
     public void QuitGame()
     {
+        StartCoroutine (QuitGameCoroutine());
+    }
+
+    public IEnumerator QuitGameCoroutine()
+    {
         if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
-        Application.Quit(); // ゲームを終了
+        yield return new WaitForSecondsRealtime(0.1f);
+        Time.timeScale = 1f; // 時間の進行を元に戻す
+        Quit();
+    }
+
+    private void Quit()
+    {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }
