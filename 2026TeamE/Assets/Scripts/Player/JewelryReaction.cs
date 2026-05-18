@@ -17,6 +17,9 @@ public class JewelryReaction : MonoBehaviour
     public float cooldownTime = 1.0f;
 
     private bool isCoolingDown = false;
+    
+    // 生成したマーカーを覚えておくための変数
+    private GameObject currentMarker;
 
     private void Start()
     {
@@ -41,9 +44,20 @@ public class JewelryReaction : MonoBehaviour
         if (visualEchoPrefab != null)
         {
             Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
-            GameObject m = Instantiate(marker, ob);
-            m.transform.localPosition = new Vector3(0, 0, 4);
-            m.transform.localRotation = Quaternion.Euler(0, -90, 0);
+            
+            // 古いマーカーが残っていたら消す（重複防止）
+            if (currentMarker != null)
+            {
+                Destroy(currentMarker);
+            }
+
+            // 新しく生成して変数に保存しておく
+            currentMarker = Instantiate(marker, ob);
+            currentMarker.transform.localPosition = new Vector3(0, 0, 4);
+            currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
+
+            // 生成したマーカーを5秒後に自動で消す
+            Destroy(currentMarker, 5f);
         }
 
         Invoke("ResetReaction", cooldownTime);
@@ -56,52 +70,53 @@ public class JewelryReaction : MonoBehaviour
 
     void Get()
     {
+        // 宝石を取得した瞬間にマーカーを消す
+        if (currentMarker != null)
+        {
+            Destroy(currentMarker);
+        }
+
         MoneyManager.Instance.MoneyOnHandIncrease(300000);
         StartCoroutine(GetAnime());
     }
 
     IEnumerator GetAnime()
     {
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlaySE("決定_1");
-        }
-
         // 最初の位置を記録（Xのみ5に変更して画面手前に出す）
         Vector3 startPos = new Vector3(5, transform.position.y, transform.position.z);
         
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
         
-        float animDuration = 0.5f; // アニメーションの長さ（秒）
-        float flashInterval = 0.05f; // 点滅のスピード
-        float popHeight = 1.5f; // ポップアップで浮き上がる高さ
+        float animDuration = 0.5f; 
+        float flashInterval = 0.05f; 
+        float popHeight = 1.5f; 
         float elapsedTime = 0f;
 
         while (elapsedTime < animDuration)
         {
-            // 0 から 1 に向かって進む進行度
             float t = elapsedTime / animDuration;
             
-            // 徐々に減速しながら上に浮き上がる計算（Ease Out Cubic）
             float easeOut = 1f - Mathf.Pow(1f - t, 3f);
             float currentY = startPos.y + (popHeight * easeOut);
             
-            // XとZは固定し、Yだけ動かす
             transform.position = new Vector3(startPos.x, currentY, startPos.z);
 
-            // 経過時間を使って点滅を計算する
             bool isVisible = (elapsedTime % (flashInterval * 2)) < flashInterval;
             foreach (Renderer r in renderers)
             {
                 if (r != null) r.enabled = isVisible;
             }
 
-            elapsedTime += Time.deltaTime; // 1フレーム分の時間を進める
-            yield return null; // 1フレーム待つ（なめらかに動かすために必須）
+            elapsedTime += Time.deltaTime; 
+            yield return null; 
         }
 
-        // アニメーションが終わったらエフェクトを出す
         Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("宝石獲得");
+        }
         
         Destroy(gameObject);
     }

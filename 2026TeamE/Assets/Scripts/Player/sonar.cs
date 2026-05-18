@@ -10,6 +10,7 @@ public class Sonar : MonoBehaviour
     public float maxRadius = 30.0f; // 消えるまでの最大半径
     public int segments = 36; // 円を構成する点の数
     public int sonarLV = 1;
+    public int makertime = 10; //マーカー表示の時間
 
     // 【追加】最大サイズで止めておく時間
     public float holdTime = 0.3f;
