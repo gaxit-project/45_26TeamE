@@ -1,85 +1,90 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BatteryManager : MonoBehaviour
 {
     [SerializeField] private PlayerController playerController;
     [SerializeField] private List<GameObject> battery = new List<GameObject>();
 
-    [Header("“_–Åİ’è")]
-    [SerializeField] private float blinkInterval = 0.15f; // “_–ÅƒXƒs[ƒh
-    [SerializeField] private float consumeTimeout = 0.1f; // Œ¸‚ç‚È‚­‚È‚Á‚Ä‚©‚çÁ”ï”»’è‚ğØ‚é‚Ü‚Å‚Ì—P—\ŠÔi•bj
+    [Header("ç‚¹æ»…è¨­å®š")]
+    [SerializeField] private float blinkInterval = 0.15f; // ç‚¹æ»…ã‚¹ãƒ”ãƒ¼ãƒ‰
+    [SerializeField] private float consumeTimeout = 0.1f; // æ¶ˆè²»ãŒæ­¢ã¾ã£ã¦ã‹ã‚‰ç‚¹æ»…ãŒçµ‚äº†ã™ã‚‹ã¾ã§ã®æ™‚é–“
 
     private float timer = 0f;
     private bool isBlinkVisible = true;
     private bool isConsuming = false;
 
-    // ƒoƒbƒeƒŠ[Œ¸­”»’è—p‚Ì•Ï”
     private float previousBattery;
     private float stopConsumeTimer = 0f;
     private int previousTargetIndex = -1;
 
+    // Imageã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã‚’ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã™ã‚‹ãŸã‚ã®ãƒªã‚¹ãƒˆ
+    private List<Image> batteryImages = new List<Image>();
+
     void Start()
     {
-        // Å‰‚ÍŒ»İ‚ÌƒoƒbƒeƒŠ[—Ê‚©‚çƒXƒ^[ƒg
         if (playerController != null)
         {
             previousBattery = playerController.currentBattery;
+        }
+
+        // å„ãƒãƒƒãƒ†ãƒªãƒ¼ã‚¢ã‚¤ã‚³ãƒ³ã®Imageã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã‚’å–å¾—ã—ã¦ãŠã
+        foreach (GameObject obj in battery)
+        {
+            if (obj != null)
+            {
+                batteryImages.Add(obj.GetComponent<Image>());
+            }
+            else
+            {
+                batteryImages.Add(null);
+            }
         }
     }
 
     void Update()
     {
-        // 1. ƒoƒbƒeƒŠ[‚ªuŒ¸‚Á‚Ä‚¢‚é‚©v‚ğ©“®ƒ`ƒFƒbƒN
         CheckBatteryDecrease();
 
-        // 2. Œ»İ“_–Å‚³‚¹‚é‚×‚«ƒAƒCƒRƒ“‚ÌƒCƒ“ƒfƒbƒNƒX‚ğæ“¾
         int targetIndex = GetTargetIndex();
 
-        // 3. “_–Å‚Æ‚»‚¤‚Å‚È‚¢‚Åˆ—‚ğŠ®‘S‚É•ª‚¯‚é
         if (isConsuming)
         {
-            // yd—vz“_–Å‘ÎÛ‚ÌƒAƒCƒRƒ“‚ª—×‚ÉˆÚ‚Á‚½i—á:81‚©‚ç80‚ÉŒ¸‚Á‚½juŠÔ‚¾‚¯‚Í
-            // ‹ó‚É‚È‚Á‚½ƒAƒCƒRƒ“‚ğŠ®‘S‚ÉÁ‚·‚½‚ß‚É1‰ñ‚¾‚¯•\¦ˆ—‚ğŒÄ‚Ô
             if (targetIndex != previousTargetIndex)
             {
                 UpdateAppearance();
-                isBlinkVisible = true; // V‚µ‚¢“_–ÅƒAƒCƒRƒ“‚ğ•K‚¸•\¦ó‘Ô‚©‚çŠJn
+                isBlinkVisible = true; 
                 timer = 0f;
             }
 
-            // “_–Å’†‚Í–ˆƒtƒŒ[ƒ€‚Ì UpdateAppearance() ‚ÍŒÄ‚Î‚¸A“_–ÅƒƒWƒbƒN‚Ì‚İÀs
             HandleBlinking(targetIndex);
+            
+            // ç‚¹æ»…å‡¦ç†ã‚’é‚ªé­”ã—ãªã„ã‚ˆã†ã«ã€è¦‹ãŸç›®ã®æ›´æ–°ï¼ˆFillAmountã®èª¿æ•´ï¼‰ã‚‚è£ã§è¡Œã†
+            UpdateFillAmounts();
         }
         else
         {
-            // “_–Å‚µ‚Ä‚¢‚È‚¢‚Í’Êí‚Ì•\¦ˆ—‚ğs‚¤
             UpdateAppearance();
 
-            // “_–Å‚ª“r’†‚ÅI‚í‚Á‚½‚ÉAƒAƒCƒRƒ“‚ª“§–¾‚Ì‚Ü‚Üc‚é‚Ì‚ğ–h‚®
-            if (targetIndex != -1)
+            if (targetIndex != -1 && battery[targetIndex] != null)
             {
                 battery[targetIndex].SetActive(true);
             }
         }
 
-        // Ÿ‚ÌƒtƒŒ[ƒ€‚Ì”äŠr—p‚ÉŒ»İ‚ÌƒCƒ“ƒfƒbƒNƒX‚ğ•Û‘¶
         previousTargetIndex = targetIndex;
     }
 
-    // ========== ’Ç‰ÁFƒoƒbƒeƒŠ[Œ¸­‚Ì©“®”»’è ==========
     private void CheckBatteryDecrease()
     {
-        // ‘O‰ñ‚ÌƒtƒŒ[ƒ€‚æ‚èƒoƒbƒeƒŠ[‚ª­‚È‚­‚È‚Á‚Ä‚¢‚½‚çuÁ”ï’†v
         if (playerController.currentBattery < previousBattery)
         {
             isConsuming = true;
-            stopConsumeTimer = consumeTimeout; // ƒ^ƒCƒ}[‚ğƒŠƒZƒbƒg
+            stopConsumeTimer = consumeTimeout; 
         }
         else
         {
-            // Œ¸‚ç‚È‚­‚È‚Á‚½ê‡A­‚µ‚¾‚¯‘Ò‚Á‚Ä‚©‚çÁ”ïó‘Ô‚ğ‰ğœ‚·‚é
-            // i’P”­‚ÅŒ¸‚Á‚½‚É1ƒtƒŒ[ƒ€‚¾‚¯‚µ‚©“_–Å‚µ‚È‚¢‚Ì‚ğ–h‚¬A©‘R‚ÉŒ©‚¹‚é‚½‚ßj
             if (stopConsumeTimer > 0)
             {
                 stopConsumeTimer -= Time.deltaTime;
@@ -90,11 +95,9 @@ public class BatteryManager : MonoBehaviour
             }
         }
 
-        // Ÿ‚ÌƒtƒŒ[ƒ€‚Ì”äŠr—p‚É‹L‰¯
         previousBattery = playerController.currentBattery;
     }
 
-    // ========== ’Ç‰ÁFŒ»İ‚Ì“_–Å‘ÎÛ‚ğ”’l‚©‚çæ“¾ ==========
     private int GetTargetIndex()
     {
         if (playerController.currentBattery > 800) return 0;
@@ -102,13 +105,12 @@ public class BatteryManager : MonoBehaviour
         if (playerController.currentBattery > 400) return 2;
         if (playerController.currentBattery > 200) return 3;
         if (playerController.currentBattery > 0) return 4;
-        return -1; // ƒoƒbƒeƒŠ[0‚Ì‚Í -1
+        return -1; 
     }
 
-    // ========== •ÏXF“_–Åˆ—i‘ÎÛ‚Ì‚İ‘€ìj ==========
     private void HandleBlinking(int targetIndex)
     {
-        if (targetIndex == -1) return; // ƒoƒbƒeƒŠ[‚ª0‚È‚ç‰½‚à‚µ‚È‚¢
+        if (targetIndex == -1 || battery[targetIndex] == null) return; 
 
         timer += Time.deltaTime;
         if (timer >= blinkInterval)
@@ -117,60 +119,59 @@ public class BatteryManager : MonoBehaviour
             timer = 0f;
         }
 
-        // ‘ÎÛ‚ÌƒAƒCƒRƒ“‚¾‚¯‚ğ“_–Å‚³‚¹‚é
         battery[targetIndex].SetActive(isBlinkVisible);
     }
 
-    // ========== Œ³‚Ì•\¦ƒƒWƒbƒNi‚»‚Ì‚Ü‚Üj ==========
+    // ON/OFFçŠ¶æ…‹ã¨FillAmountã®ä¸¡æ–¹ã‚’æ›´æ–°ã™ã‚‹
     private void UpdateAppearance()
     {
-        if (playerController.currentBattery <= 0)
+        UpdateFillAmounts();
+
+        // å®Œå…¨ã«ç©ºã«ãªã£ãŸãƒãƒƒãƒ†ãƒªãƒ¼ã¯éè¡¨ç¤ºã«ã™ã‚‹ï¼ˆã“ã‚Œã¾ã§ã®å‹•ä½œã‚’ç¶­æŒï¼‰
+        for (int i = 0; i < 5; i++)
         {
-            battery[4].SetActive(false);
-            battery[3].SetActive(false);
-            battery[2].SetActive(false);
-            battery[1].SetActive(false);
-            battery[0].SetActive(false);
+            if (batteryImages[i] != null && battery[i] != null)
+            {
+                if (batteryImages[i].fillAmount <= 0f)
+                {
+                    battery[i].SetActive(false);
+                }
+                else
+                {
+                    battery[i].SetActive(true);
+                }
+            }
         }
-        else if (playerController.currentBattery <= 200)
+    }
+
+    // ãƒãƒƒãƒ†ãƒªãƒ¼æ®‹é‡ã«å¿œã˜ã¦FillAmountã®ã¿ã‚’è¨ˆç®—ã—ã¦é©ç”¨ã™ã‚‹
+    private void UpdateFillAmounts()
+    {
+        float currentBat = playerController.currentBattery;
+
+        for (int i = 0; i < 5; i++)
         {
-            battery[4].SetActive(true);
-            battery[3].SetActive(false);
-            battery[2].SetActive(false);
-            battery[1].SetActive(false);
-            battery[0].SetActive(false);
-        }
-        else if (playerController.currentBattery <= 400)
-        {
-            battery[4].SetActive(true);
-            battery[3].SetActive(true);
-            battery[2].SetActive(false);
-            battery[1].SetActive(false);
-            battery[0].SetActive(false);
-        }
-        else if (playerController.currentBattery <= 600)
-        {
-            battery[4].SetActive(true);
-            battery[3].SetActive(true);
-            battery[2].SetActive(true);
-            battery[1].SetActive(false);
-            battery[0].SetActive(false);
-        }
-        else if (playerController.currentBattery <= 800)
-        {
-            battery[4].SetActive(true);
-            battery[3].SetActive(true);
-            battery[2].SetActive(true);
-            battery[1].SetActive(true);
-            battery[0].SetActive(false);
-        }
-        else if (playerController.currentBattery <= 1000)
-        {
-            battery[4].SetActive(true);
-            battery[3].SetActive(true);
-            battery[2].SetActive(true);
-            battery[1].SetActive(true);
-            battery[0].SetActive(true);
+            if (batteryImages[i] == null) continue;
+
+            float segmentMin = 1000f - (i + 1) * 200f; // ä¾‹: i=0 ãªã‚‰ 800
+            float segmentMax = 1000f - i * 200f;       // ä¾‹: i=0 ãªã‚‰ 1000
+
+            float fill = 0f;
+            if (currentBat >= segmentMax)
+            {
+                fill = 1f;
+            }
+            else if (currentBat <= segmentMin)
+            {
+                fill = 0f;
+            }
+            else
+            {
+                // ã‚»ã‚°ãƒ¡ãƒ³ãƒˆå†…ã®æ®‹é‡ã‚’å‰²åˆ(0.0ã€œ1.0)ã§è¨ˆç®—
+                fill = (currentBat - segmentMin) / 200f;
+            }
+
+            batteryImages[i].fillAmount = fill;
         }
     }
 }

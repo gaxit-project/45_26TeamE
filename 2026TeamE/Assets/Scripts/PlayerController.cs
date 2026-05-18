@@ -350,6 +350,15 @@ public class PlayerController : MonoBehaviour
 
         if (context.performed)
         {
+            int sonarLevel = UpgradeManager.GetLevel(UpgradeManager.SONAR);
+            if (sonarLevel >= 3)
+            {
+                SonarConsuption = 100;
+            }
+            else
+            {
+                SonarConsuption = 200;
+            }
             if (currentBattery >= SonarConsuption)
             {
                 Instantiate(sonar, transform.position, Quaternion.identity);

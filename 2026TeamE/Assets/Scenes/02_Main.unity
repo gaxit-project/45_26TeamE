@@ -2306,7 +2306,7 @@ MonoBehaviour:
   maxBattery: 1000
   currentBattery: 1000
   drillConsumption: 10
-  SonarConsuption: 200
+  SonarConsuption: 100
 --- !u!114 &548082332
 MonoBehaviour:
   m_ObjectHideFlags: 0
