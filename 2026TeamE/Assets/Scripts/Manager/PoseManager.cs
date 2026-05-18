@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -24,6 +24,9 @@ public class PoseManager : MonoBehaviour
 
     public void TogglePause(InputAction.CallbackContext context)
     {
+        // イントロダクション画面が開いている時はポーズを受け付けない
+        if (introduction.IsActive) return;
+
         if (pauseMenu.activeSelf)
         {
             if (context.performed)

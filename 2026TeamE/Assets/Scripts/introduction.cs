@@ -7,43 +7,67 @@ public class introduction : MonoBehaviour
     [Header("最初にフォーカスするボタン")]
     public GameObject firstSelectedButton; 
 
+    // 他のスクリプトから「今イントロダクション画面が開いているか」を確認できるようにする
+    public static bool IsActive { get; private set; }
+
+    private void OnEnable()
+    {
+        IsActive = true;
+    }
+
+    private void OnDisable()
+    {
+        IsActive = false;
+    }
+
     private IEnumerator Start()
     {
-        // パネルを非表示にするためにCanvasGroupを使う（無ければ自動追加）
         CanvasGroup group = GetComponent<CanvasGroup>();
         if (group == null)
         {
             group = gameObject.AddComponent<CanvasGroup>();
         }
 
-        // 最初は透明にして、ボタンも押せない状態にする
         group.alpha = 0f;
         group.interactable = false;
         group.blocksRaycasts = false;
 
-        // 1秒待つ
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
 
-        // 1秒経ったら透明度を戻して表示する
         group.alpha = 1f;
         group.interactable = true;
         group.blocksRaycasts = true;
 
-        // 時間を止める
         Time.timeScale = 0f;
         
-        // 指定したボタンに自動でフォーカスを当てる
-        if (firstSelectedButton != null)
+        if (firstSelectedButton != null && EventSystem.current != null)
         {
-            yield return new WaitForSecondsRealtime(0.2f);
             EventSystem.current.SetSelectedGameObject(null);
             EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }
     }
 
+    private void Update()
+    {
+        // 画面が開いている間は、決定ボタン以外にフォーカスが移らないように強制ロックする
+        if (IsActive && groupIsVisible() && firstSelectedButton != null && EventSystem.current != null)
+        {
+            if (EventSystem.current.currentSelectedGameObject != firstSelectedButton)
+            {
+                EventSystem.current.SetSelectedGameObject(firstSelectedButton);
+            }
+        }
+    }
+
+    // 表示が完了しているかどうかを判定
+    private bool groupIsVisible()
+    {
+        CanvasGroup group = GetComponent<CanvasGroup>();
+        return group != null && group.alpha >= 1f;
+    }
+
     public void Onstart()
     {
-        // 時間を元に戻して、この画面を非表示にする
         Time.timeScale = 1f;
         gameObject.SetActive(false);
     }

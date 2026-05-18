@@ -6,8 +6,8 @@ public class GemRadar : MonoBehaviour
 {
     public enum RadarMode
     {
-        Directional,    // 宝石の方向だけ波打つ
-        Omnidirectional // 全方位が波打ち＋鼓動（ダブルビート）する
+        Directional,    
+        Omnidirectional 
     }
 
     [Header("レーダー基本設定")]
@@ -32,14 +32,12 @@ public class GemRadar : MonoBehaviour
     private LineRenderer lineRenderer;
     private float searchTimer = 0f;
 
-    // レベル計算用の実際のパラメータ
     private float currentMaxDistance;
     private float currentMaxAngle;
-    private float maxInaccuracyRange; // 方向のブレの最大範囲
+    private float maxInaccuracyRange; 
 
-    // 範囲内のすべての宝石を保持するリスト
     private List<Transform> detectedGems = new List<Transform>();
-    private Transform nearestGem; // Omnidirectionalモード用
+    private Transform nearestGem; 
 
     void Start()
     {
@@ -62,7 +60,6 @@ public class GemRadar : MonoBehaviour
             FindGemsInRange();
         }
 
-        // Omnidirectionalモード用（一番近い宝石だけを使う旧処理）
         float omniTargetAngle = 0f;
         float omniCurrentWaveAmplitude = 0f;
         bool hasOmniTarget = nearestGem != null;
@@ -86,8 +83,9 @@ public class GemRadar : MonoBehaviour
 
             if (mode == RadarMode.Directional)
             {
-                // 複数の宝石が作る波を足し合わせる変数
-                float combinedWave = 0f;
+                // 単純に足すのではなく、一番影響が強い（波が大きい）宝石を一つだけ選ぶ
+                float maxInfluence = 0f;
+                float finalWave = 0f;
 
                 foreach (Transform gem in detectedGems)
                 {
@@ -96,35 +94,35 @@ public class GemRadar : MonoBehaviour
                     Vector3 dir = gem.position - transform.position;
                     float distance = dir.magnitude;
 
-                    // 範囲外ならスキップ
                     if (distance > currentMaxDistance) continue;
 
-                    // 1. この宝石専用のブレ（フワフワ）を計算
-                    // gem.GetInstanceID() を使うことで、Aの宝石とBの宝石で別々の揺らぎ方をする
                     float noise = Mathf.PerlinNoise(Time.time * 0.5f, gem.GetInstanceID() * 0.1f) * 2f - 1f;
                     float smoothOffset = noise * maxInaccuracyRange;
                     float targetAngle = Mathf.Atan2(dir.y, dir.z) + (smoothOffset * Mathf.Deg2Rad);
 
-                    // 2. 距離による波の強さを計算
                     float t = 1f - Mathf.Clamp01(distance / currentMaxDistance);
                     float currentWaveAmplitude = Mathf.Lerp(minAmplitude, maxAmplitude, t);
 
-                    // 3. この宝石が、現在の円の点(angle)に与える影響を加算
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg));
                     if (angleDiff < currentMaxAngle)
                     {
-                        float wave = Mathf.Sin(Time.time * waveSpeed - angle * 20f) * currentWaveAmplitude;
+                        // 影響力（本来の波の高さ × 中央からの近さによるフェード）
                         float falloff = 1f - (angleDiff / currentMaxAngle);
-                        combinedWave += wave * falloff;
+                        float influence = currentWaveAmplitude * falloff;
+
+                        // もしこの宝石の影響力が、他の宝石よりも強ければ、その波の形を採用する
+                        if (influence > maxInfluence)
+                        {
+                            maxInfluence = influence;
+                            finalWave = Mathf.Sin(Time.time * waveSpeed - angle * 20f) * influence;
+                        }
                     }
                 }
 
-                // すべての宝石の波を合計して半径に足す
-                currentRadius += combinedWave;
+                currentRadius += finalWave;
             }
             else if (mode == RadarMode.Omnidirectional && hasOmniTarget)
             {
-                // 鼓動モードはこれまで通り（一番近い宝石だけ）
                 float wavyEdge = Mathf.Sin(Time.time * waveSpeed - angle * 20f) * (omniCurrentWaveAmplitude * 0.5f);
 
                 float cycleLength = 1.5f; 
@@ -164,7 +162,6 @@ public class GemRadar : MonoBehaviour
         {
             detectedGems.Add(col.transform);
 
-            // 鼓動モード（変更なし）のために、一番近い宝石も記憶しておく
             float dist = Vector3.Distance(transform.position, col.transform.position);
             if (dist < minDistance)
             {
