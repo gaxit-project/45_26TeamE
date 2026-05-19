@@ -1,14 +1,14 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
     public static MainManager Instance { get; private set; }
 
-    [Header("Ç®ã‡")]
+    [Header("„ÅäÈáë„ÇÑÈâ±Áü≥")]
     [SerializeField] private long currentMoney = 0;
     [SerializeField] private int oreValue = 0;
 
-    [Header("ÉXÉeÅ[ÉW")]
+    [Header("„Çπ„ÉÜ„Éº„Ç∏Ë®≠ÂÆö")]
     [SerializeField] private int targetHeight = 500;
     [SerializeField] private int targetWidth = 80;
     [SerializeField] private float blockSize = 0.2f;
@@ -24,15 +24,31 @@ public class MainManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
+    private void OnEnable()
     {
-        SpawnNewLevel();
-        SoundManager.Instance.PlayBGM("ÉÅÉCÉìBGM");
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (scene.name == "02_Main")
+        {
+            SpawnNewLevel();
+            SoundManager.Instance.PlayBGM("„É°„Ç§„É≥BGM");
+        }
     }
 
     public void SpawnNewLevel()
     {
         VoxelTerrain vt = VoxelTerrain.Instance;
-        vt.CreateStage(targetWidth, targetHeight, vt.BlockSize);
+        if (vt != null)
+        {
+            vt.CreateStage(targetWidth, targetHeight, vt.BlockSize);
+        }
     }
 }

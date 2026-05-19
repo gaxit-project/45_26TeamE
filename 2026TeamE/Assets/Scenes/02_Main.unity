@@ -2675,7 +2675,7 @@ MonoBehaviour:
     m_Bits: 128
   searchInterval: 0.5
   baseMaxDistance: 60
-  baseWaveAngle: 45
+  baseWaveAngle: 30
   minAmplitude: 0.3
   maxAmplitude: 2
 --- !u!65 &548082339
