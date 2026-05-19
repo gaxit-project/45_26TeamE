@@ -931,7 +931,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DrillTip
   baseDrillInterval: 0.2
-  drillRadius: 2
+  baseDrillRadius: 1.5
   miningZone: {fileID: 1802168651}
   dirtEffect: {fileID: 317411792}
   effectKeepTime: 0.2
@@ -1126,6 +1126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseManager
   pauseMenu: {fileID: 1445798824}
+  firstSelectedButton: {fileID: 0}
 --- !u!114 &624166015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1150,6 +1151,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   isGround: 1
+  groundBoxExtents: {x: 0.35, y: 0.15, z: 0.35}
+  groundBoxOffset: {x: 0, y: 0.1, z: 0}
   drillFlag: 0
   DrillDistance: 5
   DrillCD: 0.05
@@ -1157,6 +1160,10 @@ MonoBehaviour:
   drillPivot: {fileID: 1209089298}
   maxRotationAngle: 60
   drillLevel: 1
+  dashPower: 5
+  dashCooldown: 1
+  dashDistance: 10
+  dashDuration: 0.3
   targetLight: {fileID: 1069602847}
   maxBattery: 1000
   currentBattery: 1000
@@ -1871,7 +1878,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimerManager
   timerText: {fileID: 764275106}
-  resultSceneName: Result
+  canvasAnimator: {fileID: 0}
+  PlayerAnimator: {fileID: 0}
 --- !u!4 &772913465
 Transform:
   m_ObjectHideFlags: 0
@@ -2673,8 +2681,15 @@ MonoBehaviour:
   widthZ: 400
   blockSize: 0.5
   oreProbability: 0.5
+  startOffsetX: 0
+  startDepthFromSurface: 30
+  startHoleRadius: 8
+  startShaftRadius: 3
   dirtMaterial: {fileID: 2100000, guid: d62923da4fa1f7145bf9b0fe9f57c26f, type: 2}
   oreMaterial: {fileID: 2100000, guid: 8d151ae9cb311834085131176cb7b169, type: 2}
+  bedrockMaterial: {fileID: 0}
+  stoneMaterial: {fileID: 0}
+  hardRockMaterial: {fileID: 0}
   useDeterministicSeed: 1
   seed: 12345
   chunkSizeY: 20
@@ -2839,10 +2854,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: PAUSE
+  m_text: "\u3042\u3044\u3046"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}
+  m_sharedMaterial: {fileID: -5337730745417588167, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
