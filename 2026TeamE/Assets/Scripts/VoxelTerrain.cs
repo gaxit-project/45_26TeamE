@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
@@ -51,6 +51,10 @@ public class VoxelTerrain : MonoBehaviour
 
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
+
+    // エリアごとの初期宝石合計額を保持する辞書
+    public System.Collections.Generic.Dictionary<int, long> zoneInitialGemValues = new System.Collections.Generic.Dictionary<int, long>();
+    private const long GEM_VALUE = 300000;
 
     // ブロックが変更されたときのイベント
     public event Action<int, int, byte> OnBlockChanged;
@@ -220,6 +224,7 @@ public class VoxelTerrain : MonoBehaviour
         heightY = height;
         blockSize = size;
         mapData = new byte[thicknessX, heightY, widthZ];
+        zoneInitialGemValues.Clear();
 
         var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
         float layerNoiseScale = 0.2f;
@@ -389,6 +394,12 @@ public class VoxelTerrain : MonoBehaviour
     {
         int startY = chunkIndex * chunkSizeY;
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
+        
+        int zoneIndex = chunkIndex / 10;
+        if (!zoneInitialGemValues.ContainsKey(zoneIndex))
+        {
+            zoneInitialGemValues[zoneIndex] = 0;
+        }
 
         for (int t = 0; t < 3; t++)
         {
@@ -409,9 +420,21 @@ public class VoxelTerrain : MonoBehaviour
 
                     GameObject jewel = Instantiate(treasurePrefab, pos, rotation, transform);
                     spawnedTreasures.Add(jewel);
+                    zoneInitialGemValues[zoneIndex] += GEM_VALUE;
                 }
             }
         }
+    }
+
+    // プレイヤーのYブロック座標から、そのエリアの初期宝石合計額を取得する
+    public long GetZoneInitialGemValue(int py)
+    {
+        int zoneIndex = py / (chunkSizeY * 10);
+        if (zoneInitialGemValues.ContainsKey(zoneIndex))
+        {
+            return zoneInitialGemValues[zoneIndex];
+        }
+        return 0;
     }
 
     public float GetHardnessAtDepth(int y)

@@ -2,16 +2,16 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // ’Ç‰Á
+using UnityEngine.InputSystem; // è¿½åŠ 
 
 public class ResultManager : MonoBehaviour
 {
-    [Header("UIŽQÆ")]
+    [Header("UIå‚ç…§")]
     [SerializeField] private TextMeshProUGUI onHandResultText;
     [SerializeField] private TextMeshProUGUI targetResultText;
     [SerializeField] private TextMeshProUGUI resultStatusText;
 
-    [Header("‰‰oÝ’è")]
+    [Header("æ¼”å‡ºè¨­å®š")]
     [SerializeField] private float countDuration = 2.0f;
     [SerializeField] private string nextSceneName = "Title";
 
@@ -26,9 +26,10 @@ public class ResultManager : MonoBehaviour
         if (mm != null)
         {
             finalAmount = mm.GetMoneyOnHand();
-            targetAmount = mm.GetTargetAmountOnPart();
+            //targetAmount = mm.GetTargetAmountOnPart();
+            targetAmount = (int)ZoneGemUI.LastMaxZoneValue;
             onHandResultText.text = "0";
-            targetResultText.text = targetAmount.ToString("0");
+            targetResultText.text = $"{ZoneGemUI.LastMaxZoneValue:N0}";
             resultStatusText.text = "";
             StartCoroutine(CountUpRoutine());
         }
@@ -36,13 +37,13 @@ public class ResultManager : MonoBehaviour
 
     void Update()
     {
-        // V‚µ‚¢ Input System ‚Å‚Ìu‚Ç‚ê‚©‰Ÿ‚µ‚½v”»’è
+        // æ–°ã—ã„ Input System ã§ã®ã€Œã©ã‚Œã‹æŠ¼ã—ãŸã€åˆ¤å®š
         bool wasPressed = false;
 
-        // ƒL[ƒ{[ƒh‚©ƒ}ƒEƒX‚ÌƒNƒŠƒbƒN‚ª‚ ‚Á‚½‚©
+        // ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰ã‹ãƒžã‚¦ã‚¹ã®ã‚¯ãƒªãƒƒã‚¯ãŒã‚ã£ãŸã‹
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) wasPressed = true;
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) wasPressed = true;
-        if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; // Aƒ{ƒ^ƒ“/~ƒ{ƒ^ƒ““™
+        if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; // Aãƒœã‚¿ãƒ³/Ã—ãƒœã‚¿ãƒ³ç­‰
 
         if (wasPressed)
         {
@@ -65,11 +66,11 @@ public class ResultManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float progress = elapsed / countDuration;
             int currentDisplayValue = (int)(finalAmount * progress);
-            onHandResultText.text = currentDisplayValue.ToString("0");
+            onHandResultText.text = currentDisplayValue.ToString("N0");
             yield return null;
         }
 
-        onHandResultText.text = finalAmount.ToString("0");
+        onHandResultText.text = finalAmount.ToString("N0");
         CheckSuccess(finalAmount, targetAmount);
 
         yield return new WaitForSeconds(0.2f);
@@ -80,12 +81,22 @@ public class ResultManager : MonoBehaviour
     {
         if (onHand >= target)
         {
-            resultStatusText.text = "SUCCESS";
+            resultStatusText.text = "PERFECT!";
+            resultStatusText.color = Color.green;
+        }
+        else if (onHand >= target * 2 / 3)
+        {
+            resultStatusText.text = "GREAT!";
+            resultStatusText.color = Color.green;
+        }
+        else if (onHand >= target / 3)
+        {
+            resultStatusText.text = "GOOD!";
             resultStatusText.color = Color.green;
         }
         else
         {
-            resultStatusText.text = "FAILED";
+            resultStatusText.text = "NICE TRY!";
             resultStatusText.color = Color.red;
         }
     }
