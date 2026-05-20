@@ -1,5 +1,6 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 
@@ -15,6 +16,9 @@ public class ShoppingManager : MonoBehaviour
         public int basePrice = 100;
         public int maxLevel = 10;
 
+        [TextArea(2, 4)]
+        public List<string> levelDescriptions;
+
         [HideInInspector] public int currentLevel = 1;
 
         public int CurrentPrice
@@ -26,39 +30,72 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    [Header("ƒVƒ‡ƒbƒvİ’è")]
+    [Header("ã‚·ãƒ§ãƒƒãƒ—è¨­å®š")]
     [SerializeField] private List<ShopItem> shopItems = new List<ShopItem>();
+
+    [Header("UI")]
+    [SerializeField] private TextMeshProUGUI descriptionText;
+
+    [Header("ã‚¨ãƒ•ã‚§ã‚¯ãƒˆ")]
+    [SerializeField] private GameObject jewelSparkEffect;
+    [SerializeField] private GameObject player;
 
     private static Dictionary<string, int> savedLevels = new Dictionary<string, int>();
 
-    // --- ShoppingManager.cs ‚Ì Start“à‚ğ•ÏX ---
+    // --- ShoppingManager.cs ã® Startå†…ã‚’å¤‰æ›´ ---
     void Start()
     {
-        foreach (var item in shopItems)
+        for (int i = 0; i < shopItems.Count; i++)
         {
-            // C³“_FˆêŒ³ŠÇ—ƒNƒ‰ƒX‚©‚çƒŒƒxƒ‹‚ğƒ[ƒh
+            var item = shopItems[i];
+            // ä¿®æ­£ç‚¹ï¼šä¸€å…ƒç®¡ç†ã‚¯ãƒ©ã‚¹ã‹ã‚‰ãƒ¬ãƒ™ãƒ«ã‚’ãƒ­ãƒ¼ãƒ‰
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             ShopItem target = item;
+            int index = i;
             target.buyButton.onClick.AddListener(() => TryPurchase(target));
+
+            EventTrigger trigger = target.buyButton.gameObject.GetComponent<EventTrigger>();
+            if (trigger == null) trigger = target.buyButton.gameObject.AddComponent<EventTrigger>();
+
+            EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+            enterEntry.eventID = EventTriggerType.PointerEnter;
+            enterEntry.callback.AddListener((data) => { ShowDescription(index); });
+            trigger.triggers.Add(enterEntry);
+
+            EventTrigger.Entry selectEntry = new EventTrigger.Entry();
+            selectEntry.eventID = EventTriggerType.Select;
+            selectEntry.callback.AddListener((data) => { ShowDescription(index); });
+            trigger.triggers.Add(selectEntry);
+
+            EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+            exitEntry.eventID = EventTriggerType.PointerExit;
+            exitEntry.callback.AddListener((data) => { HideDescription(); });
+            trigger.triggers.Add(exitEntry);
+
+            EventTrigger.Entry deselectEntry = new EventTrigger.Entry();
+            deselectEntry.eventID = EventTriggerType.Deselect;
+            deselectEntry.callback.AddListener((data) => { HideDescription(); });
+            trigger.triggers.Add(deselectEntry);
 
             RefreshUI(target);
         }
+        HideDescription();
     }
 
-    // --- ShoppingManager.cs ‚Ì TryPurchase“à‚ğ•ÏX ---
+    // --- ShoppingManager.cs ã® TryPurchaseå†…ã‚’å¤‰æ›´ ---
     private void TryPurchase(ShopItem item)
     {
         if (item.currentLevel >= item.maxLevel)
         {
-            SoundManager.Instance.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é3");
+            SoundManager.Instance.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹3");
             return;
         }
 
         MoneyManager mm = MoneyManager.Instance;
         if (mm == null)
         {
-            SoundManager.Instance.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é3");
+            SoundManager.Instance.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹3");
             return;
         }
 
@@ -66,16 +103,23 @@ public class ShoppingManager : MonoBehaviour
 
         if (mm.GetMoney() >= cost)
         {
-            SoundManager.Instance.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é4");
+            SoundManager.Instance.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹4");
             mm.SpendMoney(cost);
 
-            // C³“_FˆêŒ³ŠÇ—ƒNƒ‰ƒX‚ğ’Ê‚¶‚ÄƒŒƒxƒ‹ƒAƒbƒv‚ÆƒZ[ƒu‚ğÀs
+            // è³¼å…¥æˆåŠŸã‚¨ãƒ•ã‚§ã‚¯ãƒˆã®å†ç”Ÿ
+            if (jewelSparkEffect != null)
+            {
+                Instantiate(jewelSparkEffect, player.transform.position + new Vector3(0, 0, 0), Quaternion.Euler(-90, -90, 0));
+            }
+
+            // ä¿®æ­£ç‚¹ï¼šä¸€å…ƒç®¡ç†ã‚¯ãƒ©ã‚¹ã‚’é€šã˜ã¦ãƒ¬ãƒ™ãƒ«ã‚¢ãƒƒãƒ—ã¨ã‚»ãƒ¼ãƒ–ã‚’å®Ÿè¡Œ
             UpgradeManager.IncreaseLevel(item.itemName);
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             RefreshUI(item);
+            ShowDescription(shopItems.IndexOf(item));
         }
-        else SoundManager.Instance.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é3");
+        else SoundManager.Instance.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹3");
     }
 
 
@@ -87,30 +131,53 @@ public class ShoppingManager : MonoBehaviour
             item.levelText.text = $"{item.currentLevel}";
 
         if (item.priceText != null)
-            item.priceText.text = isMax ? "---" : $"$:{item.CurrentPrice}";
+            item.priceText.text = isMax ? "---" : $"$:{item.CurrentPrice:N0}";
 
         if (item.buyButton != null)
         {
             item.buyButton.interactable = true;
 
-            //‚±‚±‚Í‚ ‚Æ‚©‚çF‚Æ‚©ƒTƒCƒY‚Æ‚©•Ï‚¦‚éiŒ©‚½–Ú©‘Ì‚à•Ï‚¦‚é‚©‚àj
+            //ã“ã“ã¯ã‚ã¨ã‹ã‚‰è‰²ã¨ã‹ã‚µã‚¤ã‚ºã¨ã‹å¤‰ãˆã‚‹ï¼ˆè¦‹ãŸç›®è‡ªä½“ã‚‚å¤‰ãˆã‚‹ã‹ã‚‚ï¼‰
 
-            // Œ©‚½–ÚiFj‚ğ•Ï
+            // è¦‹ãŸç›®ï¼ˆè‰²ï¼‰ã‚’å¤‰
             ColorBlock cb = item.buyButton.colors;
             if (isMax)
             {
-                // ãŒÀ‚É’B‚µ‚½‚ÌF
+                // ä¸Šé™ã«é”ã—ãŸæ™‚ã®è‰²
                 cb.normalColor = Color.gray;
-                cb.highlightedColor = Color.gray; // ‘I‘ğ’†‚ÌF‚àƒOƒŒ[‚ÉŒÅ’è
+                cb.highlightedColor = Color.gray; // é¸æŠä¸­ã®è‰²ã‚‚ã‚°ãƒ¬ãƒ¼ã«å›ºå®š
+                cb.selectedColor = Color.gray;
+                cb.pressedColor = Color.gray;
             }
             else
             {
-                // ’Êí‚ÌFiŒ³‚ÌF‚É–ß‚·j
+                // é€šå¸¸æ™‚ã®è‰²ï¼ˆå…ƒã®è‰²ã«æˆ»ã™ï¼‰
                 cb.normalColor = Color.white;
                 cb.highlightedColor = new Color(0.9f, 0.9f, 0.9f);
+                cb.selectedColor = new Color(0.9f, 0.9f, 0.9f);
+                cb.pressedColor = new Color(0.8f, 0.8f, 0.8f);
             }
             item.buyButton.colors = cb;
         }
     }
 
+    public void ShowDescription(int itemIndex)
+    {
+        if (itemIndex < 0 || itemIndex >= shopItems.Count) return;
+        ShopItem item = shopItems[itemIndex];
+
+        if (descriptionText != null && item.levelDescriptions != null && item.levelDescriptions.Count > 0)
+        {
+            int descIndex = Mathf.Clamp(item.currentLevel - 1, 0, item.levelDescriptions.Count - 1);
+            descriptionText.text = item.levelDescriptions[descIndex];
+        }
+    }
+
+    public void HideDescription()
+    {
+        if (descriptionText != null)
+        {
+            descriptionText.text = "";
+        }
+    }
 }
