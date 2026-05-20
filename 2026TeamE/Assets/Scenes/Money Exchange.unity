@@ -2389,7 +2389,7 @@ MonoBehaviour:
     - "\u6398\u524A\u901F\u5EA6\u3000\u4E0A\u6607\n\u6398\u524A\u7BC4\u56F2\u3000\u62E1\u5927"
     - "\u6398\u524A\u901F\u5EA6\u3000\u4E0A\u6607\n\u6398\u524A\u7BC4\u56F2\u3000\u62E1\u5927"
     - "\u6398\u524A\u901F\u5EA6\u3000\u4E0A\u6607\n\u6398\u524A\u7BC4\u56F2\u3000\u62E1\u5927"
-    - "\u6700\u5927\u30EC\u30D9\u30EB\u3067\u3059"
+    - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     currentLevel: 0
   - itemName: Sonar
     buyButton: {fileID: 45655458}
@@ -2400,7 +2400,7 @@ MonoBehaviour:
     levelDescriptions:
     - "\u63A2\u77E5\u8DDD\u96E2\u3000\u4E0A\u6607\n"
     - "\u63A2\u77E5\u8DDD\u96E2\u3000\u4E0A\u6607\n\u6D88\u8CBB\u96FB\u529B\u3000\u534A\u6E1B"
-    - "\u6700\u5927\u30EC\u30D9\u30EB\u3067\u3059"
+    - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     currentLevel: 0
   - itemName: Light
     buyButton: {fileID: 750758769}
@@ -2413,7 +2413,7 @@ MonoBehaviour:
     - "\u7167\u660E\u7BC4\u56F2\u3000\u62E1\u5927"
     - "\u7167\u660E\u7BC4\u56F2\u3000\u62E1\u5927"
     - "\u7167\u660E\u7BC4\u56F2\u3000\u62E1\u5927"
-    - "\u6700\u5927\u30EC\u30D9\u30EB\u3067\u3059"
+    - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     currentLevel: 0
   - itemName: Rader
     buyButton: {fileID: 285529347}
@@ -2422,9 +2422,9 @@ MonoBehaviour:
     basePrice: 700000
     maxLevel: 3
     levelDescriptions:
-    - "\u63A2\u77E5\u8DDD\u96E2\u3000\u62E1\u5927\n\u63A2\u77E5\u5236\u5EA6\u3000\u4E0A\u6607"
-    - "\u63A2\u77E5\u8DDD\u96E2\u3000\u62E1\u5927\n\u63A2\u77E5\u5236\u5EA6\u3000\u4E0A\u6607"
-    - "\u6700\u5927\u30EC\u30D9\u30EB\u3067\u3059"
+    - "\u63A2\u77E5\u8DDD\u96E2\u3000\u62E1\u5927\n\u63A2\u77E5\u7CBE\u5EA6\u3000\u4E0A\u6607"
+    - "\u63A2\u77E5\u8DDD\u96E2\u3000\u62E1\u5927\n\u63A2\u77E5\u7CBE\u5EA6\u3000\u4E0A\u6607"
+    - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     currentLevel: 0
   descriptionText: {fileID: 1963596625}
   jewelSparkEffect: {fileID: 2770810700285028621, guid: 2bfa1d91e294b794da8d2a708241a360, type: 3}
