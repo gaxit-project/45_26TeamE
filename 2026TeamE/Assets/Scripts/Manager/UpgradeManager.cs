@@ -14,7 +14,7 @@ public static class UpgradeManager
 
     // ゲーム起動時に自動で実行される初期化処理
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Initialize()
+    public static void ResetUpgrades()
     {
         // ゲーム起動時にメモリをクリアし、ディスクのセーブデータも削除する
         currentLevels.Clear();

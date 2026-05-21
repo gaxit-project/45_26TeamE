@@ -2820,6 +2820,71 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MoneyUIInitializer
   onHandText: {fileID: 1763542895}
   targetPartText: {fileID: 1868875321}
+--- !u!1001 &691302415
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1077105864719006209, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_Name
+      value: Big_jewelry (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2608991476508051466, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: SceneName
+      value: FinalResult
+      objectReference: {fileID: 0}
+    - target: {fileID: 2608991476508051466, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: EfectPrefab
+      value: 
+      objectReference: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -388.3952
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.26319686
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 8044670152107478286, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
 --- !u!1 &712345074
 GameObject:
   m_ObjectHideFlags: 0
@@ -8031,3 +8096,4 @@ SceneRoots:
   - {fileID: 1546445451}
   - {fileID: 1016199980}
   - {fileID: 712345078}
+  - {fileID: 691302415}

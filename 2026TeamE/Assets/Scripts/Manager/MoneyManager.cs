@@ -5,22 +5,24 @@ public class MoneyManager : MonoBehaviour
 {
     public static MoneyManager Instance { get; private set; }
 
-    [SerializeField, Header("Š‚µ‚Ä‚¢‚é‘‹à")]
+    [SerializeField, Header("æ‰€æŒã—ã¦ã„ã‚‹è³‡é‡‘")]
     private int Money = 0;
-    [SerializeField, Header("Š·‹à—\’è‚Ì‘‹à")]
+    [SerializeField, Header("æ›é‡‘äºˆå®šã®è³‡é‡‘")]
     private int MoneyOnHand = 0;
-    [SerializeField, Header("–Ú•W•ÔÏŠz")]
+    [SerializeField, Header("é€šç®—å–å¾—é¡")]
+    private int TotalEarnedMoney = 0;
+    [SerializeField, Header("ç›®æ¨™è¿”æ¸ˆé¡")]
     private int TargetAmount = 0;
-    [SerializeField, Header("¡ƒp[ƒg–Ú•W•ÔÏŠz")]
+    [SerializeField, Header("ä»Šãƒ‘ãƒ¼ãƒˆç›®æ¨™è¿”æ¸ˆé¡")]
     private int TargetAmountOnPart = 0;
 
-    [SerializeField, Header("Š‚µ‚Ä‚¢‚é‘‹à‚Ì•\¦êŠ")]
+    [SerializeField, Header("æ‰€æŒã—ã¦ã„ã‚‹è³‡é‡‘ã®è¡¨ç¤ºå ´æ‰€")]
     private TextMeshProUGUI MoneyText;
-    [SerializeField, Header("Š·‹à—\’è‚Ì‘‹à‚Ì•\¦êŠ")]
+    [SerializeField, Header("æ›é‡‘äºˆå®šã®è³‡é‡‘ã®è¡¨ç¤ºå ´æ‰€")]
     private TextMeshProUGUI MoneyOnHandText;
-    [SerializeField, Header("–Ú•W•ÔÏŠz‚Ì•\¦êŠ")]
+    [SerializeField, Header("ç›®æ¨™è¿”æ¸ˆé¡ã®è¡¨ç¤ºå ´æ‰€")]
     private TextMeshProUGUI TargetAmountText;
-    [SerializeField, Header("¡ƒp[ƒg–Ú•W•ÔÏŠz‚Ì•\¦êŠ")]
+    [SerializeField, Header("ä»Šãƒ‘ãƒ¼ãƒˆç›®æ¨™è¿”æ¸ˆé¡ã®è¡¨ç¤ºå ´æ‰€")]
     private TextMeshProUGUI TargetAmountOnPartText;
 
 
@@ -49,25 +51,26 @@ public class MoneyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// è‚¿‚Ì‘‹à‚ğ‘‰Á
+    /// æ‰‹æŒã¡ã®è³‡é‡‘ã‚’å¢—åŠ 
     /// </summary>
-    /// <param name="value">‘‰Á‚·‚é’l</param>
+    /// <param name="value">å¢—åŠ ã™ã‚‹å€¤</param>
     public void MoneyOnHandIncrease(int value)
     {
         MoneyOnHand = MoneyOnHand + value;
+        TotalEarnedMoney += value; // è¿½è¨˜: é€šç®—å–å¾—é¡ã«ã‚‚åŠ ç®—
         UpdateMoneyText();
     }
     /// <summary>
-    /// è‚¿‚Ì‘‹à‚ğŒ¸­
+    /// æ‰‹æŒã¡ã®è³‡é‡‘ã‚’æ¸›å°‘
     /// </summary>
-    /// <param name="value">Œ»Û‚·‚é’l</param>
+    /// <param name="value">ç¾è±¡ã™ã‚‹å€¤</param>
     public void MoneyOnHandDecrease(int value)
     {
         MoneyOnHand = MoneyOnHand - value;
     }
 
     /// <summary>
-    /// è‚¿‚ÌŠ·‹à—\’è‚Ì‘‹à‚ğŠ·‹à
+    /// æ‰‹æŒã¡ã®æ›é‡‘äºˆå®šã®è³‡é‡‘ã‚’æ›é‡‘
     /// </summary>
     public void Cash()
     {
@@ -76,7 +79,7 @@ public class MoneyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ‘‹à‚ğ•ÔÏ‚É“–‚Ä‚é
+    /// è³‡é‡‘ã‚’è¿”æ¸ˆã«å½“ã¦ã‚‹
     /// </summary>
     public void Refund()
     {
@@ -86,7 +89,7 @@ public class MoneyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Result‰æ–Ê‚È‚Ç‚ÅAŒ»İ‚ÌMoneyOnHand‚ğ“Ç‚İæ‚é‚½‚ß‚ÌŠÖ”
+    /// Resultç”»é¢ãªã©ã§ã€ç¾åœ¨ã®MoneyOnHandã‚’èª­ã¿å–ã‚‹ãŸã‚ã®é–¢æ•°
     /// </summary>
     public int GetMoneyOnHand()
     {
@@ -94,31 +97,39 @@ public class MoneyManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Result‰æ–Ê‚È‚Ç‚ÅAŒ»İ‚ÌTargetAmountOnPart‚ğ“Ç‚İæ‚é‚½‚ß‚ÌŠÖ”
+    /// Resultç”»é¢ãªã©ã§ã€ç¾åœ¨ã®TargetAmountOnPartã‚’èª­ã¿å–ã‚‹ãŸã‚ã®é–¢æ•°
     /// </summary>
     public int GetTargetAmountOnPart()
     {
         return TargetAmountOnPart;
     }
 
-    // MoneyManager.cs “à‚É’Ç‰Á
+    /// <summary>
+    /// é€šç®—å–å¾—é¡ã‚’è¿”ã™
+    /// </summary>
+    public int GetTotalEarnedMoney()
+    {
+        return TotalEarnedMoney;
+    }
 
-    // --- MoneyManager.cs ‚Ì––”öiÅŒã‚Ì } ‚Ì’¼‘Oj‚É’Ç‰Á ---
+    // MoneyManager.cs å†…ã«è¿½åŠ 
 
-    // ŠO•”‚©‚çŒ»İ‚ÌuŠ‹à(Money)v‚ğæ“¾‚·‚é‚½‚ß‚ÌŠÖ”
+    // --- MoneyManager.cs ã®æœ«å°¾ï¼ˆæœ€å¾Œã® } ã®ç›´å‰ï¼‰ã«è¿½åŠ  ---
+
+    // å¤–éƒ¨ã‹ã‚‰ç¾åœ¨ã®ã€Œæ‰€æŒé‡‘(Money)ã€ã‚’å–å¾—ã™ã‚‹ãŸã‚ã®é–¢æ•°
     public int GetMoney()
     {
         return Money;
     }
 
-    // V‚µ‚¢ƒV[ƒ“‚ÌƒeƒLƒXƒg‚ğƒ}ƒl[ƒWƒƒ[‚É“o˜^‚µ’¼‚·ŠÖ”
+    // æ–°ã—ã„ã‚·ãƒ¼ãƒ³ã®ãƒ†ã‚­ã‚¹ãƒˆã‚’ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã«ç™»éŒ²ã—ç›´ã™é–¢æ•°
     public void SetMoneyText(TextMeshProUGUI newText)
     {
         MoneyText = newText;
         UpdateTotalMoneyText();
     }
 
-    // Š‹àƒeƒLƒXƒg‚Ì•\¦‚ğXV‚·‚éŠÖ”
+    // æ‰€æŒé‡‘ãƒ†ã‚­ã‚¹ãƒˆã®è¡¨ç¤ºã‚’æ›´æ–°ã™ã‚‹é–¢æ•°
     public void UpdateTotalMoneyText()
     {
         if (MoneyText != null)
@@ -131,7 +142,7 @@ public class MoneyManager : MonoBehaviour
         MoneyOnHandText = onHand;
         TargetAmountOnPartText = targetPart;
 
-        // •\¦‚ğŒ»İ‚Ì’l‚ÅXV
+        // è¡¨ç¤ºã‚’ç¾åœ¨ã®å€¤ã§æ›´æ–°
         UpdateMoneyText();
         if (TargetAmountOnPartText != null)
         {
@@ -139,11 +150,11 @@ public class MoneyManager : MonoBehaviour
         }
     }
 
-    // MoneyManager.cs “à‚É’Ç‰Á
+    // MoneyManager.cs å†…ã«è¿½åŠ 
     public void SpendMoney(int amount)
     {
         Money -= amount;
-        UpdateTotalMoneyText(); // Šù‘¶‚ÌXVŠÖ”‚ğŒÄ‚Ô
+        UpdateTotalMoneyText(); // æ—¢å­˜ã®æ›´æ–°é–¢æ•°ã‚’å‘¼ã¶
     }
 
 
