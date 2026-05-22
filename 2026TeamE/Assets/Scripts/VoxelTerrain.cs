@@ -234,7 +234,7 @@ public class VoxelTerrain : MonoBehaviour
         int startY = heightY - startDepthFromSurface;
         int startZ = widthZ / 2;
 
-        int goalThresholdY = 480;
+        int goalThresholdY = 80;
         int relayThickness = 3;
 
         for (int y = 0; y < heightY; y++)
@@ -409,7 +409,7 @@ public class VoxelTerrain : MonoBehaviour
                 int ry = UnityEngine.Random.Range(startY, endY);
                 int rz = UnityEngine.Random.Range(0, widthZ);
 
-                if (mapData[rx, ry, rz] == 1)
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
                 {
                     Vector3 pos = transform.position + new Vector3(
                         rx * blockSize,

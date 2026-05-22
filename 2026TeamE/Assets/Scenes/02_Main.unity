@@ -5957,6 +5957,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MoneyManager
   Money: 0
   MoneyOnHand: 0
+  TotalEarnedMoney: 0
   TargetAmount: 0
   TargetAmountOnPart: 1000000
   MoneyText: {fileID: 0}
