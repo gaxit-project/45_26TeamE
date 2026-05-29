@@ -16,22 +16,73 @@ public class JewelryReaction : MonoBehaviour
     [Header("クールダウン")]
     public float cooldownTime = 1.0f;
 
+    [Header("デバッグ用（取得可能状態）")]
+    public bool isExposed = false;
+
     private bool isCoolingDown = false;
     
     // 生成したマーカーを覚えておくための変数
     private GameObject currentMarker;
 
+    private float startTime;
+    private float checkDelay = 3.0f;
+
+    private void Awake()
+    {
+        // インスペクターの保存値に影響されないよう確実に初期化
+        isExposed = false;
+    }
+
     private void Start()
     {
         ob = transform;
+        startTime = Time.time; // 生成された時間を記録
     }
+
+    private void Update()
+    {
+        // 生成から3秒間は地形生成などの猶予として判定を無効化
+        if (Time.time - startTime < checkDelay)
+        {
+            return;
+        }
+
+        // まだ露出していない場合のみ判定を続ける
+        if (!isExposed)
+        {
+            CheckExposed();
+        }
+    }
+
+    void CheckExposed()
+    {
+        if (VoxelTerrain.Instance == null) return;
+
+        // VoxelTerrainのマップデータから、自身の位置と上下左右がAirか確認する
+        if (VoxelTerrain.Instance.IsJewelExposed(transform.position))
+        {
+            isExposed = true;
+        }
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.name.Contains("sonar") && !isCoolingDown)
         {
             ExecuteReaction();
         }
-        if (other.gameObject.CompareTag("Player"))
+        
+        // 露出している時のみプレイヤーとの接触を受け付ける
+        if (isExposed && other.gameObject.CompareTag("Player"))
+        {
+            Get();
+        }
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        // もし「触れっぱなし」の状態で後からisExposedがtrueになった場合でも取得できるようにする
+        if (isExposed && other.gameObject.CompareTag("Player"))
         {
             Get();
         }

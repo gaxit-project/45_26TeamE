@@ -159,3 +159,8 @@ MonoBehaviour:
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
   EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
   cooldownTime: 1
+  dirtLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  rayDistance: 0.6
+  isExposed: 0

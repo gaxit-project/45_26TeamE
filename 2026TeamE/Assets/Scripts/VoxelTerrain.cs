@@ -571,4 +571,27 @@ public class VoxelTerrain : MonoBehaviour
     }
 
     bool IsInside(int x, int y, int z) => x >= 0 && x < thicknessX && y >= 0 && y < heightY && z >= 0 && z < widthZ;
+
+    public bool IsJewelExposed(Vector3 worldPos)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(worldPos);
+        int x = Mathf.RoundToInt(localPos.x / blockSize);
+        int y = Mathf.FloorToInt(localPos.y / blockSize);
+        int z = Mathf.FloorToInt(localPos.z / blockSize);
+
+        bool allAir = true;
+
+        // 宝石自身のブロックが土ならまだ露出していない
+        if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air) allAir = false;
+
+        // 上下
+        if (IsInside(x, y + 1, z) && mapData[x, y + 1, z] != (byte)BlockType.Air) allAir = false;
+        if (IsInside(x, y - 1, z) && mapData[x, y - 1, z] != (byte)BlockType.Air) allAir = false;
+        
+        // 左右（ゲーム内Z軸）
+        if (IsInside(x, y, z + 1) && mapData[x, y, z + 1] != (byte)BlockType.Air) allAir = false;
+        if (IsInside(x, y, z - 1) && mapData[x, y, z - 1] != (byte)BlockType.Air) allAir = false;
+
+        return allAir;
+    }
 }
