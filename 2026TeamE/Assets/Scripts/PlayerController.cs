@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
     Rigidbody rb;
     Animator animator;
 
+    private bool CanMove => PlayerPrefs.GetInt("CanMove", 0) == 1;
+
     public GameObject sonar;
     // --- Added: カメラ連携用の変数 ---
     [Header("カメラ連携")]
@@ -80,6 +82,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1f;
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -98,6 +101,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!CanMove) return;
         if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
         
         if (Time.time < dashEndTime)
@@ -135,6 +139,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (!CanMove) return;
         if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
         CheckGround();
 
@@ -252,6 +257,7 @@ public class PlayerController : MonoBehaviour
 
     private void PerformDash()
     {
+        if (!CanMove) return;
         dashEndTime = Time.time + dashDuration;
 
         dashDirection = moveInput.magnitude > 0.1f ?
@@ -296,11 +302,13 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (!CanMove) return;
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnDrill(InputAction.CallbackContext context)
     {
+        if (!CanMove) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -321,6 +329,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
+        if (!CanMove) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -346,6 +355,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnSonar(InputAction.CallbackContext context)
     {
+        if (!CanMove) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -382,5 +392,11 @@ public class PlayerController : MonoBehaviour
         // はっきりとした枠線を描画
         Gizmos.color = isGround ? Color.green : Color.red;
         Gizmos.DrawWireCube(boxCenter, size);
+    }
+
+    public void EnablePlayerControl()
+    {
+        PlayerPrefs.SetInt("CanMove", 1);
+        PlayerPrefs.Save();
     }
 }
