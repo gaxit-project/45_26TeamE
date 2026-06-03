@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(LineRenderer))]
@@ -47,6 +47,13 @@ public class GemRadar : MonoBehaviour
         
         lineRenderer.startWidth = 0.05f;
         lineRenderer.endWidth = 0.05f;
+
+        // 爆弾レイヤー（Bomb）もレーダーの対象に含める
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer != -1)
+        {
+            gemLayer.value |= (1 << bombLayer);
+        }
 
         UpdateRadarParameters();
     }

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5762906152882434477}
   - component: {fileID: 525456242556475957}
   m_Layer: 0
-  m_Name: VisualEcho
+  m_Name: VisualEcho_bomb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -59,7 +59,7 @@ LineRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 907626f5dd9d531498838400c6644151, type: 2}
+  - {fileID: 2100000, guid: 1d9a9dbfacf1d474c918f8965aa3db90, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -193,4 +193,4 @@ MonoBehaviour:
   expansionSpeed: 30
   maxRadius: 10
   segments: 36
-  echoColor: {r: 0, g: 0.7114061, b: 1, a: 1}
+  echoColor: {r: 1, g: 0, b: 0.07801721, a: 1}

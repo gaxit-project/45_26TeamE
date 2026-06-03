@@ -18,6 +18,15 @@ public class BombReaction : MonoBehaviour
     [Header("爆発エフェクト（任意）")]
     [SerializeField] private GameObject explosionEffectPrefab;
 
+    [Header("ソナー検知時のエコープレハブ")]
+    public GameObject visualEchoPrefab;
+    [Header("ソナー検知時のマーカー")]
+    public GameObject marker;
+
+    private GameObject currentMarker;
+    private bool isCoolingDown = false;
+    public float cooldownTime = 1.0f;
+
     private bool isExposed = false;
     private bool isExploding = false;
 
@@ -52,8 +61,52 @@ public class BombReaction : MonoBehaviour
         if (VoxelTerrain.Instance.IsJewelExposed(transform.position))
         {
             isExposed = true;
+
+            // 露出してカウントダウンが始まったらマーカーを消す
+            if (currentMarker != null)
+            {
+                Destroy(currentMarker);
+            }
+
             StartCoroutine(ExplosionRoutine());
         }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        // 爆発中はソナーに反応させない
+        if (!isExploding && other.gameObject.name.Contains("sonar") && !isCoolingDown)
+        {
+            ExecuteReaction();
+        }
+    }
+
+    void ExecuteReaction()
+    {
+        isCoolingDown = true;
+
+        if (visualEchoPrefab != null)
+        {
+            Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
+            
+            if (currentMarker != null)
+            {
+                Destroy(currentMarker);
+            }
+
+            currentMarker = Instantiate(marker, transform);
+            currentMarker.transform.localPosition = new Vector3(0, 0, 4);
+            currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
+
+            Destroy(currentMarker, 5f);
+        }
+
+        Invoke("ResetReaction", cooldownTime);
+    }
+
+    void ResetReaction()
+    {
+        isCoolingDown = false;
     }
 
     private IEnumerator ExplosionRoutine()
