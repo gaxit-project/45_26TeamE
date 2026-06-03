@@ -40,6 +40,10 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject treasurePrefab;
     [SerializeField] float baseTreasureChance = 1f;
 
+    [Header("爆弾設定")]
+    [SerializeField] GameObject bombPrefab;
+    [SerializeField] float bombSpawnRatio = 0.2f;
+
     [Header("硬度設定")]
     [SerializeField] float hardnessScale = 0.5f;
 
@@ -391,6 +395,7 @@ public class VoxelTerrain : MonoBehaviour
             float finalProbability = baseTreasureChance * depthFactor;
 
             TrySpawnJewelsInChunk(i, finalProbability);
+            TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
         }
     }
 
@@ -402,6 +407,7 @@ public class VoxelTerrain : MonoBehaviour
         chunks[index].RebuildMesh(mapData, startY, endY, thicknessX, heightY, widthZ, blockSize);
     }
 
+    // チャンク内に宝石をスポーンさせる
     private void TrySpawnJewelsInChunk(int chunkIndex, float spawnChance)
     {
         int startY = chunkIndex * chunkSizeY;
@@ -433,6 +439,32 @@ public class VoxelTerrain : MonoBehaviour
                     GameObject jewel = Instantiate(treasurePrefab, pos, rotation, transform);
                     spawnedTreasures.Add(jewel);
                     zoneInitialGemValues[zoneIndex] += GEM_VALUE;
+                }
+            }
+        }
+    }
+
+    // チャンク内に爆弾をスポーンさせる
+    private void TrySpawnBombInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+        for (int t = 0; t < 2; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
+                {
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+                    Instantiate(bombPrefab, pos, rotation, transform);
                 }
             }
         }
