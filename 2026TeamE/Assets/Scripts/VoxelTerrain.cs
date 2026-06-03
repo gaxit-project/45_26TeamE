@@ -58,6 +58,7 @@ public class VoxelTerrain : MonoBehaviour
 
     // ブロックが変更されたときのイベント
     public event Action<int, int, byte> OnBlockChanged;
+    public event Action<int, int> OnBlocksDestroyedByPlayer; // dirtCount, oreCount
 
     public enum BlockType : byte
     {
@@ -164,11 +165,13 @@ public class VoxelTerrain : MonoBehaviour
     }
 
     // ブロックを掘る
-    public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
+    public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
     {
         int r = Mathf.CeilToInt(radius);
         bool changed = false;
         HashSet<int> changedYRows = new HashSet<int>();
+        int destroyedDirt = 0;
+        int destroyedOre = 0;
 
         for (int x = 0; x < thicknessX; x++)
         {
@@ -177,7 +180,8 @@ public class VoxelTerrain : MonoBehaviour
                 for (int z = centerZ - r; z <= centerZ + r; z++)
                 {
                     if (!IsInside(x, y, z)) continue;
-                    if (mapData[x, y, z] == (byte)BlockType.Air || mapData[x, y, z] == (byte)BlockType.Bedrock) continue;
+                    byte currentBlock = mapData[x, y, z];
+                    if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock) continue;
 
                     float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
                     if (distSq <= radius * radius)
@@ -185,6 +189,9 @@ public class VoxelTerrain : MonoBehaviour
                         if (y >= minLimit.y && y <= maxLimit.y &&
                             z >= minLimit.z && z <= maxLimit.z)
                         {
+                            if (currentBlock == (byte)BlockType.Dirt) destroyedDirt++;
+                            else if (currentBlock == (byte)BlockType.Ore) destroyedOre++;
+
                             mapData[x, y, z] = 0;
                             changed = true;
                             changedYRows.Add(y);
@@ -192,6 +199,11 @@ public class VoxelTerrain : MonoBehaviour
                     }
                 }
             }
+        }
+
+        if (isPlayerDigging && (destroyedDirt > 0 || destroyedOre > 0))
+        {
+            OnBlocksDestroyedByPlayer?.Invoke(destroyedDirt, destroyedOre);
         }
 
         if (changed)

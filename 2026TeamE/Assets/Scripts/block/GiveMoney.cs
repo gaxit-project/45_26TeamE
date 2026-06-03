@@ -2,79 +2,45 @@ using UnityEngine;
 
 public class GiveMoney : MonoBehaviour
 {
-    public MoneyManager moneyManager; // ¦‚±‚±‚ÍƒCƒ“ƒXƒyƒNƒ^[‚Å‹ó‚Å‚àŽ©“®‚Å’T‚µ‚Ü‚·
+    public MoneyManager moneyManager;
 
-    [Header("Ží—Þ•Ê‚Ì‹àŠz")]
+    [Header("æ›é‡‘é¡")]
     [SerializeField] private int dirtValue = 10;
     [SerializeField] private int oreValue = 50;
 
-    private int lastDirtIndices = -1;
-    private int lastOreIndices = -1;
-    private bool isInitialized = false;
-
     void Start()
     {
-        // šƒV[ƒ“‚ð“Ç‚Ý’¼‚µ‚½ÛAŽ©“®‚Å MoneyManager.Instance ‚ðƒZƒbƒg‚·‚é
         if (moneyManager == null)
         {
             moneyManager = MoneyManager.Instance;
         }
+
+        if (VoxelTerrain.Instance != null)
+        {
+            VoxelTerrain.Instance.OnBlocksDestroyedByPlayer += HandleBlocksDestroyed;
+        }
     }
 
-    void Update()
+    private void HandleBlocksDestroyed(int dirtCount, int oreCount)
     {
-        // ƒ}ƒl[ƒWƒƒ[‚ªŒ©‚Â‚©‚ç‚È‚¯‚ê‚Î‰½‚à‚µ‚È‚¢
         if (moneyManager == null)
         {
-            moneyManager = MoneyManager.Instance; // ”O‚Ì‚½‚ß‚±‚±‚Å‚àƒ`ƒFƒbƒN
-            if (moneyManager == null) return;
+            moneyManager = MoneyManager.Instance;
         }
+        if (moneyManager == null) return;
 
-        int currentDirtIndices;
-        int currentOreIndices;
-        UpdateCounts(out currentDirtIndices, out currentOreIndices);
-
-        if (!isInitialized)
+        int totalIncrease = (dirtCount * dirtValue) + (oreCount * oreValue);
+        if (totalIncrease > 0)
         {
-            if (currentDirtIndices > 0 || currentOreIndices > 0)
-            {
-                lastDirtIndices = currentDirtIndices;
-                lastOreIndices = currentOreIndices;
-                isInitialized = true;
-            }
-            return;
+            moneyManager.MoneyOnHandIncrease(totalIncrease);
         }
-
-        if (currentDirtIndices < lastDirtIndices)
-        {
-            int diff = (lastDirtIndices - currentDirtIndices);
-            // Œ¸­‚ðŒŸ’m‚µ‚½‚Æ‚«‚¾‚¯‰ÁŽZ
-            if (diff > 0) moneyManager.MoneyOnHandIncrease(dirtValue);
-        }
-
-        if (currentOreIndices < lastOreIndices)
-        {
-            int diff = (lastOreIndices - currentOreIndices);
-            if (diff > 0) moneyManager.MoneyOnHandIncrease(oreValue);
-        }
-
-        lastDirtIndices = currentDirtIndices;
-        lastOreIndices = currentOreIndices;
     }
 
-    private void UpdateCounts(out int dirtTotal, out int oreTotal)
+    void OnDestroy()
     {
-        dirtTotal = 0;
-        oreTotal = 0;
-
-        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>();
-        foreach (var mf in filters)
+        if (VoxelTerrain.Instance != null)
         {
-            if (mf.sharedMesh != null && mf.sharedMesh.subMeshCount >= 2)
-            {
-                dirtTotal += (int)mf.sharedMesh.GetIndexCount(0);
-                oreTotal += (int)mf.sharedMesh.GetIndexCount(1);
-            }
+            VoxelTerrain.Instance.OnBlocksDestroyedByPlayer -= HandleBlocksDestroyed;
         }
     }
 }

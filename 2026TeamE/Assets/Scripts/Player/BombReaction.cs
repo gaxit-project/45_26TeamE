@@ -139,7 +139,7 @@ public class BombReaction : MonoBehaviour
             Vector3 minLimit = Vector3.zero;
             Vector3 maxLimit = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
-            VoxelTerrain.Instance.ExecuteDig(centerX, centerY, centerZ, radiusInBlocks, minLimit, maxLimit);
+            VoxelTerrain.Instance.ExecuteDig(centerX, centerY, centerZ, radiusInBlocks, minLimit, maxLimit, false);
         }
 
         // 2. プレイヤーへのダメージ処理（お金を減らす処理）
