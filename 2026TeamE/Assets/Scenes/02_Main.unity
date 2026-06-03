@@ -1006,6 +1006,7 @@ MonoBehaviour:
   bedrockMaterial: {fileID: 2100000, guid: 907626f5dd9d531498838400c6644151, type: 2}
   stoneMaterial: {fileID: 2100000, guid: c9515a36a0139694ea13eb83d33e99b7, type: 2}
   hardRockMaterial: {fileID: 2100000, guid: 0da0cccadecc8664e9e0f15f08c865ad, type: 2}
+  quartziteMaterial: {fileID: 2100000, guid: ec369b4f4ee394849b4908482b1af5e0, type: 2}
   useDeterministicSeed: 1
   seed: 12345
   chunkSizeY: 20

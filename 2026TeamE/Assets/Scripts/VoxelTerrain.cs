@@ -27,6 +27,7 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] Material bedrockMaterial;
     [SerializeField] Material stoneMaterial;
     [SerializeField] Material hardRockMaterial;
+    [SerializeField] Material quartziteMaterial; // 珪岩(クォーツァイト)
 
     [Header("同期オプション")]
     [SerializeField] bool useDeterministicSeed = true;
@@ -71,7 +72,8 @@ public class VoxelTerrain : MonoBehaviour
         Ore = 2,
         Bedrock = 3,
         Stone = 4,
-        HardRock = 5
+        HardRock = 5,
+        Quartzite = 6
     }
 
     void Awake()
@@ -303,7 +305,8 @@ public class VoxelTerrain : MonoBehaviour
                             float bumpyY = y + yOffset;
                             float depthRatio = bumpyY / heightY;
 
-                            if (depthRatio < 0.2f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                            if (depthRatio < -0.2f) mapData[x, y, z] = (byte)BlockType.Quartzite;
+                            else if (depthRatio < 0.2f) mapData[x, y, z] = (byte)BlockType.HardRock;
                             else if (depthRatio < 0.6f) mapData[x, y, z] = (byte)BlockType.Stone;
                             else mapData[x, y, z] = (byte)BlockType.Dirt;
                         }
@@ -434,7 +437,7 @@ public class VoxelTerrain : MonoBehaviour
                         ry * blockSize + (blockSize / 2f),
                         rz * blockSize + (blockSize / 2f)
                     );
-                    Quaternion rotation = Quaternion.Euler(0, 90f,0);
+                    Quaternion rotation = Quaternion.Euler(0, -90f,0);
 
                     GameObject jewel = Instantiate(treasurePrefab, pos, rotation, transform);
                     spawnedTreasures.Add(jewel);
@@ -510,6 +513,9 @@ public class VoxelTerrain : MonoBehaviour
                 break;
             case BlockType.HardRock:
                 baseHardness = 10.0f;
+                break;
+            case BlockType.Quartzite:
+                baseHardness = 20.0f;
                 break;
             default:
                 baseHardness = 1.0f;
