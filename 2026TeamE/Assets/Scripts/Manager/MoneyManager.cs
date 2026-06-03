@@ -66,7 +66,8 @@ public class MoneyManager : MonoBehaviour
     /// <param name="value">現象する値</param>
     public void MoneyOnHandDecrease(int value)
     {
-        MoneyOnHand = MoneyOnHand - value;
+        MoneyOnHand = Mathf.Max(0, MoneyOnHand - value);
+        UpdateMoneyText();
     }
 
     /// <summary>
