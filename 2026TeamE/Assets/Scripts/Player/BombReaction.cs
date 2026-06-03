@@ -95,7 +95,7 @@ public class BombReaction : MonoBehaviour
             }
 
             currentMarker = Instantiate(marker, transform);
-            currentMarker.transform.localPosition = new Vector3(0, 0, 4);
+            currentMarker.transform.localPosition = new Vector3(0, 0, -4);
             currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
 
             Destroy(currentMarker, 5f);

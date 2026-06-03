@@ -104,7 +104,7 @@ public class JewelryReaction : MonoBehaviour
 
             // 新しく生成して変数に保存しておく
             currentMarker = Instantiate(marker, ob);
-            currentMarker.transform.localPosition = new Vector3(0, 0, 4);
+            currentMarker.transform.localPosition = new Vector3(0, 0, -4);
             currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
 
             // 生成したマーカーを5秒後に自動で消す

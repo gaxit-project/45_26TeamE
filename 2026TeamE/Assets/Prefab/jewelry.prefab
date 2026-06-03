@@ -28,13 +28,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1077105864719006209}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 4.99, z: 48.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!212 &7265501173327007931
 SpriteRenderer:
   serializedVersion: 2
@@ -159,8 +159,4 @@ MonoBehaviour:
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
   EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
   cooldownTime: 1
-  dirtLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  rayDistance: 0.6
   isExposed: 0
