@@ -229,7 +229,7 @@ public class BombReaction : MonoBehaviour
         // 4. SE再生
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("爆発"); // SEの名前は適当ですが、のちほど調整してください
+            SoundManager.Instance.PlaySE("Bomb_01");
         }
 
         // 5. 自分自身を破棄
