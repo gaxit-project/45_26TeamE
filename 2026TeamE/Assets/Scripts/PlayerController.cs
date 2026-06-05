@@ -1,4 +1,5 @@
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -8,7 +9,7 @@ public class PlayerController : MonoBehaviour
     Rigidbody rb;
     Animator animator;
 
-    private bool CanMove => PlayerPrefs.GetInt("CanMove", 0) == 1;
+    private bool CanMove = false;
 
     public GameObject sonar;
     // --- Added: カメラ連携用の変数 ---
@@ -396,7 +397,6 @@ public class PlayerController : MonoBehaviour
 
     public void EnablePlayerControl()
     {
-        PlayerPrefs.SetInt("CanMove", 1);
-        PlayerPrefs.Save();
+        CanMove = true;
     }
 }
