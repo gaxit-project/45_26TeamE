@@ -622,6 +622,35 @@ public class VoxelTerrain : MonoBehaviour
 
     bool IsInside(int x, int y, int z) => x >= 0 && x < thicknessX && y >= 0 && y < heightY && z >= 0 && z < widthZ;
 
+    // スケール（サイズ）を考慮して露出を判定するオーバーロード
+    public bool IsJewelExposed(Vector3 worldPos, Vector3 scale)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(worldPos);
+        int x = Mathf.RoundToInt(localPos.x / blockSize);
+        int centerY = Mathf.FloorToInt(localPos.y / blockSize);
+        int centerZ = Mathf.FloorToInt(localPos.z / blockSize);
+
+        // スケールから半径（ブロック数）を計算。最小は1。
+        int extentY = Mathf.CeilToInt(scale.y / 2f);
+        int extentZ = Mathf.CeilToInt(scale.z / 2f);
+
+        if (extentY < 1) extentY = 1;
+        if (extentZ < 1) extentZ = 1;
+
+        // 指定されたサイズの範囲内がすべてAirかチェック
+        for (int y = centerY - extentY; y <= centerY + extentY; y++)
+        {
+            for (int z = centerZ - extentZ; z <= centerZ + extentZ; z++)
+            {
+                if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     public bool IsJewelExposed(Vector3 worldPos)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldPos);

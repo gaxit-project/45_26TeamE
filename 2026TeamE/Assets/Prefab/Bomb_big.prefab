@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4569835451768528063}
   - component: {fileID: 563285261504739972}
   m_Layer: 8
-  m_Name: Bomb
+  m_Name: Bomb_big
   m_TagString: VoxelTerrain
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 4.99, z: 48.8}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7168197487637554484}
@@ -86,7 +86,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 75d8700e81b139c4c8a1641d4b782e83, type: 3}
+  m_Sprite: {fileID: 21300000, guid: d4230cc2b68e2434bab93f78ebd69079, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -115,7 +115,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.000001, y: 4.05, z: 30}
+  m_Size: {x: 8, y: 4.05, z: 30}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &4569835451768528063
 Rigidbody:
@@ -156,7 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0de834e2f8cf84249b9fb00bba00d2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombReaction
-  explosionRadius: 8
+  explosionRadius: 12
   expandSpeed: 4
   emissionIntensity: 5
   moneyPenalty: 50000
@@ -166,6 +166,7 @@ MonoBehaviour:
   rangeCircle: {fileID: 8770754737348251266}
   expandingCircle: {fileID: 6139497328927311295}
   circleSegments: 36
+  circleXOffset: 5
   cooldownTime: 1
 --- !u!1 &1286232339964196172
 GameObject:

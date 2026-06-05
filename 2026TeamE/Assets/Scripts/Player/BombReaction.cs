@@ -6,8 +6,8 @@ public class BombReaction : MonoBehaviour
     [Header("爆風の半径")]
     [SerializeField] private float explosionRadius = 3f;
 
-    [Header("爆破までの時間")]
-    [SerializeField] private float timeToExplode = 2f;
+    [Header("拡がる円のスピード（単位/秒）")]
+    [SerializeField] private float expandSpeed = 1f;
 
     [Header("点滅の発光強度(Emission)")]
     [SerializeField] private float emissionIntensity = 5f;
@@ -23,12 +23,22 @@ public class BombReaction : MonoBehaviour
     [Header("ソナー検知時のマーカー")]
     public GameObject marker;
 
+    [Header("爆発範囲表示用のLineRenderer")]
+    public LineRenderer rangeCircle;
+    [Header("時間経過で広がる爆発目安のLineRenderer")]
+    public LineRenderer expandingCircle;
+    public int circleSegments = 36;
+
+    [Header("円を手前に表示するためのXオフセット")]
+    public float circleXOffset = 5.0f;
+
     private GameObject currentMarker;
     private bool isCoolingDown = false;
     public float cooldownTime = 1.0f;
 
     private bool isExposed = false;
     private bool isExploding = false;
+    private bool isChainReacting = false;
 
     private float checkDelay = 3.0f;
     private float startTime;
@@ -53,12 +63,33 @@ public class BombReaction : MonoBehaviour
         }
     }
 
+    public void TriggerChainReaction()
+    {
+        // 既に誘爆処理済みなら無視
+        if (isChainReacting) return;
+        isChainReacting = true;
+
+        // 円の拡大スピードを2倍にする
+        expandSpeed *= 2f;
+
+        // まだカウントダウンが始まっていなければ強制的に起爆する
+        if (!isExposed)
+        {
+            isExposed = true;
+            if (currentMarker != null)
+            {
+                Destroy(currentMarker);
+            }
+            StartCoroutine(ExplosionRoutine());
+        }
+    }
+
     void CheckExposed()
     {
         if (VoxelTerrain.Instance == null) return;
 
-        // VoxelTerrainのマップデータから、自身の位置の周囲がAirか確認する
-        if (VoxelTerrain.Instance.IsJewelExposed(transform.position))
+        // VoxelTerrainのマップデータから、自身のサイズに合わせて周囲がAirか確認する
+        if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
         {
             isExposed = true;
 
@@ -109,9 +140,43 @@ public class BombReaction : MonoBehaviour
         isCoolingDown = false;
     }
 
+    private void DrawExplosionRangeCircle()
+    {
+        if (rangeCircle == null) return;
+
+        rangeCircle.gameObject.SetActive(true);
+        rangeCircle.useWorldSpace = true; // 爆弾の回転（傾き）の影響を受けないようにワールド座標を使用
+        rangeCircle.positionCount = circleSegments + 1;
+
+        Vector3 center = transform.position;
+
+        for (int i = 0; i <= circleSegments; i++)
+        {
+            float angle = (float)i / circleSegments * Mathf.PI * 2f;
+            
+            // Y座標とZ座標で円を描く
+            float y = Mathf.Sin(angle) * explosionRadius;
+            float z = Mathf.Cos(angle) * explosionRadius;
+
+            // ワールド座標で中心位置に加算する（X方向にずらしてブロックの手前に表示）
+            rangeCircle.SetPosition(i, center + new Vector3(circleXOffset, y, z));
+        }
+    }
+
     private IEnumerator ExplosionRoutine()
     {
         isExploding = true;
+
+        // 爆発範囲の赤い円を表示する
+        DrawExplosionRangeCircle();
+
+        // 拡がる円（タイマー）の初期化
+        if (expandingCircle != null)
+        {
+            expandingCircle.gameObject.SetActive(true);
+            expandingCircle.useWorldSpace = true; // こちらもワールド座標を使用
+            expandingCircle.positionCount = circleSegments + 1;
+        }
 
         // 自身および子オブジェクトの Renderer を取得
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
@@ -134,10 +199,20 @@ public class BombReaction : MonoBehaviour
         float elapsedTime = 0f;
 
         // 爆破までの間、点滅ループ
-        while (elapsedTime < timeToExplode)
+        while (true)
         {
+            // スピードが途中で変わる可能性があるため、ループ内で毎フレーム計算する
+            float safeExpandSpeed = Mathf.Max(0.01f, expandSpeed);
+            float calculatedTimeToExplode = explosionRadius / safeExpandSpeed;
+
+            // 時間経過が制限時間を超えたらループを抜けて爆発
+            if (elapsedTime >= calculatedTimeToExplode)
+            {
+                break;
+            }
+
             // 爆破が近づくにつれて点滅を速くする（スピード5から20へ変化）
-            float currentSpeed = Mathf.Lerp(5f, 20f, elapsedTime / timeToExplode);
+            float currentSpeed = Mathf.Lerp(5f, 20f, elapsedTime / calculatedTimeToExplode);
             
             // 0〜1の間を往復する値（pingPong）を生成
             float pingPong = Mathf.PingPong(elapsedTime * currentSpeed, 1f);
@@ -161,9 +236,34 @@ public class BombReaction : MonoBehaviour
                 }
             }
 
+            // --- 広がる円（爆発タイマー）の更新 ---
+            if (expandingCircle != null)
+            {
+                // 時間経過の割合 (0.0 ～ 1.0)
+                float t = elapsedTime / calculatedTimeToExplode;
+                // 現在の半径 (0 から explosionRadius へ広がる)
+                float currentExpandingRadius = Mathf.Lerp(0f, explosionRadius, t);
+                
+                Vector3 center = transform.position;
+
+                for (int i = 0; i <= circleSegments; i++)
+                {
+                    float angle = (float)i / circleSegments * Mathf.PI * 2f;
+                    float y = Mathf.Sin(angle) * currentExpandingRadius;
+                    float z = Mathf.Cos(angle) * currentExpandingRadius;
+
+                    // ワールド座標で中心位置に加算する（X方向にずらしてブロックの手前に表示）
+                    expandingCircle.SetPosition(i, center + new Vector3(circleXOffset, y, z));
+                }
+            }
+
             elapsedTime += Time.deltaTime;
             yield return null; // 次のフレームまで待機
         }
+
+        // 爆発直前に円を非表示にする
+        if (rangeCircle != null) rangeCircle.gameObject.SetActive(false);
+        if (expandingCircle != null) expandingCircle.gameObject.SetActive(false);
 
         Explode();
     }
@@ -195,12 +295,82 @@ public class BombReaction : MonoBehaviour
             VoxelTerrain.Instance.ExecuteDig(centerX, centerY, centerZ, radiusInBlocks, minLimit, maxLimit, false);
         }
 
+        // 1.4 爆発範囲内の他の爆弾を誘爆させる
+        BombReaction[] bombs = FindObjectsOfType<BombReaction>();
+        Vector2 bombPos2DForChain = new Vector2(transform.position.y, transform.position.z);
+
+        foreach (BombReaction otherBomb in bombs)
+        {
+            if (otherBomb == this) continue; // 自分自身は無視
+
+            Collider bombCol = otherBomb.GetComponent<Collider>();
+            Vector3 bombCenter = bombCol != null ? bombCol.bounds.center : otherBomb.transform.position;
+            Vector2 otherBombPos2D = new Vector2(bombCenter.y, bombCenter.z);
+
+            float distanceToBomb = Vector2.Distance(bombPos2DForChain, otherBombPos2D);
+            float otherBombRadius = 0f;
+            if (bombCol != null)
+            {
+                otherBombRadius = Mathf.Max(bombCol.bounds.extents.y, bombCol.bounds.extents.z);
+            }
+
+            // プレイヤーや宝石と同じく2D平面（YZ）で距離判定を行う
+            if (distanceToBomb <= explosionRadius + otherBombRadius)
+            {
+                otherBomb.TriggerChainReaction();
+            }
+        }
+
+        // 1.5 爆発範囲内の宝石を破壊する
+        // プレハブのタグが "jewelry" ではなく "VoxelTerrain" 等になっているため、コンポーネントで確実に取得する
+        JewelryReaction[] jewels = FindObjectsOfType<JewelryReaction>();
+        Vector2 bombPos2D = new Vector2(transform.position.y, transform.position.z);
+
+        foreach (JewelryReaction jewelScript in jewels)
+        {
+            GameObject jewel = jewelScript.gameObject;
+            Collider jewelCol = jewel.GetComponent<Collider>();
+            Vector3 jewelCenter = jewelCol != null ? jewelCol.bounds.center : jewel.transform.position;
+            Vector2 jewelPos2D = new Vector2(jewelCenter.y, jewelCenter.z);
+
+            float distanceToJewel = Vector2.Distance(bombPos2D, jewelPos2D);
+            float jewelRadius = 0f;
+            if (jewelCol != null)
+            {
+                jewelRadius = Mathf.Max(jewelCol.bounds.extents.y, jewelCol.bounds.extents.z);
+            }
+
+            // プレイヤーと同じく2D平面（YZ）で距離判定を行う
+            if (distanceToJewel <= explosionRadius + jewelRadius)
+            {
+                Destroy(jewel);
+            }
+        }
+
         // 2. プレイヤーへのダメージ処理（お金を減らす処理）
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null)
         {
-            float distance = Vector3.Distance(transform.position, player.transform.position);
-            if (distance <= explosionRadius)
+            Collider col = player.GetComponent<Collider>();
+            
+            // プレイヤーの中心座標を取得（足元が基準座標になっている場合を考慮し、コライダーの中心を使う）
+            Vector3 playerCenter = col != null ? col.bounds.center : player.transform.position;
+
+            // 地形の破壊判定（YZ平面）に合わせて、X座標を無視して中心間の距離を計算する
+            Vector2 bombPos2D2 = new Vector2(transform.position.y, transform.position.z);
+            Vector2 playerPos2D = new Vector2(playerCenter.y, playerCenter.z);
+            float distance = Vector2.Distance(bombPos2D2, playerPos2D);
+
+            // プレイヤーの体の大きさ（コライダーの広がり）を取得して、当たり判定に加算する
+            float playerRadius = 0.5f;
+            if (col != null)
+            {
+                // Y軸（高さ）とZ軸（幅/奥行き）のうち、大きい方を体の半径として扱う
+                playerRadius = Mathf.Max(col.bounds.extents.y, col.bounds.extents.z);
+            }
+
+            // 「爆発の半径」＋「プレイヤーの体の半径」の範囲内なら、体の一部が触れていると判定する
+            if (distance <= explosionRadius + playerRadius)
             {
                 if (MoneyManager.Instance != null)
                 {
@@ -223,7 +393,14 @@ public class BombReaction : MonoBehaviour
         // 3. 爆発エフェクトを生成
         if (explosionEffectPrefab != null)
         {
-            Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
+            GameObject effect = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
+            
+            // 爆発範囲(explosionRadius)に応じてエフェクトの大きさを自動調整する
+            // ※基準の大きさ（スケール1.0）を半径8.0fとした場合の倍率を計算
+            float baseRadius = 8.0f;
+            float scale = explosionRadius / baseRadius;
+            
+            effect.transform.localScale = new Vector3(scale, scale, scale);
         }
 
         // 4. SE再生
