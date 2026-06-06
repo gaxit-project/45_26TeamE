@@ -2,9 +2,12 @@
 
 public class DrillTip : MonoBehaviour
 {
-    [SerializeField] float baseDrillInterval = 0.2f; // インスペクターで設定した初期の速度間隔
-    [SerializeField] float baseDrillRadius = 1.5f;   // インスペクターで設定した初期の範囲大きさ
+    [SerializeField] float baseDrillInterval = 0.2f;
+    [SerializeField] float baseDrillRadius = 1.5f;
     [SerializeField] Transform miningZone;
+
+    [Header("可視化")]
+    [SerializeField] Transform rangeVisualizer; // ← 追加
 
     [Header("エフェクト")]
     [SerializeField] private ParticleSystem dirtEffect;
@@ -12,30 +15,24 @@ public class DrillTip : MonoBehaviour
 
     private float lastDrillTime;
     private PlayerController player;
-
     private float lastDirtTouchTime = -1f;
 
-    // ★現在のレベルに応じた掘削半径（初期値に加算）
     private float CurrentDrillRadius
     {
         get
         {
             int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
-            float bonusRadius = (drillLevel - 1) * 0.2f; // 1レベルごとに 0.2m 拡大
+            float bonusRadius = (drillLevel - 1) * 0.2f;
             return baseDrillRadius + bonusRadius;
         }
     }
 
-    // ★現在のレベルに応じたベースインターバル（初期値から減算して高速化）
     private float CurrentDrillInterval
     {
         get
         {
             int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
-            // 1レベルごとに 0.02秒 ずつ間隔を短縮（Lv.1=0.2s, Lv.2=0.18s, Lv.3=0.16s...）
             float speedBonus = (drillLevel - 1) * 0.02f;
-
-            // 計算結果がマイナス（0秒以下）にならないように下限（0.02秒）を設定
             return Mathf.Max(0.02f, baseDrillInterval - speedBonus);
         }
     }
@@ -78,7 +75,8 @@ public class DrillTip : MonoBehaviour
                     int tz = Mathf.FloorToInt(lp.z / s);
 
                     float h = terrain.GetHardnessAtPosition(tx, ty, tz);
-                    if (h > maxHardness) { maxHardness = h; }
+                    if (h > maxHardness) maxHardness = h;
+
                     if (IsBedrock(terrain, tx, ty, tz))
                     {
                         terrain.OnPlayerReachRelayPoint(ty);
@@ -88,29 +86,28 @@ public class DrillTip : MonoBehaviour
 
                 float hardness = maxHardness;
 
-                // 斜め掘りの時の硬さ補正
                 float dot = Mathf.Abs(Vector3.Dot(transform.forward, Vector3.up));
                 if (dot > 0.1f && dot < 0.9f)
                 {
                     hardness *= 1.8f;
                 }
 
-                // ★強化されたベースインターバルを元に、ブロックの硬さ（hardness）を計算する
                 float currentInterval = CurrentDrillInterval * hardness;
 
-                // --- ダッシュ中は硬さ（インターバル）を無視して即座に掘削する ---
                 if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
                 Vector3 digLocal = terrain.transform.InverseTransformPoint(transform.position);
                 int dx = Mathf.FloorToInt(digLocal.x / s);
                 int dy = Mathf.FloorToInt(digLocal.y / s);
                 int dz = Mathf.FloorToInt(digLocal.z / s);
+
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
-                float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
-                terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+                float radius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
+
+                terrain.ExecuteDig(dx, dy, dz, radius / s, minL, maxL);
                 lastDrillTime = Time.time;
             }
         }
@@ -133,6 +130,21 @@ public class DrillTip : MonoBehaviour
             {
                 dirtEffect.Stop();
             }
+        }
+
+        // =========================
+        // ★ 掘削範囲の可視化
+        // =========================
+        if (rangeVisualizer != null && player != null)
+        {
+            float radius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
+            float size = radius * 2f;
+
+            rangeVisualizer.position = transform.position + transform.forward * radius;
+            rangeVisualizer.localScale = new Vector3(size, size, size);
+
+            // 掘ってる時だけ表示
+            rangeVisualizer.gameObject.SetActive(player.IsDrilling);
         }
     }
 

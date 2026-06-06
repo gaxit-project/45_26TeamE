@@ -2077,6 +2077,7 @@ MonoBehaviour:
   baseDrillInterval: 0.2
   baseDrillRadius: 3
   miningZone: {fileID: 820273196}
+  rangeVisualizer: {fileID: 4146356772849056571, guid: d7f6e6b2eff825a4f8add6da537ab08b, type: 3}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2
 --- !u!1 &482580827
