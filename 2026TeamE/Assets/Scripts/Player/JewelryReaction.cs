@@ -26,6 +26,7 @@ public class JewelryReaction : MonoBehaviour
 
     private float startTime;
     private float checkDelay = 3.0f;
+    private bool isGot = false;
 
     private void Awake()
     {
@@ -79,6 +80,15 @@ public class JewelryReaction : MonoBehaviour
         }
     }
 
+    void OnTriggerStay(Collider other)
+    {
+        // 既に触れている状態で露出した（掘り出された）場合にも取得できるようにする
+        if (isExposed && other.gameObject.CompareTag("Player"))
+        {
+            Get();
+        }
+    }
+
     void ExecuteReaction()
     {
         isCoolingDown = true;
@@ -112,6 +122,9 @@ public class JewelryReaction : MonoBehaviour
 
     void Get()
     {
+        if (isGot) return; // 既に取得済みなら何もしない
+        isGot = true;
+
         // 宝石を取得した瞬間にマーカーを消す
         if (currentMarker != null)
         {
