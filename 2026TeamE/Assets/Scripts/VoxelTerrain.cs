@@ -45,6 +45,10 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject bombPrefab;
     [SerializeField] float bombSpawnRatio = 0.2f;
 
+    [Header("特殊セット設定")]
+    [SerializeField] GameObject bombJewelSetPrefab;
+    [SerializeField] float bombJewelSpawnChance = 0.5f;
+
     [Header("硬度設定")]
     [SerializeField] float hardnessScale = 0.5f;
 
@@ -399,6 +403,7 @@ public class VoxelTerrain : MonoBehaviour
 
             TrySpawnJewelsInChunk(i, finalProbability);
             TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
+            TrySpawnBombJewelSetInChunk(i, bombJewelSpawnChance * depthFactor);
         }
     }
 
@@ -468,6 +473,36 @@ public class VoxelTerrain : MonoBehaviour
                     );
                     Quaternion rotation = Quaternion.Euler(0, -90f, 0);
                     Instantiate(bombPrefab, pos, rotation, transform);
+                }
+            }
+        }
+    }
+
+    private void TrySpawnBombJewelSetInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+
+        for (int t = 0; t < 2; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+
+                // 土・石・硬岩だけに出す（既存と同じ条件）
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
+                {
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+
+                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+
+                    Instantiate(bombJewelSetPrefab, pos, rotation, transform);
                 }
             }
         }

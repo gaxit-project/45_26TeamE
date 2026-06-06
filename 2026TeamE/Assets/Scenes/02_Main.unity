@@ -1142,6 +1142,8 @@ MonoBehaviour:
   baseTreasureChance: 5
   bombPrefab: {fileID: 1077105864719006209, guid: e7a80b686dca789439aca5724de67a2c, type: 3}
   bombSpawnRatio: 1
+  bombJewelSetPrefab: {fileID: 3721176966014536097, guid: 11367ace4010a094497823d8194a5091, type: 3}
+  bombJewelSpawnChance: 0.5
   hardnessScale: 0.3
 --- !u!4 &221685966
 Transform:
