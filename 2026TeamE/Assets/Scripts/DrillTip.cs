@@ -6,15 +6,18 @@ public class DrillTip : MonoBehaviour
     [SerializeField] float baseDrillRadius = 1.5f;
     [SerializeField] Transform miningZone;
 
-    [Header("可視化")]
-    [SerializeField] Transform rangeVisualizer; // ← 追加
-
     [Header("エフェクト")]
     [SerializeField] private ParticleSystem dirtEffect;
     [SerializeField] private float effectKeepTime = 0.2f;
 
+    [Header("可視化(LineRenderer)")]
+    [SerializeField] private LineRenderer radiusRenderer;
+    [SerializeField] private int segments = 40;
+    [SerializeField] private float forwardOffset = 0.2f; // ← 壁から浮かせる量
+
     private float lastDrillTime;
     private PlayerController player;
+
     private float lastDirtTouchTime = -1f;
 
     private float CurrentDrillRadius
@@ -40,6 +43,36 @@ public class DrillTip : MonoBehaviour
     void Start()
     {
         player = GetComponentInParent<PlayerController>();
+    }
+
+    void Update()
+    {
+        DrawRadius();
+    }
+
+    private void DrawRadius()
+    {
+        if (radiusRenderer == null) return;
+
+        float radius = CurrentDrillRadius;
+
+        // ★ ワールド固定 +X に押し出す（回転の影響なし）
+        Vector3 center = transform.position + Vector3.right * forwardOffset;
+
+        radiusRenderer.positionCount = segments + 1;
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = i * Mathf.PI * 2 / segments;
+
+            float y = Mathf.Cos(angle) * radius;
+            float z = Mathf.Sin(angle) * radius;
+
+            // ★ YZ平面の円
+            Vector3 pos = center + new Vector3(0, y, z);
+
+            radiusRenderer.SetPosition(i, pos);
+        }
     }
 
     private void OnTriggerStay(Collider other)
@@ -105,9 +138,10 @@ public class DrillTip : MonoBehaviour
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
-                float radius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
+                float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
 
-                terrain.ExecuteDig(dx, dy, dz, radius / s, minL, maxL);
+                terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+
                 lastDrillTime = Time.time;
             }
         }
@@ -131,36 +165,29 @@ public class DrillTip : MonoBehaviour
                 dirtEffect.Stop();
             }
         }
-
-        // =========================
-        // ★ 掘削範囲の可視化
-        // =========================
-        if (rangeVisualizer != null && player != null)
-        {
-            float radius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
-            float size = radius * 2f;
-
-            rangeVisualizer.position = transform.position + transform.forward * radius;
-            rangeVisualizer.localScale = new Vector3(size, size, size);
-
-            // 掘ってる時だけ表示
-            rangeVisualizer.gameObject.SetActive(player.IsDrilling);
-        }
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, CurrentDrillRadius);
 
-        if (miningZone != null)
+        // ★ Gizmosもワールド+X固定にする
+        Vector3 center = transform.position + Vector3.right * forwardOffset;
+
+        int segments = 40;
+        float radius = CurrentDrillRadius;
+
+        Vector3 prev = center + new Vector3(0, radius, 0);
+
+        for (int i = 1; i <= segments; i++)
         {
-            BoxCollider box = miningZone.GetComponent<BoxCollider>();
-            if (box != null)
-            {
-                Gizmos.color = new Color(1, 1, 0, 0.3f);
-                Gizmos.DrawCube(miningZone.TransformPoint(box.center), Vector3.Scale(miningZone.lossyScale, box.size));
-            }
+            float angle = i * Mathf.PI * 2 / segments;
+            float y = Mathf.Cos(angle) * radius;
+            float z = Mathf.Sin(angle) * radius;
+
+            Vector3 next = center + new Vector3(0, y, z);
+            Gizmos.DrawLine(prev, next);
+            prev = next;
         }
     }
 
