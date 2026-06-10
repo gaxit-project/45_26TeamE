@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class DrillTip : MonoBehaviour
 {
@@ -43,6 +43,12 @@ public class DrillTip : MonoBehaviour
     void Start()
     {
         player = GetComponentInParent<PlayerController>();
+
+        // 古いドリル先端のエフェクトがオンのままだと勝手に出続けてしまうため、ここで無効化します
+        if (dirtEffect != null)
+        {
+            dirtEffect.gameObject.SetActive(false);
+        }
     }
 
     void Update()
@@ -147,24 +153,10 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
-        bool isRecentlyTouching = (Time.time <= lastDirtTouchTime + effectKeepTime);
-
-        if (player != null && player.IsDrilling && isRecentlyTouching)
-        {
-            if (dirtEffect != null && !dirtEffect.isPlaying)
-            {
-                dirtEffect.Play();
-            }
-        }
-        else
-        {
-            if (dirtEffect != null && dirtEffect.isPlaying)
-            {
-                dirtEffect.Stop();
-            }
-        }
+        // 描画処理（LineRenderer等の更新があればここ）
+        // パーティクルの再生処理はVoxelTerrain.cs（ブロック破壊時）に完全に任せるため、削除しました。
     }
 
     private void OnDrawGizmos()

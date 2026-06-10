@@ -182,31 +182,92 @@ public class VoxelTerrain : MonoBehaviour
         HashSet<int> changedYRows = new HashSet<int>();
         int destroyedDirt = 0;
         int destroyedOre = 0;
+        int emittedParticleCount = 0;
 
-        for (int x = 0; x < thicknessX; x++)
+        for (int y = centerY - r; y <= centerY + r; y++)
         {
-            for (int y = centerY - r; y <= centerY + r; y++)
+            for (int z = centerZ - r; z <= centerZ + r; z++)
             {
-                for (int z = centerZ - r; z <= centerZ + r; z++)
+                // 2Dの距離判定
+                float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
+                if (distSq > radius * radius) continue;
+
+                if (y < minLimit.y || y > maxLimit.y || z < minLimit.z || z > maxLimit.z) continue;
+
+                // 画面上（Y,Z）の1マスにつき、エフェクトは1回だけ出すためのフラグ
+                bool emittedForThisCell = false;
+
+                // 奥行き（X方向）をまとめて壊す
+                for (int x = 0; x < thicknessX; x++)
                 {
                     if (!IsInside(x, y, z)) continue;
                     byte currentBlock = mapData[x, y, z];
                     if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock) continue;
 
-                    float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
-                    if (distSq <= radius * radius)
+                    if (currentBlock == (byte)BlockType.Dirt)
                     {
-                        if (y >= minLimit.y && y <= maxLimit.y &&
-                            z >= minLimit.z && z <= maxLimit.z)
+                        destroyedDirt++;
+                        if (!emittedForThisCell)
                         {
-                            if (currentBlock == (byte)BlockType.Dirt) destroyedDirt++;
-                            else if (currentBlock == (byte)BlockType.Ore) destroyedOre++;
-
-                            mapData[x, y, z] = 0;
-                            changed = true;
-                            changedYRows.Add(y);
+                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
+                            Vector3 worldPos = transform.TransformPoint(localPos);
+                            if (BlockEffectManager.Instance != null)
+                            {
+                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
+                            }
+                            emittedForThisCell = true;
+                            emittedParticleCount++;
                         }
                     }
+                    else if (currentBlock == (byte)BlockType.Ore)
+                    {
+                        destroyedOre++;
+                        if (!emittedForThisCell)
+                        {
+                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
+                            Vector3 worldPos = transform.TransformPoint(localPos);
+                            if (BlockEffectManager.Instance != null)
+                            {
+                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Ore);
+                            }
+                            emittedForThisCell = true;
+                            emittedParticleCount++;
+                        }
+                    }
+                    else if (currentBlock == (byte)BlockType.Stone)
+                    {
+                        // 石の場合
+                        if (!emittedForThisCell)
+                        {
+                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
+                            Vector3 worldPos = transform.TransformPoint(localPos);
+                            if (BlockEffectManager.Instance != null)
+                            {
+                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
+                            }
+                            emittedForThisCell = true;
+                            emittedParticleCount++;
+                        }
+                    }
+                    else if (currentBlock == (byte)BlockType.HardRock)
+                    {
+                        // 岩の場合
+                        if (!emittedForThisCell)
+                        {
+                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
+                            Vector3 worldPos = transform.TransformPoint(localPos);
+                            if (BlockEffectManager.Instance != null)
+                            {
+                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
+                            }
+                            emittedForThisCell = true;
+                            emittedParticleCount++;
+                        }
+                    }
+
+                    mapData[x, y, z] = 0;
+                    changed = true;
+                    changedYRows.Add(y);
                 }
             }
         }
