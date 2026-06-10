@@ -64,7 +64,8 @@ public class BlockEffectManager : MonoBehaviour
 
         if (targetParticle == null) return;
 
-        // 選ばれたパーティクルの位置を壊れたブロックへ移動
+        // X座標を手前に固定して、壊れた場所を分かりやすくする
+        worldPosition.x = 5f;
         targetParticle.transform.position = worldPosition;
         
         // Inspectorで設定した数だけ一気に放出（Emit）
