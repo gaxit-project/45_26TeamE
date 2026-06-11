@@ -464,7 +464,11 @@ public class VoxelTerrain : MonoBehaviour
 
             TrySpawnJewelsInChunk(i, finalProbability);
             TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
-            TrySpawnBombJewelSetInChunk(i, bombJewelSpawnChance * depthFactor);
+            // 最下5チャンクでは爆弾+宝石セットを生成しない
+            if (i >= 5)
+            {
+                TrySpawnBombJewelSetInChunk(i, bombJewelSpawnChance * depthFactor);
+            }
         }
     }
 
