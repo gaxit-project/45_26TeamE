@@ -43,7 +43,7 @@ public class introduction : MonoBehaviour
         group.blocksRaycasts = false;
 
         // 8秒待機
-        yield return new WaitForSecondsRealtime(8f);
+        yield return new WaitForSecondsRealtime(8.5f);
 
         // 8秒後に表示
         group.alpha = 1f;
