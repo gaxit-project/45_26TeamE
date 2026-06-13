@@ -5,25 +5,37 @@ public class TimerManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI timerText;
     private float totalTime = 120f;
-    private bool isTimerEnded = false; // 終了判定フラグ
+    private bool isTimerEnded = false;
+    private bool isTimerRunning = false; // タイマーが動いているかどうかのフラグ
 
     [Header("演出用コンポーネント")]
-    [SerializeField] private Animator canvasAnimator; // CanvasのAnimatorをインスペクターから割り当て
-    [SerializeField] private Animator PlayerAnimator; // タイトルのAnimatorをインスペクターから割り当て
+    [SerializeField] private Animator canvasAnimator;
+    [SerializeField] private Animator PlayerAnimator;
 
     [Header("タイマー強調設定")]
     [SerializeField] private float animationSpeed = 5f;
     [SerializeField] private float maxScale = 1.3f;
 
+    // タイムラインから呼び出すスタート関数
+    public void StartTimer()
+    {
+        totalTime = 120f; // タイムをリセット（必要に応じて変更してください）
+        isTimerEnded = false;
+        isTimerRunning = true; // タイマーのカウントダウンを開始
+    }
+
     void Update()
     {
-        if (totalTime > 0)
+        // タイマーが実行中、かつ時間が残っている場合のみカウントする
+        if (isTimerRunning && totalTime > 0)
         {
             totalTime -= Time.deltaTime;
 
             if (totalTime <= 0)
             {
                 totalTime = 0;
+                isTimerRunning = false; // カウントをストップ
+
                 if (!isTimerEnded)
                 {
                     isTimerEnded = true;
@@ -32,7 +44,8 @@ public class TimerManager : MonoBehaviour
             }
 
             DisplayTime(totalTime);
-            if(totalTime > 0 && totalTime <= 30f)
+
+            if (totalTime > 0 && totalTime <= 30f)
             {
                 AnimateTimerText();
             }
@@ -54,11 +67,9 @@ public class TimerManager : MonoBehaviour
         timerText.color = Color.Lerp(Color.white, Color.red, wave);
     }
 
-    void EndTimer() //Canvasのアニメーションを再生し，タイトルに戻る
+    void EndTimer()
     {
         canvasAnimator.SetBool("isTimeUp", true);
         PlayerAnimator.SetBool("isTimeUp", true);
     }
-
-
 }
