@@ -1,9 +1,14 @@
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class JewelryReaction : MonoBehaviour
 {
+    [Header("アイテム情報")]
+    public ItemType itemType = ItemType.Jewelry;
+    [Tooltip("UI表示用のアイコンSprite（jewelry.pngなど）")]
+    public Sprite uiIcon;
     [Header("エコープレハブ")]
     public GameObject visualEchoPrefab;
     [Header("対象")]
@@ -132,6 +137,15 @@ public class JewelryReaction : MonoBehaviour
         }
 
         MoneyManager.Instance.MoneyOnHandIncrease(300000);
+
+        // 右上UIにアイコンをフライアニメーションで追加
+        if (ItemInventoryManager.Instance != null && uiIcon != null)
+        {
+            // GetAnime()が位置を変更する前にワールド座標をキャプチャ
+            Vector3 capturedPos = transform.position;
+            ItemInventoryManager.Instance.AddItem(itemType, uiIcon, capturedPos);
+        }
+
         StartCoroutine(GetAnime());
     }
 

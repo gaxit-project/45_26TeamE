@@ -41,13 +41,15 @@ public class MoneyManager : MonoBehaviour
 
     void Start()
     {
-        MoneyOnHandText.text = MoneyOnHand.ToString("N0");
+        if( MoneyOnHandText != null)
+            MoneyOnHandText.text = MoneyOnHand.ToString("N0");
         //TargetAmountOnPartText.text = TargetAmountOnPart.ToString("0");
     }
 
     private void UpdateMoneyText()
     {
-        MoneyOnHandText.text = MoneyOnHand.ToString("N0");
+        if (MoneyOnHandText != null)
+            MoneyOnHandText.text = MoneyOnHand.ToString("N0");
     }
 
     /// <summary>

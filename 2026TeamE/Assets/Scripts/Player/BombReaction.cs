@@ -386,6 +386,16 @@ public class BombReaction : MonoBehaviour
                     {
                         Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
                     }
+
+                    // 取得済みアイテムをランダムに1つ喪失させる
+                    if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
+                    {
+                        int removed = ItemInventoryManager.Instance.RemoveItemsRandom(1);
+                        if (removed > 0)
+                        {
+                            Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
+                        }
+                    }
                 }
             }
         }
