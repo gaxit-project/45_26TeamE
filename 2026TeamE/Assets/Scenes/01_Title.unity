@@ -3718,6 +3718,8 @@ MonoBehaviour:
   seSource: {fileID: 861048295}
   bgmSlider: {fileID: 1988303311}
   seSlider: {fileID: 722271808}
+  defaultBGMVolume: 0.2
+  defaultSEVolume: 0.2
 --- !u!114 &861048295
 MonoBehaviour:
   m_ObjectHideFlags: 0
