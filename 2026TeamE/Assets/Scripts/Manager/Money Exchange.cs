@@ -5,7 +5,7 @@ public class MoneyExchange : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI totalMoneyText; // このシーンでの所持金表示用
 
-    void Start()
+    void Awake()
     {
         MoneyManager mm = MoneyManager.Instance;
 

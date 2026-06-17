@@ -40,6 +40,11 @@ public class ShoppingManager : MonoBehaviour
     [SerializeField] private GameObject jewelSparkEffect;
     [SerializeField] private GameObject player;
 
+    [Header("ボタンカラー")]
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color maxLevelColor = Color.gray;
+    [SerializeField] private Color cannotBuyColor = Color.red;
+
     private static Dictionary<string, int> savedLevels = new Dictionary<string, int>();
 
     // --- ShoppingManager.cs の Start内を変更 ---
@@ -81,6 +86,7 @@ public class ShoppingManager : MonoBehaviour
             RefreshUI(target);
         }
         HideDescription();
+        UpdateAllButtons();
     }
 
     // --- ShoppingManager.cs の TryPurchase内を変更 ---
@@ -116,16 +122,18 @@ public class ShoppingManager : MonoBehaviour
             UpgradeManager.IncreaseLevel(item.itemName);
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
-            RefreshUI(item);
+            UpdateAllButtons();
             ShowDescription(shopItems.IndexOf(item));
         }
         else SoundManager.Instance.PlaySE("つるはしで掘る3");
     }
 
-
     private void RefreshUI(ShopItem item)
     {
         bool isMax = item.currentLevel >= item.maxLevel;
+
+        MoneyManager mm = MoneyManager.Instance;
+        bool canBuy = mm != null && mm.GetMoney() >= item.CurrentPrice;
 
         if (item.levelText != null)
             item.levelText.text = $"{item.currentLevel}";
@@ -137,26 +145,30 @@ public class ShoppingManager : MonoBehaviour
         {
             item.buyButton.interactable = true;
 
-            //ここはあとから色とかサイズとか変える（見た目自体も変えるかも）
-
-            // 見た目（色）を変
             ColorBlock cb = item.buyButton.colors;
+
             if (isMax)
             {
-                // 上限に達した時の色
-                cb.normalColor = Color.gray;
-                cb.highlightedColor = Color.gray; // 選択中の色もグレーに固定
-                cb.selectedColor = Color.gray;
-                cb.pressedColor = Color.gray;
+                cb.normalColor = maxLevelColor;
+                cb.highlightedColor = maxLevelColor;
+                cb.selectedColor = maxLevelColor;
+                cb.pressedColor = maxLevelColor;
+            }
+            else if (!canBuy)
+            {
+                cb.normalColor = cannotBuyColor;
+                cb.highlightedColor = cannotBuyColor;
+                cb.selectedColor = cannotBuyColor;
+                cb.pressedColor = cannotBuyColor;
             }
             else
             {
-                // 通常時の色（元の色に戻す）
-                cb.normalColor = Color.white;
-                cb.highlightedColor = new Color(0.9f, 0.9f, 0.9f);
-                cb.selectedColor = new Color(0.9f, 0.9f, 0.9f);
-                cb.pressedColor = new Color(0.8f, 0.8f, 0.8f);
+                cb.normalColor = normalColor;
+                cb.highlightedColor = normalColor * 0.9f;
+                cb.selectedColor = normalColor * 0.9f;
+                cb.pressedColor = normalColor * 0.8f;
             }
+
             item.buyButton.colors = cb;
         }
     }
@@ -178,6 +190,14 @@ public class ShoppingManager : MonoBehaviour
         if (descriptionText != null)
         {
             descriptionText.text = "";
+        }
+    }
+
+    private void UpdateAllButtons()
+    {
+        foreach (var item in shopItems)
+        {
+            RefreshUI(item);
         }
     }
 }
