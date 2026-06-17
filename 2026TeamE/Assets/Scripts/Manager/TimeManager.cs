@@ -34,7 +34,7 @@ public class TimerManager : MonoBehaviour
     // Timeline‚ÌSignal‚©‚çŒÄ‚Î‚ê‚é
     public void StartTimer()
     {
-        totalTime = 120f;
+        totalTime = 60f;
         isTimerEnded = false;
         isTimerRunning = true;
 
