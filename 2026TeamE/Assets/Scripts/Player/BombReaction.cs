@@ -46,6 +46,12 @@ public class BombReaction : MonoBehaviour
     void Start()
     {
         startTime = Time.time;
+
+        //生成時、空中に露出していたら自分を削除
+        if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
+        {
+            Destroy(this);
+        }
     }
 
     void Update()
