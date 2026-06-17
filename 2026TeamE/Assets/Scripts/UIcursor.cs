@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class UICursor : MonoBehaviour
@@ -16,6 +18,10 @@ public class UICursor : MonoBehaviour
     private GameObject lastSelected;
 
     private RectTransform cursorRect;
+
+    [Header("キャンセルボタンでフォーカスするもの")]
+    [SerializeField] public GameObject cancel;
+
 
     void Start()
     {
@@ -78,5 +84,10 @@ public class UICursor : MonoBehaviour
                 cursorRect.sizeDelta = Vector2.Lerp(cursorRect.sizeDelta, targetSize, Time.unscaledDeltaTime * scrollSpeed);
             }
         }
+    }
+
+    public void OnCancel(InputAction.CallbackContext context)
+    {
+        EventSystem.current.SetSelectedGameObject(cancel);
     }
 }
