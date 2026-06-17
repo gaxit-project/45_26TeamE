@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.Video;
 
 public class ShoppingManager : MonoBehaviour
 {
@@ -19,6 +20,9 @@ public class ShoppingManager : MonoBehaviour
         [TextArea(2, 4)]
         public List<string> levelDescriptions;
 
+        [Header("説明動画")]
+        public VideoClip descriptionVideo;
+
         [HideInInspector] public int currentLevel = 1;
 
         public int CurrentPrice
@@ -28,6 +32,8 @@ public class ShoppingManager : MonoBehaviour
                 return Mathf.FloorToInt(basePrice * Mathf.Pow(1.5f, currentLevel - 1));
             }
         }
+
+
     }
 
     [Header("ショップ設定")]
@@ -35,6 +41,9 @@ public class ShoppingManager : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI descriptionText;
+
+    [Header("動画表示")]
+    [SerializeField] private VideoPlayer videoPlayer;
 
     [Header("エフェクト")]
     [SerializeField] private GameObject jewelSparkEffect;
@@ -89,6 +98,14 @@ public class ShoppingManager : MonoBehaviour
         UpdateAllButtons();
     }
 
+    private void Update()
+    {
+        if (videoPlayer != null && videoPlayer.isPlaying)
+        {
+            Debug.Log(videoPlayer.texture);
+        }
+    }
+
     // --- ShoppingManager.cs の TryPurchase内を変更 ---
     private void TryPurchase(ShopItem item)
     {
@@ -139,7 +156,7 @@ public class ShoppingManager : MonoBehaviour
             item.levelText.text = $"{item.currentLevel}";
 
         if (item.priceText != null)
-            item.priceText.text = isMax ? "---" : $"$:{item.CurrentPrice:N0}";
+            item.priceText.text = isMax ? "---" : $"{item.CurrentPrice:N0}";
 
         if (item.buyButton != null)
         {
@@ -176,12 +193,34 @@ public class ShoppingManager : MonoBehaviour
     public void ShowDescription(int itemIndex)
     {
         if (itemIndex < 0 || itemIndex >= shopItems.Count) return;
+
         ShopItem item = shopItems[itemIndex];
 
-        if (descriptionText != null && item.levelDescriptions != null && item.levelDescriptions.Count > 0)
+        if (descriptionText != null &&
+            item.levelDescriptions != null &&
+            item.levelDescriptions.Count > 0)
         {
-            int descIndex = Mathf.Clamp(item.currentLevel - 1, 0, item.levelDescriptions.Count - 1);
+            int descIndex = Mathf.Clamp(
+                item.currentLevel - 1,
+                0,
+                item.levelDescriptions.Count - 1);
+
             descriptionText.text = item.levelDescriptions[descIndex];
+        }
+
+        // 動画再生
+        if (videoPlayer != null)
+        {
+            if (item.descriptionVideo != null)
+            {
+                videoPlayer.Stop();
+                videoPlayer.clip = item.descriptionVideo;
+                videoPlayer.isLooping = true;
+                videoPlayer.Play();
+
+                Debug.Log("動画再生開始");
+                Debug.Log(videoPlayer.texture);
+            }
         }
     }
 
@@ -190,6 +229,11 @@ public class ShoppingManager : MonoBehaviour
         if (descriptionText != null)
         {
             descriptionText.text = "";
+        }
+
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
         }
     }
 
