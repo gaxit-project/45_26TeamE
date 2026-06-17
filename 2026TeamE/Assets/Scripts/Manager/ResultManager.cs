@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
 
 public class ResultManager : MonoBehaviour
 {
@@ -54,6 +55,10 @@ public class ResultManager : MonoBehaviour
     [SerializeField, Tooltip("すべて開け終わった後にフォーカスを移すボタン（次へボタンなど）")]
     private GameObject nextFocusWhenAllOpened;
 
+    [Header("イベント設定")]
+    [SerializeField, Tooltip("未回収アイテムの自動開封・換金が終わった後に呼ばれる処理（ここにシーン遷移を入れる）")]
+    private UnityEvent onCompleteResult;
+
     [Header("ボタン色設定")]
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color highlightColor = new Color(1f, 1f, 0.7f, 1f);
@@ -65,6 +70,7 @@ public class ResultManager : MonoBehaviour
     private bool isAnimationFinished = false;
     private bool skipRequested = false;
     private int openedCount = 0;
+    private bool isProcessingReset = false;
 
     // 生成したボタンのリスト（ナビゲーション設定用）
     private List<Button> itemButtons = new List<Button>();
@@ -113,31 +119,125 @@ public class ResultManager : MonoBehaviour
     /// </summary>
     public void ResetCollectedData()
     {
-        // 1. まず、まだクリックされていない（開封されていない）アイテムを全て自動で換金する
+        if (isProcessingReset) return;
+        isProcessingReset = true;
+        StartCoroutine(AutoOpenAndCompleteRoutine());
+    }
+
+    private IEnumerator AutoOpenAndCompleteRoutine()
+    {
         MoneyManager mm = MoneyManager.Instance;
         List<ItemInventoryManager.ItemData> items = ItemInventoryManager.GetCollectedItemsForResult();
 
-        if (mm != null && items.Count == itemButtons.Count)
+        if (mm == null || items.Count != itemButtons.Count)
         {
-            int autoAddedMoney = 0;
-            for (int i = 0; i < itemButtons.Count; i++)
-            {
-                if (itemButtons[i] != null && itemButtons[i].interactable)
-                {
-                    autoAddedMoney += items[i].moneyValue;
-                    itemButtons[i].interactable = false; // 二重加算防止
-                }
-            }
+            ItemInventoryManager.ClearCollectedData();
+            onCompleteResult?.Invoke();
+            yield break;
+        }
 
-            if (autoAddedMoney > 0)
+        int autoAddedMoney = 0;
+        bool hasOpenedAny = false;
+
+        for (int i = 0; i < itemButtons.Count; i++)
+        {
+            if (itemButtons[i] != null && itemButtons[i].interactable)
             {
-                mm.MoneyOnHandIncrease(autoAddedMoney);
-                Debug.Log($"[ResultManager] 残っていた未回収のアイテムを自動換金しました: +{autoAddedMoney}");
+                ItemInventoryManager.ItemData item = items[i];
+                int addMoney = 0;
+
+                // 宝箱か皮袋の場合
+                if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
+                {
+                    if (openedChestIndices.Contains(i))
+                    {
+                        // 既に1段階目（開封）は済んでいる場合は、抽選済みの中身から金額を取得
+                        if (droppedLootMap.TryGetValue(i, out LootItem droppedLoot))
+                        {
+                            addMoney = droppedLoot.moneyValue;
+                        }
+                    }
+                    else
+                    {
+                        // 未開封のものをここで強制的に開ける演出
+                        openedChestIndices.Add(i);
+                        hasOpenedAny = true;
+
+                        Image img = itemButtons[i].GetComponent<Image>();
+                        if (img != null)
+                        {
+                            if (item.type == ItemType.TresureBox && openTreasureBoxSprite != null)
+                                img.sprite = openTreasureBoxSprite;
+                            else if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
+                                img.sprite = openLeatherBagSprite;
+
+                            img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
+                        }
+
+                        LootItem loot = RollLoot(item.type);
+                        droppedLootMap[i] = loot;
+
+                        if (loot != null && loot.sprite != null)
+                        {
+                            addMoney = loot.moneyValue;
+
+                            GameObject lootIcon = new GameObject("LootIcon");
+                            lootIcon.transform.SetParent(itemButtons[i].transform, false);
+
+                            Image lootImg = lootIcon.AddComponent<Image>();
+                            lootImg.sprite = loot.sprite;
+                            lootImg.raycastTarget = false;
+
+                            RectTransform lootRect = lootIcon.GetComponent<RectTransform>();
+                            lootRect.anchorMin = Vector2.zero;
+                            lootRect.anchorMax = Vector2.one;
+                            lootRect.offsetMin = Vector2.zero;
+                            lootRect.offsetMax = Vector2.zero;
+
+                            droppedIconMap[i] = lootIcon;
+                            StartCoroutine(PopInAnimation(lootIcon.transform));
+                        }
+                    }
+                }
+                else
+                {
+                    // 普通の宝石などはそのままの金額
+                    addMoney = item.moneyValue;
+                }
+
+                // 即座にお金を加算
+                if (addMoney > 0)
+                {
+                    mm.MoneyOnHandIncrease(addMoney);
+                    autoAddedMoney += addMoney;
+                }
+
+                itemButtons[i].interactable = false; // 二重加算防止
             }
         }
 
-        // 2. アイテムデータをクリア
+        // テキストを最終的な金額に更新
+        if (autoAddedMoney > 0)
+        {
+            onHandResultText.text = mm.GetMoneyOnHand().ToString("N0");
+            Debug.Log($"[ResultManager] 残っていた未回収のアイテムを自動換金しました: +{autoAddedMoney} (最終所持金: {mm.GetMoneyOnHand()})");
+        }
+
+        // ここからウェイト（待ち時間）処理
+        if (hasOpenedAny)
+        {
+            // 箱が新しく開いた場合は、中身が飛び出すアニメーションを見るために長めに待つ
+            yield return new WaitForSeconds(1.5f);
+        }
+        else if (autoAddedMoney > 0)
+        {
+            // 箱は開かなかったが、回収忘れの宝石などでお金が増えた場合は、数字が変わったのを見せるために少し待つ
+            yield return new WaitForSeconds(1.0f);
+        }
+
+        // 2. アイテムデータをクリアして、完了イベントを発火
         ItemInventoryManager.ClearCollectedData();
+        onCompleteResult?.Invoke();
     }
 
     /// <summary>
@@ -167,6 +267,14 @@ public class ResultManager : MonoBehaviour
 
             // 全アイテム表示後、最初のボタンを選択状態にする（ゲームパッド用）
             SelectFirstButton();
+        }
+        else
+        {
+            // アイテムを一つも回収していない場合は、最初から「次へ」ボタンにフォーカスを当てる
+            if (nextFocusWhenAllOpened != null && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(nextFocusWhenAllOpened);
+            }
         }
 
         // アイテム表示が終わったら、現在の所持金を表示して操作可能にする
@@ -364,10 +472,9 @@ public class ResultManager : MonoBehaviour
 
         openedCount++; // 回収済みの数を増やす
 
-        // 2. ボタンを無効化して消滅させる
+        // 2. ボタンを無効化して消滅させ、フォーカス移動を行う
         btn.interactable = false; // 連打防止
-        SelectNextAvailableButton(index);
-        StartCoroutine(ShrinkAndDestroy(btn.gameObject));
+        StartCoroutine(DestroyAndSelectNext(index, btn.gameObject));
     }
 
     /// <summary>
@@ -405,11 +512,32 @@ public class ResultManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ボタンを縮小させてから破棄するアニメーション
+    /// ボタンをレイアウトから除外し、配置を確定させてからフォーカスを移動して縮小破棄する
     /// </summary>
-    private IEnumerator ShrinkAndDestroy(GameObject target)
+    private IEnumerator DestroyAndSelectNext(int index, GameObject target)
     {
-        float duration = 0.2f;
+        // 1. レイアウトの詰め（横スライド）を即座に行わせるため、レイアウト計算から外す
+        LayoutElement layout = target.GetComponent<LayoutElement>();
+        if (layout != null)
+        {
+            layout.ignoreLayout = true;
+        }
+
+        // 2. コンテナのレイアウトを強制的に即座に再計算する（画面上の配置を確定させる）
+        if (itemIconContainer != null)
+        {
+            RectTransform containerRect = itemIconContainer.GetComponent<RectTransform>();
+            if (containerRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
+            }
+        }
+
+        // 3. アイテムの配置がスライドして完了した状態で、次のボタンへフォーカスを移す
+        SelectNextAvailableButton(index);
+
+        // 4. アニメーションさせながら消滅
+        float duration = 0.05f;
         float elapsed = 0f;
         Vector3 startScale = target.transform.localScale;
 
