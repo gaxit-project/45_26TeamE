@@ -14,10 +14,6 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private Slider bgmSlider;
     [SerializeField] private Slider seSlider;
 
-    [Header("Volume Settings")]
-    [SerializeField] private float defaultBGMVolume = 0.2f;
-    [SerializeField] private float defaultSEVolume = 0.2f;
-
     private bool isInitializing = false;
     private CriAtomExPlayback loopPlayback;
     private string currentLoopCueName = "";
@@ -30,8 +26,6 @@ public class SoundManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             if(bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
-            if(bgmSource != null) bgmSource.volume = defaultBGMVolume;
-            if(seSource != null) seSource.volume = defaultSEVolume;
         }
         else
         {
@@ -49,9 +43,6 @@ public class SoundManager : MonoBehaviour
         isInitializing = true;
         if (bgmSlider != null)
         {
-            bgmSlider.minValue = 0f;
-            bgmSlider.maxValue = 1f;
-
             // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
             bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
             bgmSlider.value = bgmSource.volume;
@@ -60,9 +51,6 @@ public class SoundManager : MonoBehaviour
 
         if (seSlider != null)
         {
-            seSlider.minValue = 0f;
-            seSlider.maxValue = 1f;
-
             // SEのスライダーも同様にリセットして更新
             seSlider.onValueChanged.RemoveListener(SetSEVolume);
             seSlider.value = seSource.volume;
