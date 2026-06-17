@@ -84,12 +84,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 005b9c5004c07b64eb7c1b96160c39cd, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4fc0c58ca4036764db15c29c7bcd5479, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 4, y: 4.05}
+  m_Size: {x: 4, y: 4.01}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -156,6 +156,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JewelryReaction
   itemType: 3
   uiIcon: {fileID: 21300000, guid: 4fc0c58ca4036764db15c29c7bcd5479, type: 3}
+  moneyValue: 300000
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
   ob: {fileID: 0}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
