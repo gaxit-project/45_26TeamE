@@ -4,9 +4,10 @@ using TMPro;
 public class TimerManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI timerText;
-    private float totalTime = 120f;
+
+    private float totalTime = 60f;
     private bool isTimerEnded = false;
-    private bool isTimerRunning = false; // タイマーが動いているかどうかのフラグ
+    private bool isTimerRunning = false;
 
     [Header("演出用コンポーネント")]
     [SerializeField] private Animator canvasAnimator;
@@ -16,17 +17,33 @@ public class TimerManager : MonoBehaviour
     [SerializeField] private float animationSpeed = 5f;
     [SerializeField] private float maxScale = 1.3f;
 
-    // タイムラインから呼び出すスタート関数
-    public void StartTimer()
+    private static bool firstLoad = true;
+
+    private void Start()
     {
-        totalTime = 120f; // タイムをリセット（必要に応じて変更してください）
-        isTimerEnded = false;
-        isTimerRunning = true; // タイマーのカウントダウンを開始
+        if (firstLoad)
+        {
+            firstLoad = false;
+        }
+        else
+        {
+            StartTimer();
+        }
     }
 
-    void Update()
+    // TimelineのSignalから呼ばれる
+    public void StartTimer()
     {
-        // タイマーが実行中、かつ時間が残っている場合のみカウントする
+        totalTime = 120f;
+        isTimerEnded = false;
+        isTimerRunning = true;
+
+        timerText.transform.localScale = Vector3.one;
+        timerText.color = Color.white;
+    }
+
+    private void Update()
+    {
         if (isTimerRunning && totalTime > 0)
         {
             totalTime -= Time.deltaTime;
@@ -34,7 +51,7 @@ public class TimerManager : MonoBehaviour
             if (totalTime <= 0)
             {
                 totalTime = 0;
-                isTimerRunning = false; // カウントをストップ
+                isTimerRunning = false;
 
                 if (!isTimerEnded)
                 {
@@ -49,27 +66,40 @@ public class TimerManager : MonoBehaviour
             {
                 AnimateTimerText();
             }
+            else
+            {
+                timerText.transform.localScale = Vector3.one;
+                timerText.color = Color.white;
+            }
         }
     }
 
-    void DisplayTime(float timeToDisplay)
+    private void DisplayTime(float timeToDisplay)
     {
         int minutes = Mathf.FloorToInt(timeToDisplay / 60);
         int seconds = Mathf.FloorToInt(timeToDisplay % 60);
+
         timerText.text = string.Format("{0} : {1:00}", minutes, seconds);
     }
 
-    void AnimateTimerText()
+    private void AnimateTimerText()
     {
         float wave = (Mathf.Sin(Time.time * animationSpeed) + 1f) / 2f;
+
         float currentScale = Mathf.Lerp(1f, maxScale, wave);
-        timerText.transform.localScale = new Vector3(currentScale, currentScale, 1f);
+
+        timerText.transform.localScale =
+            new Vector3(currentScale, currentScale, 1f);
+
         timerText.color = Color.Lerp(Color.white, Color.red, wave);
     }
 
-    void EndTimer()
+    private void EndTimer()
     {
-        canvasAnimator.SetBool("isTimeUp", true);
-        PlayerAnimator.SetBool("isTimeUp", true);
+        if (canvasAnimator != null)
+            canvasAnimator.SetBool("isTimeUp", true);
+
+        if (PlayerAnimator != null)
+            PlayerAnimator.SetBool("isTimeUp", true);
     }
 }
