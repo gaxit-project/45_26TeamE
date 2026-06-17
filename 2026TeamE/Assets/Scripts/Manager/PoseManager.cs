@@ -14,13 +14,13 @@ public class PoseManager : MonoBehaviour
     [SerializeField] private GameObject firstSelectedButton;
 
     // ポーズ画面がアクティブかどうかを取得
-    public bool IsPaused => pauseMenu.activeSelf;
+    public bool IsPaused => pauseMenu != null && pauseMenu.activeSelf;
 
     private float inputBlockEndTime = 0f;
     public bool IsTransitioning { get; private set; } = false;
 
     // ポーズ中、シーン遷移中、またはポーズ解除直後の0.1秒間は入力をブロックする
-    public bool IsInputBlocked => pauseMenu.activeSelf || IsTransitioning || Time.unscaledTime < inputBlockEndTime;
+    public bool IsInputBlocked => (pauseMenu != null && pauseMenu.activeSelf) || IsTransitioning || Time.unscaledTime < inputBlockEndTime;
 
     public void TogglePause(InputAction.CallbackContext context)
     {
