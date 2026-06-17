@@ -131,7 +131,6 @@ public class ResultManager : MonoBehaviour
 
         if (mm == null || items.Count != itemButtons.Count)
         {
-            ItemInventoryManager.ClearCollectedData();
             onCompleteResult?.Invoke();
             yield break;
         }
@@ -235,8 +234,7 @@ public class ResultManager : MonoBehaviour
             yield return new WaitForSeconds(1.0f);
         }
 
-        // 2. アイテムデータをクリアして、完了イベントを発火
-        ItemInventoryManager.ClearCollectedData();
+        // 2. 完了イベントを発火
         onCompleteResult?.Invoke();
     }
 
@@ -615,5 +613,11 @@ public class ResultManager : MonoBehaviour
         }
 
         return weightedList[weightedList.Count - 1].item;
+    }
+
+    private void OnDestroy()
+    {
+        // 次のシーンでもアイテムデータを参照する可能性があるため、ここではクリアしない。
+        // （次回のメインシーンの ItemInventoryManager.Start() にて自動で初期化されます）
     }
 }

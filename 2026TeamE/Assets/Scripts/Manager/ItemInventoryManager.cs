@@ -92,6 +92,9 @@ public class ItemInventoryManager : MonoBehaviour
 
     private void Start()
     {
+        // メインシーン開始時に、以前のプレイの取得アイテムデータをリセットする
+        ClearItems();
+
         mainCamera = Camera.main;
 
         if (canvasRect != null)

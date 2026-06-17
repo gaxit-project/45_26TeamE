@@ -23,6 +23,9 @@ public class UICursor : MonoBehaviour
     [SerializeField] public GameObject cancel;
 
 
+    private bool cancelPending = false;
+    private int cancelDelayFrames = 0;
+
     void Start()
     {
         lastSelected = EventSystem.current.currentSelectedGameObject;
@@ -34,6 +37,27 @@ public class UICursor : MonoBehaviour
 
     void Update()
     {
+        // ====== キャンセル入力の直接検出 ======
+        if (!cancelPending && cancel != null)
+        {
+            bool cancelPressed = false;
+
+            // キーボード: Escape
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                cancelPressed = true;
+
+            // ゲームパッド: Bボタン（East）
+            if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
+                cancelPressed = true;
+
+            if (cancelPressed)
+            {
+                cancelPending = true;
+                cancelDelayFrames = 2;
+            }
+        }
+
+        // ====== カーソル追従処理 ======
         GameObject selected = EventSystem.current.currentSelectedGameObject;
 
         if (selected == null || cursor == null)
@@ -86,20 +110,34 @@ public class UICursor : MonoBehaviour
         }
     }
 
+    void LateUpdate()
+    {
+        // キャンセル入力のフォーカス移動を、全てのUI処理が終わった後に実行する
+        if (cancelPending)
+        {
+            cancelDelayFrames--;
+            if (cancelDelayFrames <= 0)
+            {
+                cancelPending = false;
+                if (cancel != null && EventSystem.current != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(null);
+                    EventSystem.current.SetSelectedGameObject(cancel);
+                    Debug.Log($"[UICursor] キャンセル入力: {cancel.name} にフォーカスを移動しました");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// PlayerInput経由で呼ばれた場合の互換用（直接検出がメインのため、通常は使われない）
+    /// </summary>
     public void OnCancel(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && cancel != null && !cancelPending)
         {
-            if (cancel != null && EventSystem.current != null)
-            {
-                EventSystem.current.SetSelectedGameObject(null); // 一度フォーカスを外すことで確実にする
-                EventSystem.current.SetSelectedGameObject(cancel);
-                Debug.Log($"[UICursor] キャンセル入力: {cancel.name} にフォーカスを移動しました");
-            }
-            else
-            {
-                Debug.LogWarning("[UICursor] キャンセル入力が呼ばれましたが、cancelオブジェクトかEventSystemがnullです");
-            }
+            cancelPending = true;
+            cancelDelayFrames = 2;
         }
     }
 }
