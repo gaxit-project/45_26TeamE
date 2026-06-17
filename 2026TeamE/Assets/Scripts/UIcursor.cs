@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -88,6 +88,18 @@ public class UICursor : MonoBehaviour
 
     public void OnCancel(InputAction.CallbackContext context)
     {
-        EventSystem.current.SetSelectedGameObject(cancel);
+        if (context.performed)
+        {
+            if (cancel != null && EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null); // 一度フォーカスを外すことで確実にする
+                EventSystem.current.SetSelectedGameObject(cancel);
+                Debug.Log($"[UICursor] キャンセル入力: {cancel.name} にフォーカスを移動しました");
+            }
+            else
+            {
+                Debug.LogWarning("[UICursor] キャンセル入力が呼ばれましたが、cancelオブジェクトかEventSystemがnullです");
+            }
+        }
     }
 }

@@ -9,6 +9,8 @@ public class JewelryReaction : MonoBehaviour
     public ItemType itemType = ItemType.Jewelry;
     [Tooltip("UI表示用のアイコンSprite（jewelry.pngなど）")]
     public Sprite uiIcon;
+    [Tooltip("リザルト画面で宝箱を開けた時に加算される金額")]
+    public int moneyValue = 300000;
     [Header("エコープレハブ")]
     public GameObject visualEchoPrefab;
     [Header("対象")]
@@ -136,14 +138,13 @@ public class JewelryReaction : MonoBehaviour
             Destroy(currentMarker);
         }
 
-        MoneyManager.Instance.MoneyOnHandIncrease(300000);
-
+        // お金はリザルト画面で宝箱開封時に加算する（ここでは加算しない）
         // 右上UIにアイコンをフライアニメーションで追加
         if (ItemInventoryManager.Instance != null && uiIcon != null)
         {
             // GetAnime()が位置を変更する前にワールド座標をキャプチャ
             Vector3 capturedPos = transform.position;
-            ItemInventoryManager.Instance.AddItem(itemType, uiIcon, capturedPos);
+            ItemInventoryManager.Instance.AddItem(itemType, uiIcon, capturedPos, moneyValue);
         }
 
         StartCoroutine(GetAnime());

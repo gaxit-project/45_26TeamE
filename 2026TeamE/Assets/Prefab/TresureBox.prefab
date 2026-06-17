@@ -156,7 +156,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JewelryReaction
   itemType: 2
   uiIcon: {fileID: 21300000, guid: d4c3f2546075e8141b8495e1969c71e1, type: 3}
-  moneyValue: 300000
+  moneyValue: 0
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
   ob: {fileID: 0}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}

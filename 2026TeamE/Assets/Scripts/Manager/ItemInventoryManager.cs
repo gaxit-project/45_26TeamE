@@ -9,12 +9,7 @@ using UnityEngine.UI;
 /// 【機能】
 /// ・アイテム取得 → ワールド座標からUIへフライアニメーション → アイコン定着
 /// ・ダメージ時のアイテム喪失 → 縮小アニメ → 隙間を滑らかに詰めて並び直し
-/// 
-/// 【使い方】
-/// 1. 02_Mainシーンに空のGameObjectを作り、このスクリプトをアタッチ
-/// 2. Canvasの直下に「ItemIconPanel」(HorizontalLayoutGroup) を右上に配置
-/// 3. アイコンPrefab（Image + LayoutElement付きGameObject, 64x64推奨）を作成
-/// 4. インスペクターで canvasRect, iconContainer, iconPrefab を設定
+/// ・リザルト画面用に取得アイテム＆金額データをシーン間で引き継ぐ
 /// </summary>
 public class ItemInventoryManager : MonoBehaviour
 {
@@ -52,22 +47,35 @@ public class ItemInventoryManager : MonoBehaviour
     [SerializeField, Tooltip("アイコンの幅（LayoutElement.preferredWidth）")]
     private float iconWidth = 64f;
 
-    // 取得済みアイテムの情報を保持する内部クラス
-    private class CollectedItemData
+    // ========== アイテムデータ（シーン間引き継ぎ用にstaticリスト） ==========
+
+    /// <summary>
+    /// リザルト画面に引き継ぐアイテムデータ
+    /// </summary>
+    [System.Serializable]
+    public class ItemData
     {
         public ItemType type;
         public Sprite icon;
-        public GameObject uiObject; // iconContainer内のUI要素
+        public int moneyValue;
     }
 
-    // 取得済みアイテムリスト（UIオブジェクトと紐付け）
-    private List<CollectedItemData> collectedItems = new List<CollectedItemData>();
+    // staticリストでシーン遷移後もデータが残る
+    private static List<ItemData> s_collectedItems = new List<ItemData>();
+
+    // UI要素との紐付け（現在のシーン内でのみ有効）
+    private class LiveItemData
+    {
+        public int dataIndex; // s_collectedItems 内のインデックス
+        public GameObject uiObject;
+    }
+    private List<LiveItemData> liveItems = new List<LiveItemData>();
 
     // カメラ参照
     private Camera mainCamera;
-    private Camera canvasCamera; // Screen Space - Camera用（Overlayならnull）
+    private Camera canvasCamera;
 
-    // 削除アニメーション中のアイテム数（同時削除の制御用）
+    // 削除アニメーション中のカウント
     private int removingCount = 0;
 
     private void Awake()
@@ -86,7 +94,6 @@ public class ItemInventoryManager : MonoBehaviour
     {
         mainCamera = Camera.main;
 
-        // CanvasのrenderModeに応じてカメラを取得
         if (canvasRect != null)
         {
             Canvas canvas = canvasRect.GetComponentInParent<Canvas>();
@@ -103,45 +110,57 @@ public class ItemInventoryManager : MonoBehaviour
 
     /// <summary>
     /// アイテムを取得した時に呼び出す。
-    /// ワールド座標からUIの右上パネルへ飛んでいくアニメーションを再生し、アイコンを追加する。
+    /// お金はここでは加算せず、データとして保持する。リザルトで開封時に加算。
     /// </summary>
-    public void AddItem(ItemType type, Sprite icon, Vector3 worldPosition)
+    /// <param name="type">アイテムの種類</param>
+    /// <param name="icon">UI表示用のSprite</param>
+    /// <param name="worldPosition">アイテムの3Dワールド座標（取得時の位置）</param>
+    /// <param name="moneyValue">リザルトで開封時に加算される金額</param>
+    public void AddItem(ItemType type, Sprite icon, Vector3 worldPosition, int moneyValue = 0)
     {
-        StartCoroutine(FlyToUI(type, icon, worldPosition));
+        // データをstaticリストに保存
+        ItemData data = new ItemData
+        {
+            type = type,
+            icon = icon,
+            moneyValue = moneyValue
+        };
+        s_collectedItems.Add(data);
+
+        StartCoroutine(FlyToUI(data, worldPosition));
     }
 
     /// <summary>
     /// ワールド座標 → UIへのフライアニメーション
     /// </summary>
-    private IEnumerator FlyToUI(ItemType type, Sprite icon, Vector3 worldPosition)
+    private IEnumerator FlyToUI(ItemData data, Vector3 worldPosition)
     {
         if (canvasRect == null || iconPrefab == null || mainCamera == null)
         {
-            AddIconToPanel(type, icon);
+            AddIconToPanel(data);
             yield break;
         }
 
-        // ========== 1. フライ用の一時アイコンを Canvas 直下に生成 ==========
+        // 1. フライ用の一時アイコンを Canvas 直下に生成
         GameObject flyIcon = Instantiate(iconPrefab, canvasRect);
         Image flyImage = flyIcon.GetComponent<Image>();
         if (flyImage != null)
         {
-            flyImage.sprite = icon;
+            flyImage.sprite = data.icon;
             flyImage.raycastTarget = false;
         }
 
-        // フライ中はLayoutElementを無効化（Canvas直下に置くため）
         LayoutElement flyLayout = flyIcon.GetComponent<LayoutElement>();
         if (flyLayout != null) flyLayout.ignoreLayout = true;
 
         RectTransform flyRect = flyIcon.GetComponent<RectTransform>();
 
-        // ========== 2. 開始位置：ワールド座標 → Canvas内ローカル座標 ==========
+        // 2. 開始位置
         Vector3 screenStart = mainCamera.WorldToScreenPoint(worldPosition);
         if (screenStart.z < 0)
         {
             Destroy(flyIcon);
-            AddIconToPanel(type, icon);
+            AddIconToPanel(data);
             yield break;
         }
 
@@ -149,13 +168,13 @@ public class ItemInventoryManager : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvasRect, screenStart, canvasCamera, out startLocalPos);
 
-        // ========== 3. 終了位置：iconContainer の位置 → Canvas内ローカル座標 ==========
+        // 3. 終了位置
         Vector3 containerScreenPos = RectTransformUtility.WorldToScreenPoint(canvasCamera, iconContainer.position);
         Vector2 endLocalPos;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvasRect, containerScreenPos, canvasCamera, out endLocalPos);
 
-        // ========== 4. フライアニメーション ==========
+        // 4. フライアニメーション
         float elapsed = 0f;
         flyRect.anchoredPosition = startLocalPos;
         flyRect.localScale = Vector3.one * startScale;
@@ -164,14 +183,12 @@ public class ItemInventoryManager : MonoBehaviour
         {
             float t = elapsed / flyDuration;
 
-            // EaseInOutQuad
             float easedT;
             if (t < 0.5f)
                 easedT = 2f * t * t;
             else
                 easedT = 1f - Mathf.Pow(-2f * t + 2f, 2f) / 2f;
 
-            // 放物線アーチ
             Vector2 currentPos = Vector2.Lerp(startLocalPos, endLocalPos, easedT);
             float arc = arcHeight * 4f * t * (1f - t);
             currentPos.y += arc;
@@ -179,7 +196,6 @@ public class ItemInventoryManager : MonoBehaviour
             flyRect.anchoredPosition = currentPos;
             flyRect.localScale = Vector3.one * Mathf.Lerp(startScale, 1f, easedT);
 
-            // 終盤の軽いフェード
             if (flyImage != null && t > 0.8f)
             {
                 float alpha = Mathf.Lerp(1f, 0.5f, (t - 0.8f) / 0.2f);
@@ -192,17 +208,17 @@ public class ItemInventoryManager : MonoBehaviour
             yield return null;
         }
 
-        // ========== 5. フライアイコン削除 ==========
+        // 5. フライアイコン削除
         Destroy(flyIcon);
 
-        // ========== 6. 正式アイコンをパネルに追加 ==========
-        AddIconToPanel(type, icon);
+        // 6. 正式アイコンをパネルに追加
+        AddIconToPanel(data);
     }
 
     /// <summary>
-    /// アイコンをパネルに追加し、ポップインアニメーションを再生する
+    /// アイコンをパネルに追加
     /// </summary>
-    private void AddIconToPanel(ItemType type, Sprite icon)
+    private void AddIconToPanel(ItemData data)
     {
         if (iconContainer == null || iconPrefab == null) return;
 
@@ -210,10 +226,9 @@ public class ItemInventoryManager : MonoBehaviour
         Image slotImage = slotIcon.GetComponent<Image>();
         if (slotImage != null)
         {
-            slotImage.sprite = icon;
+            slotImage.sprite = data.icon;
         }
 
-        // LayoutElement を確保（なければ追加）→ 削除アニメ時に幅を操作する
         LayoutElement layout = slotIcon.GetComponent<LayoutElement>();
         if (layout == null)
         {
@@ -222,20 +237,17 @@ public class ItemInventoryManager : MonoBehaviour
         layout.preferredWidth = iconWidth;
         layout.preferredHeight = iconWidth;
 
-        // データリストに追加
-        collectedItems.Add(new CollectedItemData
+        // UIオブジェクトとデータを紐付け
+        int dataIndex = s_collectedItems.IndexOf(data);
+        liveItems.Add(new LiveItemData
         {
-            type = type,
-            icon = icon,
+            dataIndex = dataIndex,
             uiObject = slotIcon
         });
 
         StartCoroutine(PopInAnimation(slotIcon.transform));
     }
 
-    /// <summary>
-    /// スケール0→1のポップインアニメーション（EaseOutBack）
-    /// </summary>
     private IEnumerator PopInAnimation(Transform target)
     {
         float elapsed = 0f;
@@ -260,56 +272,47 @@ public class ItemInventoryManager : MonoBehaviour
     // =====================================================================
 
     /// <summary>
-    /// 末尾からN個のアイテムを削除する（爆弾ダメージなど）
-    /// 縮小アニメーション後にHorizontalLayoutGroupが自動的に隙間を詰める
+    /// 末尾からN個のアイテムを削除する
     /// </summary>
-    /// <param name="count">削除するアイテム数</param>
-    /// <returns>実際に削除されたアイテム数</returns>
     public int RemoveItemsFromEnd(int count)
     {
         int actualRemoved = 0;
-        // 末尾から順に削除
         for (int i = 0; i < count; i++)
         {
-            if (collectedItems.Count == 0) break;
-
-            int lastIndex = collectedItems.Count - 1;
-            RemoveItemAtIndex(lastIndex);
+            if (liveItems.Count == 0) break;
+            RemoveItemAtLiveIndex(liveItems.Count - 1);
             actualRemoved++;
         }
         return actualRemoved;
     }
 
     /// <summary>
-    /// ランダムな位置のアイテムをN個削除する（列の途中が消えて詰め直し）
+    /// ランダムな位置のアイテムをN個削除する
     /// </summary>
-    /// <param name="count">削除するアイテム数</param>
-    /// <returns>実際に削除されたアイテム数</returns>
     public int RemoveItemsRandom(int count)
     {
         int actualRemoved = 0;
         for (int i = 0; i < count; i++)
         {
-            if (collectedItems.Count == 0) break;
-
-            int randomIndex = Random.Range(0, collectedItems.Count);
-            RemoveItemAtIndex(randomIndex);
+            if (liveItems.Count == 0) break;
+            int randomIndex = Random.Range(0, liveItems.Count);
+            RemoveItemAtLiveIndex(randomIndex);
             actualRemoved++;
         }
         return actualRemoved;
     }
 
     /// <summary>
-    /// 指定タイプのアイテムを1つ削除する（最初に見つかったもの）
+    /// 指定タイプのアイテムを1つ削除する
     /// </summary>
-    /// <returns>削除できたかどうか</returns>
     public bool RemoveItemByType(ItemType type)
     {
-        for (int i = 0; i < collectedItems.Count; i++)
+        for (int i = 0; i < liveItems.Count; i++)
         {
-            if (collectedItems[i].type == type)
+            int dataIdx = liveItems[i].dataIndex;
+            if (dataIdx >= 0 && dataIdx < s_collectedItems.Count && s_collectedItems[dataIdx].type == type)
             {
-                RemoveItemAtIndex(i);
+                RemoveItemAtLiveIndex(i);
                 return true;
             }
         }
@@ -319,38 +322,42 @@ public class ItemInventoryManager : MonoBehaviour
     /// <summary>
     /// 最後のアイテムを1つ削除する
     /// </summary>
-    /// <returns>削除できたかどうか</returns>
     public bool RemoveLastItem()
     {
-        if (collectedItems.Count == 0) return false;
-        RemoveItemAtIndex(collectedItems.Count - 1);
+        if (liveItems.Count == 0) return false;
+        RemoveItemAtLiveIndex(liveItems.Count - 1);
         return true;
     }
 
-    /// <summary>
-    /// 指定インデックスのアイテムを削除（縮小アニメーション付き）
-    /// リストからは即座に除外し、UIは非同期で消える
-    /// </summary>
-    private void RemoveItemAtIndex(int index)
+    private void RemoveItemAtLiveIndex(int liveIndex)
     {
-        if (index < 0 || index >= collectedItems.Count) return;
+        if (liveIndex < 0 || liveIndex >= liveItems.Count) return;
 
-        CollectedItemData itemData = collectedItems[index];
-        collectedItems.RemoveAt(index);
+        LiveItemData live = liveItems[liveIndex];
 
-        if (itemData.uiObject != null)
+        // staticリストからも削除
+        if (live.dataIndex >= 0 && live.dataIndex < s_collectedItems.Count)
         {
-            // アニメーション付きで削除
-            StartCoroutine(RemoveAnimation(itemData.uiObject));
+            s_collectedItems.RemoveAt(live.dataIndex);
+
+            // インデックスを再計算（削除した分だけ後続のインデックスがずれる）
+            for (int i = 0; i < liveItems.Count; i++)
+            {
+                if (liveItems[i].dataIndex > live.dataIndex)
+                {
+                    liveItems[i].dataIndex--;
+                }
+            }
+        }
+
+        liveItems.RemoveAt(liveIndex);
+
+        if (live.uiObject != null)
+        {
+            StartCoroutine(RemoveAnimation(live.uiObject));
         }
     }
 
-    /// <summary>
-    /// 削除アニメーション：
-    /// 1. スケール縮小 + 透明度フェードアウト
-    /// 2. LayoutElementの幅を0に縮めることで、HorizontalLayoutGroupが隙間を滑らかに詰める
-    /// 3. 完了後にGameObject破棄
-    /// </summary>
     private IEnumerator RemoveAnimation(GameObject target)
     {
         if (target == null) yield break;
@@ -361,7 +368,6 @@ public class ItemInventoryManager : MonoBehaviour
         Image image = target.GetComponent<Image>();
         LayoutElement layout = target.GetComponent<LayoutElement>();
 
-        // LayoutElementがない場合は追加
         if (layout == null)
         {
             layout = target.AddComponent<LayoutElement>();
@@ -371,25 +377,21 @@ public class ItemInventoryManager : MonoBehaviour
 
         float elapsed = 0f;
         float startWidth = layout.preferredWidth;
-        float startHeight = layout.preferredHeight;
         Color startColor = image != null ? image.color : Color.white;
 
-        // ---- フェーズ1: 赤く光って縮小（フィードバック感） ----
+        // フェーズ1: 赤フラッシュ + 振動
         float phase1Duration = removeDuration * 0.4f;
         while (elapsed < phase1Duration)
         {
             if (target == null) yield break;
-
             float t = elapsed / phase1Duration;
 
-            // 赤フラッシュ → フェードアウト
             if (image != null)
             {
                 Color c = Color.Lerp(startColor, new Color(1f, 0.3f, 0.3f, 1f), t);
                 image.color = c;
             }
 
-            // 少し揺れる
             float shake = Mathf.Sin(t * Mathf.PI * 6f) * 3f * (1f - t);
             if (rect != null)
             {
@@ -400,29 +402,23 @@ public class ItemInventoryManager : MonoBehaviour
             yield return null;
         }
 
-        // ---- フェーズ2: 縮小 + 幅を0にして隙間を詰める ----
+        // フェーズ2: 縮小 + 幅→0
         elapsed = 0f;
         float phase2Duration = removeDuration * 0.6f;
         while (elapsed < phase2Duration)
         {
             if (target == null) yield break;
-
             float t = elapsed / phase2Duration;
-
-            // EaseInQuad で加速的に縮む
             float easedT = t * t;
 
-            // スケール縮小
             float scale = Mathf.Lerp(1f, 0f, easedT);
             target.transform.localScale = Vector3.one * scale;
 
-            // 幅を縮める → HorizontalLayoutGroupが自動で隣を詰める
             if (layout != null)
             {
                 layout.preferredWidth = Mathf.Lerp(startWidth, 0f, easedT);
             }
 
-            // フェードアウト
             if (image != null)
             {
                 Color c = image.color;
@@ -434,7 +430,6 @@ public class ItemInventoryManager : MonoBehaviour
             yield return null;
         }
 
-        // ---- 完了: GameObject を破棄 ----
         removingCount--;
         Destroy(target);
     }
@@ -448,7 +443,8 @@ public class ItemInventoryManager : MonoBehaviour
     /// </summary>
     public void ClearItems()
     {
-        collectedItems.Clear();
+        s_collectedItems.Clear();
+        liveItems.Clear();
         if (iconContainer == null) return;
 
         foreach (Transform child in iconContainer)
@@ -458,46 +454,57 @@ public class ItemInventoryManager : MonoBehaviour
     }
 
     // =====================================================================
-    //  ユーティリティ
+    //  リザルト画面用 API
     // =====================================================================
 
     /// <summary>
-    /// 取得済みアイテムの種類リストのコピーを返す
+    /// リザルト画面用：取得済みアイテムのリストを返す（staticなので別シーンからでも参照可能）
     /// </summary>
-    public List<ItemType> GetCollectedItemTypes()
+    public static List<ItemData> GetCollectedItemsForResult()
     {
-        List<ItemType> types = new List<ItemType>();
-        foreach (var item in collectedItems)
-        {
-            types.Add(item.type);
-        }
-        return types;
+        return new List<ItemData>(s_collectedItems);
     }
 
     /// <summary>
-    /// 指定タイプのアイテム取得数を返す
+    /// リザルト画面用：全アイテムの合計金額を返す
     /// </summary>
+    public static int GetTotalMoneyValue()
+    {
+        int total = 0;
+        foreach (var item in s_collectedItems)
+        {
+            total += item.moneyValue;
+        }
+        return total;
+    }
+
+    /// <summary>
+    /// リザルト処理完了後にデータをクリアする（次のステージ用）
+    /// </summary>
+    public static void ClearCollectedData()
+    {
+        s_collectedItems.Clear();
+    }
+
+    // =====================================================================
+    //  ユーティリティ
+    // =====================================================================
+
+    public int GetTotalItemCount()
+    {
+        return s_collectedItems.Count;
+    }
+
     public int GetItemCount(ItemType type)
     {
         int count = 0;
-        foreach (var item in collectedItems)
+        foreach (var item in s_collectedItems)
         {
             if (item.type == type) count++;
         }
         return count;
     }
 
-    /// <summary>
-    /// 全アイテムの取得数を返す
-    /// </summary>
-    public int GetTotalItemCount()
-    {
-        return collectedItems.Count;
-    }
-
-    /// <summary>
-    /// 削除アニメーション実行中かどうか
-    /// </summary>
     public bool IsRemoving()
     {
         return removingCount > 0;
