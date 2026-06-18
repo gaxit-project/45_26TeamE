@@ -1,5 +1,4 @@
-using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -8,8 +7,12 @@ public class TitleManager : MonoBehaviour
 {
     [Header("UI Objects")]
     [SerializeField] private GameObject pressAnyButtonText;
-    [SerializeField] private Animator mainMenuAnimator;
+    [SerializeField] private GameObject modeSelectionPanel;
     [SerializeField] private GameObject firstSelectedButton;
+
+    [Header("Fade Settings")]
+    [SerializeField] private CanvasGroup fadeCanvasGroup;
+    [SerializeField] private float fadeDuration = 1f;
 
     [Header("OptionPanel")]
     [SerializeField] private GameObject optionPanel;
@@ -22,15 +25,14 @@ public class TitleManager : MonoBehaviour
         SettingManager.Instance?.CloseSettingPanel(false);
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
+        modeSelectionPanel.SetActive(false);
+        fadeCanvasGroup.alpha = 0f;
+        fadeCanvasGroup.blocksRaycasts = false;
     }
 
     private void Update()
     {
-        if(!isWaitingInput)
-        {
-            return;
-        }
-
+        if (!isWaitingInput) return;
         bool keyboardPressed = Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame;
 
         bool gamepadPressed = false;
@@ -48,8 +50,39 @@ public class TitleManager : MonoBehaviour
 
         if(keyboardPressed || gamepadPressed)
         {
-            PushToStart();
+            isWaitingInput = false;
+            StartCoroutine(TransitionToModeSelection());
         }
+    }
+
+    // タイトル画面からモード選択画面への遷移を開始するメソッド
+    private IEnumerator TransitionToModeSelection()
+    {
+        isWaitingInput = false;
+        SoundManager.Instance?.PlaySE("つるはしで掘る1");
+
+        fadeCanvasGroup.blocksRaycasts = true;
+        float elapsedTime = 0f;
+        while(elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            fadeCanvasGroup.alpha = Mathf.Clamp01(elapsedTime / fadeDuration);
+            yield return null;
+        }
+        pressAnyButtonText.SetActive(false);
+        modeSelectionPanel.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+
+        elapsedTime = 0f;
+        while(elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            fadeCanvasGroup.alpha = 1f - Mathf.Clamp01(elapsedTime / fadeDuration);
+            yield return null;
+        }
+        fadeCanvasGroup.blocksRaycasts = false;
+
+        EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
     // 入力待ち状態で、現在選択されているUI要素がない場合に最初のボタンを選択する
@@ -59,22 +92,6 @@ public class TitleManager : MonoBehaviour
         {
             EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }
-    }
-
-    // スタート画面のアニメーションを開始するメソッド
-    private void PushToStart()
-    {
-        isWaitingInput = false;
-        pressAnyButtonText.SetActive(false);
-        mainMenuAnimator.SetTrigger("SlideIn");
-        SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        Invoke(nameof(SelectFirstButton), 0.5f);
-    }
-
-    // 最初のボタンを選択するメソッド
-    private void SelectFirstButton()
-    {
-        EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
     // オプションパネルを開くメソッド
