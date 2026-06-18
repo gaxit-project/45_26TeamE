@@ -2862,7 +2862,16 @@ MonoBehaviour:
   startScale: 1.5
   popDuration: 0.25
   removeDuration: 0.3
-  iconWidth: 100
+  iconWidth: 150
+  countTextSize: 50
+  countTextOffset: {x: 10, y: -10}
+  displaySettings:
+  - type: 0
+    icon: {fileID: 21300000, guid: 005b9c5004c07b64eb7c1b96160c39cd, type: 3}
+  - type: 2
+    icon: {fileID: 21300000, guid: d4c3f2546075e8141b8495e1969c71e1, type: 3}
+  - type: 3
+    icon: {fileID: 21300000, guid: 99ec95c154f2e6b4ba8a50d18d542f2a, type: 3}
 --- !u!1 &548082329
 GameObject:
   m_ObjectHideFlags: 0
@@ -6272,14 +6281,14 @@ RectTransform:
   - {fileID: 332021650}
   - {fileID: 202987032}
   - {fileID: 1077877592}
+  - {fileID: 1900301481}
+  - {fileID: 525658500}
   - {fileID: 968829298}
   - {fileID: 877486767}
   - {fileID: 1085344450}
   - {fileID: 116572836}
   - {fileID: 418726916}
   - {fileID: 1197769852}
-  - {fileID: 1900301481}
-  - {fileID: 525658500}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -7799,8 +7808,8 @@ MonoBehaviour:
   m_ChildAlignment: 2
   m_StartCorner: 1
   m_StartAxis: 0
-  m_CellSize: {x: 100, y: 100}
-  m_Spacing: {x: 0, y: 0}
+  m_CellSize: {x: 200, y: 200}
+  m_Spacing: {x: 10, y: 10}
   m_Constraint: 1
   m_ConstraintCount: 10
 --- !u!1001 &1911198726
