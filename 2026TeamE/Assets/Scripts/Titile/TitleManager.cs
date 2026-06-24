@@ -28,10 +28,13 @@ public class TitleManager : MonoBehaviour
         modeSelectionPanel.SetActive(false);
         fadeCanvasGroup.alpha = 0f;
         fadeCanvasGroup.blocksRaycasts = false;
+        Cursor.visible = true;
     }
 
     private void Update()
     {
+        HandleCursorVidibility();
+
         if (!isWaitingInput) return;
         bool keyboardPressed = Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame;
 
@@ -52,6 +55,31 @@ public class TitleManager : MonoBehaviour
         {
             isWaitingInput = false;
             StartCoroutine(TransitionToModeSelection());
+        }
+    }
+
+    // マウスの動きやクリック、ゲームパッドの入力に応じてカーソルの表示/非表示を切り替えるメソッド
+    private void HandleCursorVidibility()
+    {
+        if(Mouse.current != null)
+        {
+            bool mouseMoved = Mouse.current.delta.ReadValue().sqrMagnitude > 0.01f;
+            bool mouseClicked = Mouse.current.leftButton.wasPressedThisFrame || Mouse.current.rightButton.wasPressedThisFrame;
+            if (mouseMoved || mouseClicked)
+            {
+                Cursor.visible = true;
+            }
+        }
+        if(Gamepad.current != null)
+        {
+            foreach (var control in Gamepad.current.allControls)
+            {
+                if (control.IsPressed())
+                {
+                    Cursor.visible = false;
+                    break;
+                }
+            }
         }
     }
 
