@@ -67,6 +67,10 @@ public class PlayerController : MonoBehaviour
     [Header("JetPack")]
     [SerializeField] float baseJetpackForce = 15f;
     [SerializeField] float baseJetpackMaxSpeed = 6f;
+
+    [Header("JetPack Effect")]
+    [SerializeField] private ParticleSystem jetpackEffectLeft;
+    [SerializeField] private ParticleSystem jetpackEffectRight;
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
@@ -94,6 +98,12 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
         drillCDstarttime = Time.time;
         poseManager = GetComponent<PoseManager>();
+
+        if (jetpackEffectLeft != null)
+            jetpackEffectLeft.Stop();
+
+        if (jetpackEffectRight != null)
+            jetpackEffectRight.Stop();
 
         // --- Added: インスペクターで未設定の場合、メインカメラから取得を試みる ---
         if (cameraAnimator == null)
@@ -165,6 +175,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private bool IsJetpacking
+    {
+        get
+        {
+            return !isGround && isJumpPressed;
+        }
+    }
+
     private void ApplyCustomGravity()
     {
         if (rb.linearVelocity.y < 0)
@@ -230,6 +248,30 @@ public class PlayerController : MonoBehaviour
 
         UpdateAnimation();
         HandleDrillRotation();
+        UpdateJetpackEffects();
+    }
+
+    private void UpdateJetpackEffects()
+    {
+        if (jetpackEffectLeft == null || jetpackEffectRight == null)
+            return;
+
+        if (IsJetpacking)
+        {
+            if (!jetpackEffectLeft.isPlaying)
+                jetpackEffectLeft.Play();
+
+            if (!jetpackEffectRight.isPlaying)
+                jetpackEffectRight.Play();
+        }
+        else
+        {
+            if (jetpackEffectLeft.isPlaying)
+                jetpackEffectLeft.Stop();
+
+            if (jetpackEffectRight.isPlaying)
+                jetpackEffectRight.Stop();
+        }
     }
 
     private void HandleDrillRotation()
