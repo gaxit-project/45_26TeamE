@@ -3,17 +3,31 @@ using TMPro;
 
 public class TimerManager : MonoBehaviour
 {
+    public static TimerManager Instance { get; private set; }
+
     [SerializeField] private TextMeshProUGUI timerText;
 
     private float totalTime = 60f;
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
 
-    [Header("‰‰o—pƒRƒ“ƒ|[ƒlƒ“ƒg")]
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    [Header("æ¼”å‡ºç”¨ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆ")]
     [SerializeField] private Animator canvasAnimator;
     [SerializeField] private Animator PlayerAnimator;
 
-    [Header("ƒ^ƒCƒ}[‹­’²İ’è")]
+    [Header("ã‚¿ã‚¤ãƒãƒ¼å¼·èª¿è¨­å®š")]
     [SerializeField] private float animationSpeed = 5f;
     [SerializeField] private float maxScale = 1.3f;
 
@@ -31,7 +45,7 @@ public class TimerManager : MonoBehaviour
         }
     }
 
-    // Timeline‚ÌSignal‚©‚çŒÄ‚Î‚ê‚é
+    // Timelineã®Signalã‹ã‚‰å‘¼ã°ã‚Œã‚‹
     public void StartTimer()
     {
         totalTime = 60f;
@@ -101,5 +115,16 @@ public class TimerManager : MonoBehaviour
 
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
+    }
+
+    /// <summary>
+    /// åˆ¶é™æ™‚é–“ã‚’æŒ‡å®šç§’æ•°ã ã‘å¢—ã‚„ã™
+    /// </summary>
+    public void AddTime(float seconds)
+    {
+        if (isTimerEnded) return;
+
+        totalTime += seconds;
+        isTimerRunning = true;
     }
 }
