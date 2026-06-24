@@ -244,4 +244,5 @@ public class ShoppingManager : MonoBehaviour
             RefreshUI(item);
         }
     }
+
 }

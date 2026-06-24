@@ -2416,8 +2416,6 @@ MonoBehaviour:
   miningZone: {fileID: 820273196}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2
-  radiusRenderer: {fileID: 424515388}
-  segments: 40
   forwardOffset: 1
 --- !u!120 &424515388
 LineRenderer:
@@ -2957,6 +2955,8 @@ MonoBehaviour:
   currentBattery: 1000
   drillConsumption: 10
   SonarConsuption: 100
+  jetpackForce: 15
+  maxJetpackSpeed: 8
 --- !u!114 &548082332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3126,6 +3126,10 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 3176eeb0-1b10-4151-bca1-9fcce50a2d8f
     m_ActionName: 'Player/Sonar[/XInputControllerWindows/rightShoulder]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: f1644812-e098-4aad-9d39-25ffbad2fe43
+    m_ActionName: 'Player/cancel[/XInputControllerWindows/buttonEast,/Keyboard/rightShift]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player

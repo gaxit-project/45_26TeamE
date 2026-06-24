@@ -63,6 +63,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float drillConsumption = 1f;
     [SerializeField] float SonarConsuption = 200f;
 
+
+    [Header("JetPack")]
+    [SerializeField] float baseJetpackForce = 15f;
+    [SerializeField] float baseJetpackMaxSpeed = 6f;
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
@@ -116,13 +120,48 @@ public class PlayerController : MonoBehaviour
             if (wasDashing)
             {
                 wasDashing = false;
-                // ダッシュ終了時に慣性を消してピタッと止める
                 rb.linearVelocity = Vector3.zero;
             }
 
             Vector3 targetVelocity = moveDirection * Speed;
             rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
+
+            // JetPack
+            if (!isGround && isJumpPressed)
+            {
+                if (rb.linearVelocity.y < CurrentJetpackMaxSpeed)
+                {
+                    rb.AddForce(
+                        Vector3.up * CurrentJetpackForce,
+                        ForceMode.Acceleration
+                    );
+                }
+            }
+
             ApplyCustomGravity();
+        }
+    }
+
+    //ジェットパックのプロパティ
+    private float CurrentJetpackForce
+    {
+        get
+        {
+            int level = UpgradeManager.GetLevel(UpgradeManager.JET);
+
+            // Lv1=15, Lv2=20, Lv3=25...
+            return baseJetpackForce + (level - 1) * 5f;
+        }
+    }
+
+    private float CurrentJetpackMaxSpeed
+    {
+        get
+        {
+            int level = UpgradeManager.GetLevel(UpgradeManager.JET);
+
+            // Lv1=6, Lv2=8, Lv3=10...
+            return baseJetpackMaxSpeed + (level - 1) * 2f;
         }
     }
 

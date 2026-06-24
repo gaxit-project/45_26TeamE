@@ -574,7 +574,7 @@ MonoBehaviour:
     m_Mode: 4
     m_WrapAround: 0
     m_SelectOnUp: {fileID: 750758769}
-    m_SelectOnDown: {fileID: 668649652}
+    m_SelectOnDown: {fileID: 580515088}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
   m_Transition: 1
@@ -2208,7 +2208,7 @@ MonoBehaviour:
   m_Navigation:
     m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 750758769}
+    m_SelectOnUp: {fileID: 285529347}
     m_SelectOnDown: {fileID: 668649652}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
@@ -2744,7 +2744,7 @@ MonoBehaviour:
   m_Navigation:
     m_Mode: 4
     m_WrapAround: 0
-    m_SelectOnUp: {fileID: 285529347}
+    m_SelectOnUp: {fileID: 990759163}
     m_SelectOnDown: {fileID: 45655458}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
@@ -5285,8 +5285,6 @@ MonoBehaviour:
   miningZone: {fileID: 0}
   dirtEffect: {fileID: 0}
   effectKeepTime: 0.2
-  radiusRenderer: {fileID: 0}
-  segments: 40
   forwardOffset: 0.2
 --- !u!1 &1175743708
 GameObject:

@@ -10,10 +10,7 @@ public class DrillTip : MonoBehaviour
     [SerializeField] private ParticleSystem dirtEffect;
     [SerializeField] private float effectKeepTime = 0.2f;
 
-    [Header("可視化(LineRenderer)")]
-    [SerializeField] private LineRenderer radiusRenderer;
-    [SerializeField] private int segments = 40;
-    [SerializeField] private float forwardOffset = 0.2f; // ← 壁から浮かせる量
+    [SerializeField] private float forwardOffset = 0.2f;
 
     private float lastDrillTime;
     private PlayerController player;
@@ -51,35 +48,6 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        DrawRadius();
-    }
-
-    private void DrawRadius()
-    {
-        if (radiusRenderer == null) return;
-
-        float radius = CurrentDrillRadius;
-
-        // ★ ワールド固定 +X に押し出す（回転の影響なし）
-        Vector3 center = transform.position + Vector3.right * forwardOffset;
-
-        radiusRenderer.positionCount = segments + 1;
-
-        for (int i = 0; i <= segments; i++)
-        {
-            float angle = i * Mathf.PI * 2 / segments;
-
-            float y = Mathf.Cos(angle) * radius;
-            float z = Mathf.Sin(angle) * radius;
-
-            // ★ YZ平面の円
-            Vector3 pos = center + new Vector3(0, y, z);
-
-            radiusRenderer.SetPosition(i, pos);
-        }
-    }
 
     private void OnTriggerStay(Collider other)
     {
@@ -151,12 +119,6 @@ public class DrillTip : MonoBehaviour
                 lastDrillTime = Time.time;
             }
         }
-    }
-
-    private void LateUpdate()
-    {
-        // 描画処理（LineRenderer等の更新があればここ）
-        // パーティクルの再生処理はVoxelTerrain.cs（ブロック破壊時）に完全に任せるため、削除しました。
     }
 
     private void OnDrawGizmos()
