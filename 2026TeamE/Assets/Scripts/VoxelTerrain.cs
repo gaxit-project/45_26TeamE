@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using UnityEditor;
 
 public class VoxelTerrain : MonoBehaviour
 {
@@ -57,6 +58,8 @@ public class VoxelTerrain : MonoBehaviour
     private HashSet<int> chunksToUpdate = new HashSet<int>();
     private List<GameObject> spawnedTreasures = new List<GameObject>();
     byte[,,] mapData;
+
+    private System.Collections.Generic.Dictionary<int, int> zoneCollectedGemCounts = new System.Collections.Generic.Dictionary<int, int>();
 
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
@@ -486,7 +489,7 @@ public class VoxelTerrain : MonoBehaviour
         int startY = chunkIndex * chunkSizeY;
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
         
-        int zoneIndex = chunkIndex / 10;
+        int zoneIndex = GetRelayID(startY);
         if (!zoneInitialGemValues.ContainsKey(zoneIndex))
         {
             zoneInitialGemValues[zoneIndex] = 0;
@@ -628,8 +631,8 @@ public class VoxelTerrain : MonoBehaviour
 
     private int GetRelayID(int y)
     {
-        int interval = chunkSizeY * 10;
-        return y / interval;
+        int depthPerZone = 200;
+        return y / depthPerZone;
     }
     public void OnPlayerReachRelayPoint(int y)
     {
@@ -643,6 +646,13 @@ public class VoxelTerrain : MonoBehaviour
         if (currentID == CheckpointManager.Instance.GetUsedCheckpointID())
         {
             Debug.Log("同じチェックポイントのためスキップ");
+            return;
+        }
+
+        if(!IsZoneCleared(currentID))
+        {
+            int currentCount = zoneCollectedGemCounts.ContainsKey(currentID) ? zoneCollectedGemCounts[currentID] : 0;
+            Debug.Log($"アクセス拒否：ゾーン {currentID} のジュエルが足りません");
             return;
         }
 
@@ -749,6 +759,34 @@ public class VoxelTerrain : MonoBehaviour
             }
         }
         return true;
+    }
+
+    public void CollectedJewel(Vector3 worldPos)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(worldPos);
+        int blockY = Mathf.FloorToInt(localPos.y / blockSize);
+
+        int currentDepth = Mathf.Abs(blockY);
+
+        int zoneIndex = GetRelayID(currentDepth);
+
+        if (!zoneCollectedGemCounts.ContainsKey(zoneIndex))
+        {
+            zoneCollectedGemCounts[zoneIndex] = 0;
+        }
+
+        zoneCollectedGemCounts[zoneIndex]++;
+
+        Debug.Log($"<color=cyan>[ジュエル獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の合計: {zoneCollectedGemCounts[zoneIndex]}個");
+    }
+
+    public bool IsZoneCleared(int zoneIndex)
+    {
+        if (zoneCollectedGemCounts.TryGetValue(zoneIndex, out int count))
+        {
+            return count >= 3; // 3個以上で解除
+        }
+        return false;
     }
 
     public bool IsJewelExposed(Vector3 worldPos)
