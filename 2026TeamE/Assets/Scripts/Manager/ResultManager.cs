@@ -55,6 +55,10 @@ public class ResultManager : MonoBehaviour
     [SerializeField, Tooltip("すべて開け終わった後にフォーカスを移すボタン（次へボタンなど）")]
     private GameObject nextFocusWhenAllOpened;
 
+    [Header("カーソル設定")]
+    [SerializeField, Tooltip("UICursorコンポーネント（演出中はカーソルを非表示にする）")]
+    private UICursor uiCursor;
+
     [Header("イベント設定")]
     [SerializeField, Tooltip("未回収アイテムの自動開封・換金が終わった後に呼ばれる処理（ここにシーン遷移を入れる）")]
     private UnityEvent onCompleteResult;
@@ -66,6 +70,8 @@ public class ResultManager : MonoBehaviour
     [SerializeField] private Color selectedColor = new Color(1f, 1f, 0.5f, 1f);
 
     [Header("演出設定")]
+    [SerializeField, Tooltip("アイテムが配置されてから自動開封するまでの遅延（秒）")]
+    private float autoOpenDelay = 0.3f;
 
     private bool isAnimationFinished = false;
     private bool skipRequested = false;
@@ -86,6 +92,9 @@ public class ResultManager : MonoBehaviour
 
     void Start()
     {
+        // 演出が終わるまでカーソルを非表示にする
+        SetCursorVisible(false);
+
         // 取得アイテムをUIに並べる
         StartCoroutine(ShowCollectedItems());
     }
@@ -239,7 +248,7 @@ public class ResultManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 取得アイテムを1つずつアニメーション付きで並べた後、カウントアップに進む
+    /// 取得アイテムを1つずつアニメーション付きで並べた後、自動開封してからカーソルを表示する
     /// </summary>
     private IEnumerator ShowCollectedItems()
     {
@@ -263,7 +272,24 @@ public class ResultManager : MonoBehaviour
                 yield return new WaitForSeconds(iconInterval);
             }
 
-            // 全アイテム表示後、最初のボタンを選択状態にする（ゲームパッド用）
+            // --- 自動開封フェーズ ---
+            // 少し待ってから宝箱・皮袋を順番に開封する
+            yield return new WaitForSeconds(autoOpenDelay);
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                ItemInventoryManager.ItemData item = items[i];
+                if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
+                {
+                    AutoOpenChest(i, item);
+                    yield return new WaitForSeconds(iconInterval);
+                }
+            }
+
+            // 開封演出の完了を待つ
+            yield return new WaitForSeconds(0.3f);
+
+            // 全アイテム表示＆開封完了後、最初のボタンを選択状態にする（ゲームパッド用）
             SelectFirstButton();
         }
         else
@@ -286,6 +312,68 @@ public class ResultManager : MonoBehaviour
         }
         
         isAnimationFinished = true;
+
+        // カーソルを表示する
+        SetCursorVisible(true);
+    }
+
+    /// <summary>
+    /// 宝箱・皮袋を自動的に開封する（中身を表示するが換金はしない）
+    /// </summary>
+    private void AutoOpenChest(int index, ItemInventoryManager.ItemData item)
+    {
+        if (index < 0 || index >= itemButtons.Count) return;
+        if (openedChestIndices.Contains(index)) return;
+
+        openedChestIndices.Add(index);
+        Button btn = itemButtons[index];
+
+        // 画像を開いた状態に差し替え
+        Image img = btn.GetComponent<Image>();
+        if (img != null)
+        {
+            if (item.type == ItemType.TresureBox && openTreasureBoxSprite != null)
+                img.sprite = openTreasureBoxSprite;
+            else if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
+                img.sprite = openLeatherBagSprite;
+
+            img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
+        }
+
+        // ランダムに中身を抽選
+        LootItem loot = RollLoot(item.type);
+        droppedLootMap[index] = loot;
+
+        // 中身のアイコンをボタンの子として生成
+        if (loot != null && loot.sprite != null)
+        {
+            GameObject lootIcon = new GameObject("LootIcon");
+            lootIcon.transform.SetParent(btn.transform, false);
+
+            Image lootImg = lootIcon.AddComponent<Image>();
+            lootImg.sprite = loot.sprite;
+            lootImg.raycastTarget = false;
+
+            RectTransform lootRect = lootIcon.GetComponent<RectTransform>();
+            lootRect.anchorMin = Vector2.zero;
+            lootRect.anchorMax = Vector2.one;
+            lootRect.offsetMin = Vector2.zero;
+            lootRect.offsetMax = Vector2.zero;
+
+            droppedIconMap[index] = lootIcon;
+            StartCoroutine(PopInAnimation(lootIcon.transform));
+        }
+    }
+
+    /// <summary>
+    /// カーソルの表示/非表示を切り替える
+    /// </summary>
+    private void SetCursorVisible(bool visible)
+    {
+        if (uiCursor != null && uiCursor.cursor != null)
+        {
+            uiCursor.cursor.SetActive(visible);
+        }
     }
 
     /// <summary>
@@ -374,7 +462,7 @@ public class ResultManager : MonoBehaviour
     }
 
     /// <summary>
-    /// アイテムボタンが決定された時のコールバック
+    /// アイテムボタンが決定された時のコールバック（ワンクリックで換金）
     /// </summary>
     private void OnItemButtonClicked(int index)
     {
@@ -385,80 +473,31 @@ public class ResultManager : MonoBehaviour
         if (index >= items.Count) return;
 
         ItemInventoryManager.ItemData item = items[index];
-        Debug.Log($"[ResultManager] アイテム {index} が選択されました: {item.type}, 金額: {item.moneyValue}");
-
         Button btn = itemButtons[index];
 
-        // 宝箱か皮袋の場合
+        int moneyToAdd = 0;
+
+        // 宝箱・皮袋の場合は、自動開封で抽選済みのドロップアイテムの金額を使う
         if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
         {
-            if (!openedChestIndices.Contains(index))
+            if (droppedLootMap.TryGetValue(index, out LootItem droppedLoot))
             {
-                // ========== 1回目のクリック：開ける（無効化しない） ==========
-                openedChestIndices.Add(index);
-
-                // 画像を開いた状態に差し替え
-                Image img = btn.GetComponent<Image>();
-                if (img != null)
-                {
-                    if (item.type == ItemType.TresureBox && openTreasureBoxSprite != null)
-                        img.sprite = openTreasureBoxSprite;
-                    else if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
-                        img.sprite = openLeatherBagSprite;
-
-                    // ボタンは有効なままなので、Imageの色を直接暗くする
-                    img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
-                }
-
-                // ランダムに中身を抽選
-                LootItem loot = RollLoot(item.type);
-                droppedLootMap[index] = loot;
-
-                // 中身のアイコンをボタンの子として生成
-                if (loot != null && loot.sprite != null)
-                {
-                    GameObject lootIcon = new GameObject("LootIcon");
-                    lootIcon.transform.SetParent(btn.transform, false);
-
-                    Image lootImg = lootIcon.AddComponent<Image>();
-                    lootImg.sprite = loot.sprite;
-                    lootImg.raycastTarget = false; // ボタンのクリックを邪魔しない
-
-                    RectTransform lootRect = lootIcon.GetComponent<RectTransform>();
-                    lootRect.anchorMin = Vector2.zero;
-                    lootRect.anchorMax = Vector2.one;
-                    lootRect.offsetMin = Vector2.zero;
-                    lootRect.offsetMax = Vector2.zero;
-
-                    droppedIconMap[index] = lootIcon;
-
-                    // ポップイン演出
-                    StartCoroutine(PopInAnimation(lootIcon.transform));
-                }
-
-            }
-            else
-            {
-                // ========== 2回目のクリック：中身を入手して消滅させる ==========
-                int lootMoney = 0;
-                if (droppedLootMap.TryGetValue(index, out LootItem droppedLoot))
-                {
-                    lootMoney = droppedLoot.moneyValue;
-                }
-                AddMoneyAndDestroyButton(lootMoney, index, btn);
+                moneyToAdd = droppedLoot.moneyValue;
             }
         }
         else
         {
-            // 宝石など（1回で入手して消滅）
-            AddMoneyAndDestroyButton(item.moneyValue, index, btn);
+            // 宝石など
+            moneyToAdd = item.moneyValue;
         }
+
+        AddMoneyAndDisableButton(moneyToAdd, index, btn);
     }
 
     /// <summary>
-    /// お金を追加し、ボタンを無効化して消滅させる共通処理
+    /// お金を追加し、ボタンを灰色に無効化する共通処理（ボタンは画面に残す）
     /// </summary>
-    private void AddMoneyAndDestroyButton(int moneyValue, int index, Button btn)
+    private void AddMoneyAndDisableButton(int moneyValue, int index, Button btn)
     {
         // 1. お金を追加
         MoneyManager mm = MoneyManager.Instance;
@@ -470,9 +509,21 @@ public class ResultManager : MonoBehaviour
 
         openedCount++; // 回収済みの数を増やす
 
-        // 2. ボタンを無効化して消滅させ、フォーカス移動を行う
-        btn.interactable = false; // 連打防止
-        StartCoroutine(DestroyAndSelectNext(index, btn.gameObject));
+        // 2. ボタンを無効化（灰色になる。画面からは消さない）
+        btn.interactable = false;
+
+        // 3. ドロップアイテムのアイコンも灰色にする
+        if (droppedIconMap.TryGetValue(index, out GameObject lootIcon) && lootIcon != null)
+        {
+            Image lootImg = lootIcon.GetComponent<Image>();
+            if (lootImg != null)
+            {
+                lootImg.color = new Color(0.6f, 0.6f, 0.6f, 1f);
+            }
+        }
+
+        // 4. 次の未換金ボタンにフォーカスを移す（全て換金済みならnextFocusWhenAllOpenedへ）
+        SelectNextAvailableButton(index);
     }
 
     /// <summary>
@@ -501,7 +552,7 @@ public class ResultManager : MonoBehaviour
                 return;
             }
         }
-        
+
         // 有効なボタンが一つも残っていない場合
         if (nextFocusWhenAllOpened != null)
         {
@@ -510,61 +561,19 @@ public class ResultManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ボタンをレイアウトから除外し、配置を確定させてからフォーカスを移動して縮小破棄する
-    /// </summary>
-    private IEnumerator DestroyAndSelectNext(int index, GameObject target)
-    {
-        // 1. レイアウトの詰め（横スライド）を即座に行わせるため、レイアウト計算から外す
-        LayoutElement layout = target.GetComponent<LayoutElement>();
-        if (layout != null)
-        {
-            layout.ignoreLayout = true;
-        }
-
-        // 2. コンテナのレイアウトを強制的に即座に再計算する（画面上の配置を確定させる）
-        if (itemIconContainer != null)
-        {
-            RectTransform containerRect = itemIconContainer.GetComponent<RectTransform>();
-            if (containerRect != null)
-            {
-                LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
-            }
-        }
-
-        // 3. アイテムの配置がスライドして完了した状態で、次のボタンへフォーカスを移す
-        SelectNextAvailableButton(index);
-
-        // 4. アニメーションさせながら消滅
-        float duration = 0.05f;
-        float elapsed = 0f;
-        Vector3 startScale = target.transform.localScale;
-
-        while (elapsed < duration)
-        {
-            if (target == null) yield break;
-            float t = elapsed / duration;
-            target.transform.localScale = Vector3.Lerp(startScale, Vector3.zero, t * t); // easeIn
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        if (target != null)
-        {
-            Destroy(target);
-        }
-    }
-
-    /// <summary>
     /// ポップインアニメーション（EaseOutBack）
     /// </summary>
     private IEnumerator PopInAnimation(Transform target)
     {
+        if (target == null) yield break;
+
         float duration = 0.2f;
         float elapsed = 0f;
         target.localScale = Vector3.zero;
 
         while (elapsed < duration)
         {
+            if (target == null) yield break;
             float t = elapsed / duration;
             float overshoot = 1.7f;
             float easedT = 1f + (overshoot + 1f) * Mathf.Pow(t - 1f, 3f)
@@ -574,7 +583,7 @@ public class ResultManager : MonoBehaviour
             yield return null;
         }
 
-        target.localScale = Vector3.one;
+        if (target != null) target.localScale = Vector3.one;
     }
 
     /// <summary>

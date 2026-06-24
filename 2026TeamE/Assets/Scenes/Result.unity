@@ -1679,6 +1679,7 @@ MonoBehaviour:
     treasureBoxChance: 0
     leatherBagChance: 40
   nextFocusWhenAllOpened: {fileID: 966817814}
+  uiCursor: {fileID: 1834622939}
   onCompleteResult:
     m_PersistentCalls:
       m_Calls:
@@ -1698,6 +1699,7 @@ MonoBehaviour:
   highlightColor: {r: 1, g: 1, b: 0.7, a: 1}
   pressedColor: {r: 1, g: 0.9, b: 0.4, a: 1}
   selectedColor: {r: 1, g: 1, b: 0.5, a: 1}
+  autoOpenDelay: 0.3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
