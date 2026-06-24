@@ -606,19 +606,19 @@ public class VoxelTerrain : MonoBehaviour
                 baseHardness = 1.0f;
                 break;
             case BlockType.Ore:
-                baseHardness = 3.0f;
+                baseHardness = 6.0f;
                 break;
             case BlockType.Bedrock:
                 baseHardness = float.MaxValue;
                 break;
             case BlockType.Stone:
-                baseHardness = 5.0f;
-                break;
-            case BlockType.HardRock:
                 baseHardness = 10.0f;
                 break;
-            case BlockType.Quartzite:
+            case BlockType.HardRock:
                 baseHardness = 20.0f;
+                break;
+            case BlockType.Quartzite:
+                baseHardness = 40.0f;
                 break;
             default:
                 baseHardness = 1.0f;
