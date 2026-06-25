@@ -221,6 +221,16 @@ public class ResultManager : MonoBehaviour
                 }
 
                 itemButtons[i].interactable = false; // 二重加算防止
+
+                // ドロップアイテムの中身アイコンも灰色にする
+                if (droppedIconMap.TryGetValue(i, out GameObject lIcon) && lIcon != null)
+                {
+                    Image lImg = lIcon.GetComponent<Image>();
+                    if (lImg != null)
+                    {
+                        lImg.color = new Color(0.6f, 0.6f, 0.6f, 1f);
+                    }
+                }
             }
         }
 
