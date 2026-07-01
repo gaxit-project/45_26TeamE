@@ -17,7 +17,7 @@ public class Chunk : MonoBehaviour
     List<int> hardRockTriangles = new List<int>();
     List<int> bedrockTriangles = new List<int>();
 
-    public void Init(Material dirtMat, Material oreMat, Material stoneMat, Material hardRockMat, Material bedRockMat)
+    public void Init(Material dirtMat, Material oreMat, Material stoneMat, Material hardRockMat, Material bedRockMat, Material quartzite)
     {
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
@@ -26,7 +26,7 @@ public class Chunk : MonoBehaviour
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         meshFilter.mesh = mesh;
-        meshRenderer.materials = new Material[] { dirtMat, oreMat, stoneMat, hardRockMat, bedRockMat };
+        meshRenderer.materials = new Material[] { dirtMat, oreMat, stoneMat, hardRockMat, bedRockMat, quartzite};
     }
 
     public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize)

@@ -42,6 +42,10 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject treasurePrefab;
     [SerializeField] float baseTreasureChance = 1f;
 
+    [Header("鍵設定")]
+    [SerializeField] GameObject keyPrefab;
+    [SerializeField] float baseKeyChance = 1f;
+
     [Header("爆弾設定")]
     [SerializeField] GameObject bombPrefab;
     [SerializeField] float bombSpawnRatio = 0.2f;
@@ -59,7 +63,7 @@ public class VoxelTerrain : MonoBehaviour
     private List<GameObject> spawnedTreasures = new List<GameObject>();
     byte[,,] mapData;
 
-    private System.Collections.Generic.Dictionary<int, int> zoneCollectedGemCounts = new System.Collections.Generic.Dictionary<int, int>();
+    private System.Collections.Generic.Dictionary<int, int> zoneCollectedKeyCounts = new System.Collections.Generic.Dictionary<int, int>();
 
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
@@ -459,12 +463,13 @@ public class VoxelTerrain : MonoBehaviour
             go.name = $"Chunk_{i}";
             go.transform.localPosition = new Vector3(0, 0, 0);
             chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial);
+            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial);
 
             UpdateChunkMesh(i);
             float depthFactor = (float)(numChunks - i);
             float finalProbability = baseTreasureChance * depthFactor;
 
+            TrySpawnKeysInChunk(i, finalProbability);
             TrySpawnJewelsInChunk(i, finalProbability);
             TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
             // 最下5チャンクでは爆弾+宝石セットを生成しない
@@ -482,6 +487,36 @@ public class VoxelTerrain : MonoBehaviour
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
         chunks[index].RebuildMesh(mapData, startY, endY, thicknessX, heightY, widthZ, blockSize);
     }
+
+    private void TrySpawnKeysInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+        int zoneIndex = GetRelayID(startY);
+        for (int t = 0; t < 3; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
+                {
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+                    GameObject keyGo = Instantiate(keyPrefab, pos, rotation, transform);
+                    if(keyGo.TryGetComponent<KeyBehaviour>(out var keyBehaviour))
+                    {
+                        keyBehaviour.Setup(zoneIndex);
+                    }
+                }
+            }
+        }
+    } 
 
     // チャンク内に宝石をスポーンさせる
     private void TrySpawnJewelsInChunk(int chunkIndex, float spawnChance)
@@ -551,7 +586,9 @@ public class VoxelTerrain : MonoBehaviour
         int startY = chunkIndex * chunkSizeY;
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
 
-        for (int t = 0; t < 2; t++)
+        int zonIndex = GetRelayID(Mathf.Abs(startY));
+
+        for (int t = 0; t < 3; t++)
         {
             if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
             {
@@ -570,10 +607,23 @@ public class VoxelTerrain : MonoBehaviour
 
                     Quaternion rotation = Quaternion.Euler(0, -90f, 0);
 
-                    Instantiate(bombJewelSetPrefab, pos, rotation, transform);
+                    GameObject keyGo = Instantiate(keyPrefab, pos, rotation, transform);
+                    if(keyGo.TryGetComponent<KeyBehaviour>(out var keyBehaviour))
+                    {
+                        keyBehaviour.Setup(zonIndex);
+                    }
                 }
             }
         }
+    }
+
+    public void CollectedKeyDirect(int zoneIndex)
+    {
+        if(!zoneCollectedKeyCounts.ContainsKey(zoneIndex))
+        {
+            zoneCollectedKeyCounts[zoneIndex] = 0;
+        }
+        zoneCollectedKeyCounts[zoneIndex]++;
     }
 
     // プレイヤーのYブロック座標から、そのエリアの初期宝石合計額を取得する
@@ -651,8 +701,8 @@ public class VoxelTerrain : MonoBehaviour
 
         if(!IsZoneCleared(currentID))
         {
-            int currentCount = zoneCollectedGemCounts.ContainsKey(currentID) ? zoneCollectedGemCounts[currentID] : 0;
-            Debug.Log($"アクセス拒否：ゾーン {currentID} のジュエルが足りません");
+            int currentCount = zoneCollectedKeyCounts.ContainsKey(currentID) ? zoneCollectedKeyCounts[currentID] : 0;
+            Debug.Log($"アクセス拒否：ゾーン {currentID} の鍵が足りません");
             return;
         }
 
@@ -770,19 +820,30 @@ public class VoxelTerrain : MonoBehaviour
 
         int zoneIndex = GetRelayID(currentDepth);
 
-        if (!zoneCollectedGemCounts.ContainsKey(zoneIndex))
+        Debug.Log($"<color=cyan>[ジュエル獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の合計: {zoneCollectedKeyCounts[zoneIndex]}個");
+    }
+
+    public void CollectedKey(Vector3 worldPos)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(worldPos);
+        int blockY = Mathf.FloorToInt(localPos.y / blockSize);
+        int currentDepth = Mathf.Abs(blockY);
+
+        int zoneIndex = GetRelayID(currentDepth);
+
+        if (!zoneCollectedKeyCounts.ContainsKey(zoneIndex))
         {
-            zoneCollectedGemCounts[zoneIndex] = 0;
+            zoneCollectedKeyCounts[zoneIndex] = 0;
         }
 
-        zoneCollectedGemCounts[zoneIndex]++;
+        zoneCollectedKeyCounts[zoneIndex]++;
 
-        Debug.Log($"<color=cyan>[ジュエル獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の合計: {zoneCollectedGemCounts[zoneIndex]}個");
+        Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
     }
 
     public bool IsZoneCleared(int zoneIndex)
     {
-        if (zoneCollectedGemCounts.TryGetValue(zoneIndex, out int count))
+        if (zoneCollectedKeyCounts.TryGetValue(zoneIndex, out int count))
         {
             return count >= 3; // 3個以上で解除
         }
