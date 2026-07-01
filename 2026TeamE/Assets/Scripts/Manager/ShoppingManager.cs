@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.Video;
+using UnityEngine.UI;
 
 public class ShoppingManager : MonoBehaviour
 {
@@ -22,6 +23,12 @@ public class ShoppingManager : MonoBehaviour
 
         [Header("説明動画")]
         public VideoClip descriptionVideo;
+
+        [Header("説明画像")]
+        public Sprite descriptionSprite;
+
+        [Header("表示先Image")]
+        public Image descriptionImage;
 
         [HideInInspector] public int currentLevel = 1;
 
@@ -91,6 +98,13 @@ public class ShoppingManager : MonoBehaviour
             deselectEntry.eventID = EventTriggerType.Deselect;
             deselectEntry.callback.AddListener((data) => { HideDescription(); });
             trigger.triggers.Add(deselectEntry);
+
+            // 画像を設定
+            if (item.descriptionImage != null)
+            {
+                item.descriptionImage.sprite = item.descriptionSprite;
+                item.descriptionImage.enabled = item.descriptionSprite != null;
+            }
 
             RefreshUI(target);
         }
@@ -222,6 +236,12 @@ public class ShoppingManager : MonoBehaviour
                 Debug.Log(videoPlayer.texture);
             }
         }
+
+        if (item.descriptionImage != null)
+        {
+            item.descriptionImage.sprite = item.descriptionSprite;
+            item.descriptionImage.enabled = item.descriptionSprite != null;
+        }
     }
 
     public void HideDescription()
@@ -234,6 +254,15 @@ public class ShoppingManager : MonoBehaviour
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
+        }
+
+        foreach (var item in shopItems)
+        {
+            if (item.descriptionImage != null)
+            {
+                item.descriptionImage.sprite = null;
+                item.descriptionImage.enabled = false;
+            }
         }
     }
 
