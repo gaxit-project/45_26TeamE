@@ -393,6 +393,11 @@ public class VoxelTerrain : MonoBehaviour
 
         GenerateChunks();
         TeleportPlayerToStart(startX, startY, startZ);
+        GameObject playerObj = GameObject.FindWithTag("Player");
+        if (playerObj != null)
+        {
+            ClearBlocksAroundPoint(playerObj.transform.position, 4.0f);
+        }
     }
 
     private bool IsRelayZone(int y, int thickness)
