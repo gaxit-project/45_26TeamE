@@ -8,4 +8,5 @@ public enum ItemType
     BigJewelry,     // 大きい宝石
     TresureBox,     // 宝箱
     LeatherBag,     // 皮のバッグ
+    Key,            // 鍵
 }

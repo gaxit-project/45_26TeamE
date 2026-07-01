@@ -480,4 +480,22 @@ public class PlayerController : MonoBehaviour
     {
         CanMove = true;
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        ICollectible collectible = other.GetComponent<ICollectible>();
+        if (collectible != null)
+        {
+            collectible.Collect();
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        ICollectible collectible = other.GetComponent<ICollectible>();
+        if (collectible != null)
+        {
+            collectible.Collect();
+        }
+    }
 }

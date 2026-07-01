@@ -3,7 +3,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class JewelryReaction : MonoBehaviour
+public class JewelryReaction : MonoBehaviour, ICollectible
 {
     [Header("アイテム情報")]
     public ItemType itemType = ItemType.Jewelry;
@@ -34,6 +34,27 @@ public class JewelryReaction : MonoBehaviour
     private float startTime;
     private float checkDelay = 3.0f;
     private bool isGot = false;
+    
+    // アイテム取得時の共通関数
+    public void Collect()
+    {
+        if (!isExposed || isGot) return;
+        isGot = true;
+        if(VoxelTerrain.Instance != null)
+        {
+            VoxelTerrain.Instance.CollectedJewel(transform.position);
+        }
+        if (currentMarker != null)
+        {
+            Destroy(currentMarker);
+        }
+        if (ItemInventoryManager.Instance != null && uiIcon != null)
+        {
+            Vector3 capturedPos = transform.position;
+            ItemInventoryManager.Instance.AddItem(itemType, uiIcon, capturedPos, moneyValue);
+        }
+        StartCoroutine(GetAnime());
+    }
 
     private void Awake()
     {
@@ -79,21 +100,6 @@ public class JewelryReaction : MonoBehaviour
         {
             ExecuteReaction();
         }
-        
-        // 露出している時のみプレイヤーとの接触を受け付ける
-        if (isExposed && other.gameObject.CompareTag("Player"))
-        {
-            Get();
-        }
-    }
-
-    void OnTriggerStay(Collider other)
-    {
-        // 既に触れている状態で露出した（掘り出された）場合にも取得できるようにする
-        if (isExposed && other.gameObject.CompareTag("Player"))
-        {
-            Get();
-        }
     }
 
     void ExecuteReaction()
@@ -125,34 +131,6 @@ public class JewelryReaction : MonoBehaviour
     void ResetReaction()
     {
         isCoolingDown = false;
-    }
-
-    void Get()
-    {
-        if (isGot) return; // 既に取得済みなら何もしない
-        isGot = true;
-
-        if (VoxelTerrain.Instance != null)
-        {
-            VoxelTerrain.Instance.CollectedJewel(transform.position);
-        }
-
-        // 宝石を取得した瞬間にマーカーを消す
-        if (currentMarker != null)
-        {
-            Destroy(currentMarker);
-        }
-
-        // お金はリザルト画面で宝箱開封時に加算する（ここでは加算しない）
-        // 右上UIにアイコンをフライアニメーションで追加
-        if (ItemInventoryManager.Instance != null && uiIcon != null)
-        {
-            // GetAnime()が位置を変更する前にワールド座標をキャプチャ
-            Vector3 capturedPos = transform.position;
-            ItemInventoryManager.Instance.AddItem(itemType, uiIcon, capturedPos, moneyValue);
-        }
-
-        StartCoroutine(GetAnime());
     }
 
     IEnumerator GetAnime()

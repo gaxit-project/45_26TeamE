@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33d5665860dd3aa45a7b7dad75749d2b, type: 3}
+  m_Name: JewelData
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  itemName: Jewel
+  uiIcon: {fileID: 21300000, guid: 005b9c5004c07b64eb7c1b96160c39cd, type: 3}
+  moneyValue: 300000
+  effectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
+  seName: "\u5B9D\u77F3\u5165\u624B"
