@@ -50,6 +50,10 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject bombPrefab;
     [SerializeField] float bombSpawnRatio = 0.2f;
 
+    [Header("酸素設定")]
+    [SerializeField] GameObject oxygenPrefab;
+    [SerializeField] float baseOxygenChance = 1f;
+
     [Header("特殊セット設定")]
     [SerializeField] GameObject bombJewelSetPrefab;
     [SerializeField] float bombJewelSpawnChance = 0.5f;
@@ -476,6 +480,7 @@ public class VoxelTerrain : MonoBehaviour
 
             TrySpawnKeysInChunk(i, finalProbability);
             TrySpawnJewelsInChunk(i, finalProbability);
+            TrySpawnOxygenInChunk(i, finalProbability);
             TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
             // 最下5チャンクでは爆弾+宝石セットを生成しない
             if (i >= 5)
@@ -581,6 +586,32 @@ public class VoxelTerrain : MonoBehaviour
                     );
                     Quaternion rotation = Quaternion.Euler(0, -90f, 0);
                     Instantiate(bombPrefab, pos, rotation, transform);
+                }
+            }
+        }
+    }
+
+
+    private void TrySpawnOxygenInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+        for (int t = 0; t < 2; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
+                {
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+                    Instantiate(oxygenPrefab, pos, rotation, transform);
                 }
             }
         }
