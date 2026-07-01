@@ -202,6 +202,12 @@ public class ShoppingManager : MonoBehaviour
 
             item.buyButton.colors = cb;
         }
+
+        if (item.descriptionImage != null)
+        {
+            item.descriptionImage.sprite = item.descriptionSprite;
+            item.descriptionImage.enabled = item.descriptionSprite != null;
+        }
     }
 
     public void ShowDescription(int itemIndex)
@@ -236,12 +242,6 @@ public class ShoppingManager : MonoBehaviour
                 Debug.Log(videoPlayer.texture);
             }
         }
-
-        if (item.descriptionImage != null)
-        {
-            item.descriptionImage.sprite = item.descriptionSprite;
-            item.descriptionImage.enabled = item.descriptionSprite != null;
-        }
     }
 
     public void HideDescription()
@@ -254,15 +254,6 @@ public class ShoppingManager : MonoBehaviour
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
-        }
-
-        foreach (var item in shopItems)
-        {
-            if (item.descriptionImage != null)
-            {
-                item.descriptionImage.sprite = null;
-                item.descriptionImage.enabled = false;
-            }
         }
     }
 
