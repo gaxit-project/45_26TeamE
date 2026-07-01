@@ -1610,6 +1610,8 @@ MonoBehaviour:
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
   treasurePrefab: {fileID: 1077105864719006209, guid: a5c3993a5a86db142b4e7f45d9e05b86, type: 3}
   baseTreasureChance: 5
+  keyPrefab: {fileID: 1077105864719006209, guid: b144154cd100ffa49ac413a153c945c7, type: 3}
+  baseKeyChance: 1
   bombPrefab: {fileID: 1077105864719006209, guid: e7a80b686dca789439aca5724de67a2c, type: 3}
   bombSpawnRatio: 1
   bombJewelSetPrefab: {fileID: 3721176966014536097, guid: 11367ace4010a094497823d8194a5091, type: 3}
@@ -11421,7 +11423,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4751267345067237687, guid: 14802d068c91b864fa9d5e6c5993fd0f, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6398009305529240598, guid: 14802d068c91b864fa9d5e6c5993fd0f, type: 3}
       propertyPath: m_Pivot.x
