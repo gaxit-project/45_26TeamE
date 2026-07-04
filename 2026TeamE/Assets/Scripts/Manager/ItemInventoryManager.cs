@@ -435,7 +435,16 @@ public class ItemInventoryManager : MonoBehaviour
 
     public static List<ItemData> GetCollectedItemsForResult()
     {
-        return new List<ItemData>(s_collectedItems);
+        // 鍵は次のエリアに行くためのもので換金用ではないため、リザルト画面には出さない
+        List<ItemData> resultList = new List<ItemData>();
+        foreach (var item in s_collectedItems)
+        {
+            if (item.type != ItemType.Key)
+            {
+                resultList.Add(item);
+            }
+        }
+        return resultList;
     }
 
     public static int GetTotalMoneyValue()
@@ -443,7 +452,11 @@ public class ItemInventoryManager : MonoBehaviour
         int total = 0;
         foreach (var item in s_collectedItems)
         {
-            total += item.moneyValue;
+            // 念のため鍵の金額は足さない
+            if (item.type != ItemType.Key)
+            {
+                total += item.moneyValue;
+            }
         }
         return total;
     }
