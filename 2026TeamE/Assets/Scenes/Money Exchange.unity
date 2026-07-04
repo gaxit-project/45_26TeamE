@@ -3957,7 +3957,7 @@ MonoBehaviour:
     - "\u6398\u524A\u901F\u5EA6\u3000\u30A2\u30C3\u30D7\n\u6398\u524A\u7BC4\u56F2\u3000\u62E1\u5927"
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     descriptionVideo: {fileID: 32900000, guid: 254db59a828a92249b56c255d926d54f, type: 3}
-    descriptionSprite: {fileID: 21300000, guid: f0c24708fe791ea4b94a93f64a4de432, type: 3}
+    descriptionSprite: {fileID: 21300000, guid: 4053b5f3216284a4190f8d0aba7a1529, type: 3}
     descriptionImage: {fileID: 385315804}
     currentLevel: 0
   - itemName: Sonar
