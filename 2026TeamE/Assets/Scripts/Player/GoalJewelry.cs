@@ -6,7 +6,7 @@ public class GoalJewelry : MonoBehaviour
 {
 
     [SerializeField] private string SceneName;
-    [Header("ƒGƒtƒFƒNƒgƒvƒŒƒnƒu")]
+    [Header("ã‚¨ãƒ•ã‚§ã‚¯ãƒˆãƒ—ãƒ¬ãƒãƒ–")]
     public GameObject EfectPrefab;
 
     void OnTriggerEnter(Collider other)
@@ -21,9 +21,11 @@ public class GoalJewelry : MonoBehaviour
     {
         StartCoroutine(GetAnime());
     }
+    public static bool isGoalReached = false;
+
     IEnumerator GetAnime()
     {
-        // Å‰‚ÌˆÊ’u‚ğ‹L˜^iX‚Ì‚İ5‚É•ÏX‚µ‚Ä‰æ–Êè‘O‚Éo‚·j
+        // æœ€åˆã®ä½ç½®è¨˜éŒ²ï¼ˆXã®ã¿5ã«å¤‰æ›´ã—ã¦ç”»é¢å¤–ã«å‡ºã™ï¼‰
         Vector3 startPos = new Vector3(5, transform.position.y, transform.position.z);
 
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
@@ -56,11 +58,12 @@ public class GoalJewelry : MonoBehaviour
 
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("•óÎŠl“¾");
+            SoundManager.Instance.PlaySE("ç€æ°´ï¼‘");
         }
-        SceneManager.LoadScene(SceneName);
+        
+        isGoalReached = true;
+        SceneManager.LoadScene("Result");
         Destroy(gameObject);
         
     }
 }
-

@@ -48,14 +48,23 @@ public class anySceneButton : MonoBehaviour
         // シーン遷移を行う
         if (!string.IsNullOrEmpty(sceneName))
         {
-            // SceneLoaderがある場合はそちらを利用し、なければ通常のSceneManagerを利用
+            string targetScene = sceneName;
+
+            // もしゴールの宝石を取得して換金画面（Result）に来ている場合は、最終リザルト（FinalResult）に遷移する
+            if (GoalJewelry.isGoalReached && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Result")
+            {
+                targetScene = "FinalResult";
+                GoalJewelry.isGoalReached = false; // フラグをリセット
+            }
+
+            // SceneLoaderがある場合、そちらを利用し、なければ通常のSceneManagerを利用
             if (SceneLoader.Instance != null)
             {
-                SceneLoader.Instance.LoadScene(sceneName);
+                SceneLoader.Instance.LoadScene(targetScene);
             }
             else
             {
-                SceneManager.LoadScene(sceneName);
+                SceneManager.LoadScene(targetScene);
             }
         }
         else

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
@@ -101,10 +101,26 @@ public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
         // 手前（x=4.5）に移動させてブロックに埋まらないようにする（アイテムより少し奥）
         transform.position = new Vector3(4.5f, transform.position.y, transform.position.z);
 
+        // 1秒待機して宝箱を取得した感覚を出す
+                float delayDuration = 1.0f;
+        float elapsedDelay = 0f;
+        Vector3 initialPos = transform.position;
+        while (elapsedDelay < delayDuration)
+        {
+            float t = elapsedDelay / delayDuration;
+            float popUpHeight = 1.8f;
+            float currentY = initialPos.y + Mathf.Sin(t * Mathf.PI) * popUpHeight;
+            transform.position = new Vector3(initialPos.x, currentY, initialPos.z);
+            elapsedDelay += Time.deltaTime;
+            yield return null;
+        }
+        transform.position = initialPos;
+
         // 1. スプライトを開いた状態に変更
         if (spriteRenderer != null && openSprite != null)
         {
-            spriteRenderer.sprite = openSprite;
+                        spriteRenderer.sprite = openSprite;
+            spriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 1f);
         }
 
         // 2. 中身のアイテムを生成し、一時的にコライダーを無効化（プレイヤーの即時取得を防ぐため）

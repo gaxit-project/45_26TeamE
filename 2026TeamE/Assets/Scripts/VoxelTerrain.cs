@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
@@ -896,7 +896,7 @@ public class VoxelTerrain : MonoBehaviour
         {
             for (int z = centerZ - extentZ; z <= centerZ + extentZ; z++)
             {
-                if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air)
+                if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air && mapData[x, y, z] != (byte)BlockType.Bedrock)
                 {
                     return false;
                 }
@@ -958,15 +958,15 @@ public class VoxelTerrain : MonoBehaviour
         bool allAir = true;
 
         // 宝石自身のブロックが土ならまだ露出していない
-        if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air) allAir = false;
+        if (IsInside(x, y, z) && mapData[x, y, z] != (byte)BlockType.Air && mapData[x, y, z] != (byte)BlockType.Bedrock) allAir = false;
 
         // 上下
-        if (IsInside(x, y + 1, z) && mapData[x, y + 1, z] != (byte)BlockType.Air) allAir = false;
-        if (IsInside(x, y - 1, z) && mapData[x, y - 1, z] != (byte)BlockType.Air) allAir = false;
+        if (IsInside(x, y + 1, z) && mapData[x, y + 1, z] != (byte)BlockType.Air && mapData[x, y + 1, z] != (byte)BlockType.Bedrock) allAir = false;
+        if (IsInside(x, y - 1, z) && mapData[x, y - 1, z] != (byte)BlockType.Air && mapData[x, y - 1, z] != (byte)BlockType.Bedrock) allAir = false;
         
         // 左右（ゲーム内Z軸）
-        if (IsInside(x, y, z + 1) && mapData[x, y, z + 1] != (byte)BlockType.Air) allAir = false;
-        if (IsInside(x, y, z - 1) && mapData[x, y, z - 1] != (byte)BlockType.Air) allAir = false;
+        if (IsInside(x, y, z + 1) && mapData[x, y, z + 1] != (byte)BlockType.Air && mapData[x, y, z + 1] != (byte)BlockType.Bedrock) allAir = false;
+        if (IsInside(x, y, z - 1) && mapData[x, y, z - 1] != (byte)BlockType.Air && mapData[x, y, z - 1] != (byte)BlockType.Bedrock) allAir = false;
 
         return allAir;
     }
