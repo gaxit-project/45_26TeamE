@@ -853,10 +853,14 @@ public class VoxelTerrain : MonoBehaviour
         int blockY = Mathf.FloorToInt(localPos.y / blockSize);
 
         int currentDepth = Mathf.Abs(blockY);
-
         int zoneIndex = GetRelayID(currentDepth);
 
-        Debug.Log($"<color=cyan>[ジュエル獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の合計: {zoneCollectedKeyCounts[zoneIndex]}個");
+        int keyCount = 0;
+        zoneCollectedKeyCounts.TryGetValue(zoneIndex, out keyCount);
+
+        Debug.Log(
+            $"<color=cyan>[ジュエル獲得]</color> 深度:{currentDepth} " +
+            $"(ゾーン:{zoneIndex}) | 現在の鍵:{keyCount}個");
     }
 
     public void CollectedKey(Vector3 worldPos)
