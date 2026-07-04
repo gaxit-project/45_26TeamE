@@ -4,7 +4,6 @@ using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.Video;
-using UnityEngine.UI;
 
 public class ShoppingManager : MonoBehaviour
 {
@@ -13,13 +12,19 @@ public class ShoppingManager : MonoBehaviour
     {
         public string itemName;
         public Button buyButton;
-        public TextMeshProUGUI levelText;
+        // 削除：public TextMeshProUGUI levelText;
         public TextMeshProUGUI priceText;
         public int basePrice = 100;
         public int maxLevel = 10;
 
         [TextArea(2, 4)]
         public List<string> levelDescriptions;
+
+        [Header("個別説明テキスト")]
+        public TextMeshProUGUI itemDescriptionText;
+
+        [Header("レベル表示用の星UI")]
+        public GameObject[] starImages;
 
         [Header("説明動画")]
         public VideoClip descriptionVideo;
@@ -39,14 +44,12 @@ public class ShoppingManager : MonoBehaviour
                 return Mathf.FloorToInt(basePrice * Mathf.Pow(1.5f, currentLevel - 1));
             }
         }
-
-
     }
 
     [Header("ショップ設定")]
     [SerializeField] private List<ShopItem> shopItems = new List<ShopItem>();
 
-    [Header("UI")]
+    [Header("UI (不要な場合は削除可)")]
     [SerializeField] private TextMeshProUGUI descriptionText;
 
     [Header("動画表示")]
@@ -63,13 +66,11 @@ public class ShoppingManager : MonoBehaviour
 
     private static Dictionary<string, int> savedLevels = new Dictionary<string, int>();
 
-    // --- ShoppingManager.cs の Start内を変更 ---
     void Start()
     {
         for (int i = 0; i < shopItems.Count; i++)
         {
             var item = shopItems[i];
-            // 修正点：一元管理クラスからレベルをロード
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             ShopItem target = item;
@@ -91,15 +92,14 @@ public class ShoppingManager : MonoBehaviour
 
             EventTrigger.Entry exitEntry = new EventTrigger.Entry();
             exitEntry.eventID = EventTriggerType.PointerExit;
-            exitEntry.callback.AddListener((data) => { HideDescription(); });
+            exitEntry.callback.AddListener((data) => { HideDescription(index); });
             trigger.triggers.Add(exitEntry);
 
             EventTrigger.Entry deselectEntry = new EventTrigger.Entry();
             deselectEntry.eventID = EventTriggerType.Deselect;
-            deselectEntry.callback.AddListener((data) => { HideDescription(); });
+            deselectEntry.callback.AddListener((data) => { HideDescription(index); });
             trigger.triggers.Add(deselectEntry);
 
-            // 画像を設定
             if (item.descriptionImage != null)
             {
                 item.descriptionImage.sprite = item.descriptionSprite;
@@ -108,7 +108,7 @@ public class ShoppingManager : MonoBehaviour
 
             RefreshUI(target);
         }
-        HideDescription();
+        HideAllDescriptions();
         UpdateAllButtons();
     }
 
@@ -120,7 +120,6 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    // --- ShoppingManager.cs の TryPurchase内を変更 ---
     private void TryPurchase(ShopItem item)
     {
         if (item.currentLevel >= item.maxLevel)
@@ -143,13 +142,11 @@ public class ShoppingManager : MonoBehaviour
             SoundManager.Instance.PlaySE("つるはしで掘る4");
             mm.SpendMoney(cost);
 
-            // 購入成功エフェクトの再生
             if (jewelSparkEffect != null)
             {
-                Instantiate(jewelSparkEffect, player.transform.position + new Vector3(0, 0, 0), Quaternion.Euler(-90, -90, 0));
+                Instantiate(jewelSparkEffect, player.transform.position, Quaternion.Euler(-90, -90, 0));
             }
 
-            // 修正点：一元管理クラスを通じてレベルアップとセーブを実行
             UpgradeManager.IncreaseLevel(item.itemName);
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
@@ -162,20 +159,28 @@ public class ShoppingManager : MonoBehaviour
     private void RefreshUI(ShopItem item)
     {
         bool isMax = item.currentLevel >= item.maxLevel;
-
         MoneyManager mm = MoneyManager.Instance;
         bool canBuy = mm != null && mm.GetMoney() >= item.CurrentPrice;
 
-        if (item.levelText != null)
-            item.levelText.text = $"{item.currentLevel}";
+        // 削除：if (item.levelText != null) item.levelText.text = ...
 
         if (item.priceText != null)
             item.priceText.text = isMax ? "---" : $"{item.CurrentPrice:N0}";
 
+        if (item.starImages != null)
+        {
+            for (int i = 0; i < item.starImages.Length; i++)
+            {
+                if (item.starImages[i] != null)
+                {
+                    item.starImages[i].SetActive(i < item.currentLevel);
+                }
+            }
+        }
+
         if (item.buyButton != null)
         {
             item.buyButton.interactable = true;
-
             ColorBlock cb = item.buyButton.colors;
 
             if (isMax)
@@ -199,7 +204,6 @@ public class ShoppingManager : MonoBehaviour
                 cb.selectedColor = normalColor * 0.9f;
                 cb.pressedColor = normalColor * 0.8f;
             }
-
             item.buyButton.colors = cb;
         }
 
@@ -216,7 +220,7 @@ public class ShoppingManager : MonoBehaviour
 
         ShopItem item = shopItems[itemIndex];
 
-        if (descriptionText != null &&
+        if (item.itemDescriptionText != null &&
             item.levelDescriptions != null &&
             item.levelDescriptions.Count > 0)
         {
@@ -225,35 +229,43 @@ public class ShoppingManager : MonoBehaviour
                 0,
                 item.levelDescriptions.Count - 1);
 
+            item.itemDescriptionText.text = item.levelDescriptions[descIndex];
+        }
+
+        if (descriptionText != null && item.levelDescriptions != null && item.levelDescriptions.Count > 0)
+        {
+            int descIndex = Mathf.Clamp(item.currentLevel - 1, 0, item.levelDescriptions.Count - 1);
             descriptionText.text = item.levelDescriptions[descIndex];
         }
 
-        // 動画再生
-        if (videoPlayer != null)
+        if (videoPlayer != null && item.descriptionVideo != null)
         {
-            if (item.descriptionVideo != null)
-            {
-                videoPlayer.Stop();
-                videoPlayer.clip = item.descriptionVideo;
-                videoPlayer.isLooping = true;
-                videoPlayer.Play();
-
-                Debug.Log("動画再生開始");
-                Debug.Log(videoPlayer.texture);
-            }
+            videoPlayer.Stop();
+            videoPlayer.clip = item.descriptionVideo;
+            videoPlayer.isLooping = true;
+            videoPlayer.Play();
         }
     }
 
-    public void HideDescription()
+    public void HideDescription(int itemIndex)
     {
-        if (descriptionText != null)
+        if (itemIndex >= 0 && itemIndex < shopItems.Count)
         {
-            descriptionText.text = "";
+            if (shopItems[itemIndex].itemDescriptionText != null)
+            {
+                shopItems[itemIndex].itemDescriptionText.text = "";
+            }
         }
 
-        if (videoPlayer != null)
+        if (descriptionText != null) descriptionText.text = "";
+        if (videoPlayer != null) videoPlayer.Stop();
+    }
+
+    private void HideAllDescriptions()
+    {
+        for (int i = 0; i < shopItems.Count; i++)
         {
-            videoPlayer.Stop();
+            HideDescription(i);
         }
     }
 
@@ -264,5 +276,4 @@ public class ShoppingManager : MonoBehaviour
             RefreshUI(item);
         }
     }
-
 }
