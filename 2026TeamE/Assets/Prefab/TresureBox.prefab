@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7265501173327007931}
   - component: {fileID: 7780117687900619292}
   - component: {fileID: 4569835451768528063}
-  - component: {fileID: 3047343684742328082}
+  - component: {fileID: -1110592612354487257}
   m_Layer: 7
   m_Name: TresureBox
   m_TagString: VoxelTerrain
@@ -142,7 +142,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 126
   m_CollisionDetection: 0
---- !u!114 &3047343684742328082
+--- !u!114 &-1110592612354487257
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -151,15 +151,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1077105864719006209}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8db1d0e3abab4c48b8c1bfc82e72bc8, type: 3}
+  m_Script: {fileID: 11500000, guid: 3203bcc4e14b5304184af11032db2bc8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JewelryReaction
-  itemType: 2
-  uiIcon: {fileID: 21300000, guid: d4c3f2546075e8141b8495e1969c71e1, type: 3}
-  moneyValue: 0
+  m_EditorClassIdentifier: Assembly-CSharp::TreasureBoxBehaviour
+  openSprite: {fileID: 21300000, guid: a239cae3155f6b54a8d6bae527149747, type: 3}
+  contentPrefab: {fileID: 0}
+  zoneIndex: 0
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
-  ob: {fileID: 0}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
-  EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}
   cooldownTime: 1
   isExposed: 0

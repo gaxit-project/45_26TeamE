@@ -155,7 +155,7 @@ public class ResultManager : MonoBehaviour
                 int addMoney = 0;
 
                 // 宝箱か皮袋の場合
-                if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
+                if (item.type == ItemType.LeatherBag)
                 {
                     if (openedChestIndices.Contains(i))
                     {
@@ -174,9 +174,7 @@ public class ResultManager : MonoBehaviour
                         Image img = itemButtons[i].GetComponent<Image>();
                         if (img != null)
                         {
-                            if (item.type == ItemType.TresureBox && openTreasureBoxSprite != null)
-                                img.sprite = openTreasureBoxSprite;
-                            else if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
+                            if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
                                 img.sprite = openLeatherBagSprite;
 
                             img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
@@ -289,7 +287,7 @@ public class ResultManager : MonoBehaviour
             for (int i = 0; i < items.Count; i++)
             {
                 ItemInventoryManager.ItemData item = items[i];
-                if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
+                if (item.type == ItemType.LeatherBag)
                 {
                     AutoOpenChest(i, item);
                     yield return new WaitForSeconds(iconInterval);
@@ -342,9 +340,7 @@ public class ResultManager : MonoBehaviour
         Image img = btn.GetComponent<Image>();
         if (img != null)
         {
-            if (item.type == ItemType.TresureBox && openTreasureBoxSprite != null)
-                img.sprite = openTreasureBoxSprite;
-            else if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
+            if (item.type == ItemType.LeatherBag && openLeatherBagSprite != null)
                 img.sprite = openLeatherBagSprite;
 
             img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
@@ -488,7 +484,7 @@ public class ResultManager : MonoBehaviour
         int moneyToAdd = 0;
 
         // 宝箱・皮袋の場合は、自動開封で抽選済みのドロップアイテムの金額を使う
-        if (item.type == ItemType.TresureBox || item.type == ItemType.LeatherBag)
+        if (item.type == ItemType.LeatherBag)
         {
             if (droppedLootMap.TryGetValue(index, out LootItem droppedLoot))
             {
@@ -611,9 +607,7 @@ public class ResultManager : MonoBehaviour
         {
             if (loot == null || loot.sprite == null) continue;
 
-            int chance = (containerType == ItemType.TresureBox)
-                ? loot.treasureBoxChance
-                : loot.leatherBagChance;
+            int chance = loot.leatherBagChance;
 
             if (chance <= 0) continue;
 

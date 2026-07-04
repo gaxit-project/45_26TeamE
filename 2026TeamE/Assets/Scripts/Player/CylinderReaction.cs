@@ -2,7 +2,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class CylinderReaction : MonoBehaviour
+public class CylinderReaction : MonoBehaviour, ICollectible
 {
     [Header("タイマー延長")]
     [Tooltip("取得時に制限時間に加算される秒数")]
@@ -121,6 +121,14 @@ public class CylinderReaction : MonoBehaviour
     void ResetReaction()
     {
         isCoolingDown = false;
+    }
+
+    public void Collect()
+    {
+        if (isExposed)
+        {
+            Get();
+        }
     }
 
     void Get()
