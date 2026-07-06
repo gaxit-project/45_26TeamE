@@ -6,7 +6,7 @@ public enum ItemType
 {
     Jewelry,        // 通常宝石
     BigJewelry,     // 大きい宝石
-    TresureBox,     // 宝箱
+    GoldLeatherBag, // 金の皮のバッグ
     LeatherBag,     // 皮のバッグ
     Key,            // 鍵
 }
