@@ -61,6 +61,10 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] GameObject leatherBagPrefab;
     [SerializeField] float baseLeatherBagChance = 1f;
 
+    [Header("金の皮袋設定")]
+    [SerializeField] GameObject GoldleatherBagPrefab;
+    [SerializeField] float GoldbaseLeatherBagChance = 1f;
+
     [Header("特殊セット設定")]
     [SerializeField] GameObject bombJewelSetPrefab;
     [SerializeField] float bombJewelSpawnChance = 0.5f;
@@ -489,6 +493,7 @@ public class VoxelTerrain : MonoBehaviour
             TrySpawnJewelsInChunk(i, finalProbability);
             TrySpawnOxygenInChunk(i, finalProbability);
             TrySpawnLeatherBagInChunk(i, finalProbability);
+            TrySpawnGoldLeatherBagInChunk(i, finalProbability);
             TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
             // 最下5チャンクでは爆弾+宝石セットを生成しない
             if (i >= 5)
@@ -668,6 +673,38 @@ public class VoxelTerrain : MonoBehaviour
                         if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
                         {
                             tb.contentPrefab = leatherBagPrefab;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void TrySpawnGoldLeatherBagInChunk(int chunkIndex, float spawnChance)
+    {
+        int startY = chunkIndex * chunkSizeY;
+        int endY = Mathf.Min(startY + chunkSizeY, heightY);
+        for (int t = 0; t < 1; t++)
+        {
+            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
+            {
+                int rx = UnityEngine.Random.Range(0, thicknessX);
+                int ry = UnityEngine.Random.Range(startY, endY);
+                int rz = UnityEngine.Random.Range(0, widthZ);
+                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
+                {
+                    Vector3 pos = transform.position + new Vector3(
+                        rx * blockSize,
+                        ry * blockSize + (blockSize / 2f),
+                        rz * blockSize + (blockSize / 2f)
+                    );
+                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+                    if (treasureBoxPrefab != null && leatherBagPrefab != null)
+                    {
+                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
+                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
+                        {
+                            tb.contentPrefab = GoldleatherBagPrefab;
                         }
                     }
                 }

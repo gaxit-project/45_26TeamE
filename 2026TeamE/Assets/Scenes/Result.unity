@@ -2009,27 +2009,27 @@ MonoBehaviour:
   iconInterval: 0.1
   iconSize: 200
   gemCountText: {fileID: 1194535426}
-  openGoldLeatherBagSprite: {fileID: 0}
+  openGoldLeatherBagSprite: {fileID: 21300000, guid: f4fea0626ba493b4ebfc67bc4a03f434, type: 3}
   openLeatherBagSprite: {fileID: 21300000, guid: 4fc0c58ca4036764db15c29c7bcd5479, type: 3}
   lootJewel:
     sprite: {fileID: 21300000, guid: 005b9c5004c07b64eb7c1b96160c39cd, type: 3}
     moneyValue: 300000
-    GoldLeatherBagChance: 0
+    GoldLeatherBagChance: 30
     leatherBagChance: 20
   lootManyJewels:
     sprite: {fileID: 21300000, guid: 54b06ce2610687140afe5c8b41c3de06, type: 3}
     moneyValue: 1000000
-    GoldLeatherBagChance: 0
+    GoldLeatherBagChance: 40
     leatherBagChance: 5
   lootBill:
     sprite: {fileID: 21300000, guid: 2ecf92d37367065479c087abfde1fe5b, type: 3}
     moneyValue: 50000
-    GoldLeatherBagChance: 0
+    GoldLeatherBagChance: 10
     leatherBagChance: 35
   lootBillBundle:
     sprite: {fileID: 21300000, guid: 1afffcd156b598b48a96ed32c8ca75cb, type: 3}
     moneyValue: 150000
-    GoldLeatherBagChance: 0
+    GoldLeatherBagChance: 20
     leatherBagChance: 40
   nextFocusButton: {fileID: 966817814}
 --- !u!1660057539 &9223372036854775807

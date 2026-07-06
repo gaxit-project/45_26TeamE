@@ -180,7 +180,7 @@ public class ResultManager : MonoBehaviour
                 {
                     if (bag.type == ItemType.LeatherBag && openLeatherBagSprite != null)
                         img.sprite = openLeatherBagSprite;
-                    else if (openGoldLeatherBagSprite != null)
+                    else if (bag.type == ItemType.GoldLeatherBag && openGoldLeatherBagSprite != null)
                         img.sprite = openGoldLeatherBagSprite;
                     
                     // ここではまだ元の明るさのまま
@@ -365,7 +365,16 @@ public class ResultManager : MonoBehaviour
         {
             if (loot == null || loot.sprite == null) continue;
 
-            int chance = loot.leatherBagChance; // 今回は皮袋のみを想定
+            int chance = 0;
+            if (containerType == ItemType.GoldLeatherBag)
+            {
+                chance = loot.GoldLeatherBagChance; // 金の皮袋（元宝箱設定）用
+            }
+            else
+            {
+                chance = loot.leatherBagChance; // 普通の皮袋用
+            }
+            
             if (chance <= 0) continue;
 
             weightedList.Add((loot, chance));

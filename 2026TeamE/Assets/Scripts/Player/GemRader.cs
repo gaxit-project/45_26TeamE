@@ -22,7 +22,7 @@ public class GemRadar : MonoBehaviour
 
     [Header("レーダー性能の基準値（レベル2相当）")]
     [Tooltip("ここに入力した数値を基準にして、レベルに応じて自動で掛け算・割り算されます")]
-    public float baseMaxDistance = 30f; 
+    public float baseMaxDistance = 15f; 
     public float baseWaveAngle = 45f;   
     
     [Header("距離による波の高さ（Amplitude）")]
@@ -111,6 +111,7 @@ public class GemRadar : MonoBehaviour
                     float currentWaveAmplitude = Mathf.Lerp(minAmplitude, maxAmplitude, t);
 
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg));
+                    
                     if (angleDiff < currentMaxAngle)
                     {
                         // 影響力（本来の波の高さ × 中央からの近さによるフェード）
@@ -161,20 +162,25 @@ public class GemRadar : MonoBehaviour
 
         Collider[] colliders = Physics.OverlapSphere(transform.position, currentMaxDistance, gemLayer);
         
+        System.Array.Sort(colliders, (a, b) => 
+        {
+            float distA = (a.transform.position - transform.position).sqrMagnitude;
+            float distB = (b.transform.position - transform.position).sqrMagnitude;
+            return distA.CompareTo(distB);
+        });
+
         detectedGems.Clear();
-        float minDistance = float.MaxValue;
         nearestGem = null;
 
-        foreach (Collider col in colliders)
+        int count = Mathf.Min(3, colliders.Length);
+        for (int i = 0; i < count; i++)
         {
-            detectedGems.Add(col.transform);
+            detectedGems.Add(colliders[i].transform);
+        }
 
-            float dist = Vector3.Distance(transform.position, col.transform.position);
-            if (dist < minDistance)
-            {
-                minDistance = dist;
-                nearestGem = col.transform;
-            }
+        if (detectedGems.Count > 0)
+        {
+            nearestGem = detectedGems[0];
         }
     }
 

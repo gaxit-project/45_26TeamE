@@ -1487,6 +1487,8 @@ MonoBehaviour:
   baseOxygenChance: 1
   leatherBagPrefab: {fileID: 1077105864719006209, guid: d466b68b6ecfa4442afb6b04c1aa16e7, type: 3}
   baseLeatherBagChance: 1
+  GoldleatherBagPrefab: {fileID: 1077105864719006209, guid: 332bf8569b80f5b4a869f8baa1d2eab1, type: 3}
+  GoldbaseLeatherBagChance: 1
   bombJewelSetPrefab: {fileID: 3721176966014536097, guid: 11367ace4010a094497823d8194a5091, type: 3}
   bombJewelSpawnChance: 0.5
   hardnessScale: 0.3
@@ -7775,6 +7777,8 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 005b9c5004c07b64eb7c1b96160c39cd, type: 3}
   - type: 3
     icon: {fileID: 21300000, guid: 99ec95c154f2e6b4ba8a50d18d542f2a, type: 3}
+  - type: 2
+    icon: {fileID: 21300000, guid: 8d74ca20ea72dea4293241a5f2982657, type: 3}
   - type: 4
     icon: {fileID: 21300000, guid: e564335ee74e8af47ab124f265045691, type: 3}
 --- !u!1 &548082329
@@ -18242,6 +18246,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DebugItemManager
   jewelryData: {fileID: 11400000, guid: 2e988a96ed6b8974899e00ba1fbf0285, type: 2}
   leatherBagData: {fileID: 11400000, guid: f2d93955d2edcf34db9ae6a6295a4d67, type: 2}
+  GoldleatherBagData: {fileID: 11400000, guid: 915639f86b5527540af55477b506eec6, type: 2}
   keyData: {fileID: 11400000, guid: f30ef3234a6452c4ab75924dcf66343b, type: 2}
   addOxygenTime: 20
 --- !u!4 &1928958367

@@ -13,6 +13,7 @@ public class DebugItemManager : MonoBehaviour
     [Header("アイテムデータ設定（インスペクターで割り当てる）")]
     [SerializeField] private ItemData jewelryData;
     [SerializeField] private ItemData leatherBagData;
+    [SerializeField] private ItemData GoldleatherBagData;
     [SerializeField] private ItemData keyData;
 
     [Header("デバッグ設定")]
@@ -23,13 +24,14 @@ public class DebugItemManager : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        // 【1〜3キー】通常アイテム取得
+        // 【1〜4キー】通常アイテム取得
         if (kb.digit1Key.wasPressedThisFrame) AddDebugItem(ItemType.Jewelry, jewelryData);
         if (kb.digit2Key.wasPressedThisFrame) AddDebugItem(ItemType.LeatherBag, leatherBagData);
-        if (kb.digit3Key.wasPressedThisFrame) AddDebugItem(ItemType.Key, keyData);
+        if (kb.digit3Key.wasPressedThisFrame) AddDebugItem(ItemType.GoldLeatherBag, GoldleatherBagData);
+        if (kb.digit4Key.wasPressedThisFrame) AddDebugItem(ItemType.Key, keyData);
 
-        // 【4キー】酸素取得（タイム延長）
-        if (kb.digit4Key.wasPressedThisFrame)
+        // 【5キー】酸素取得（タイム延長）
+        if (kb.digit5Key.wasPressedThisFrame)
         {
             if (TimerManager.Instance != null)
             {
