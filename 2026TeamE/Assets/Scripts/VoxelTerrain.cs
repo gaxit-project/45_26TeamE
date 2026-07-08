@@ -184,22 +184,6 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    /*void GenerateLevel()
-    {
-        mapData = new byte[thicknessX, heightY, widthZ];
-        var rnd = useDeterministicSeed ? new System.Random(seed) : new System.Random();
-        for (int x = 0; x < thicknessX; x++)
-        {
-                for (int y = 0; y < heightY; y++)
-                {
-                    for(int z = 0; z < widthZ; z++)
-                    {
-                        mapData[x, y, z] = (rnd.NextDouble() * 100.0 < oreProbability) ? (byte)2 : (byte)1;
-                    }
-            }
-        }
-    }*/
-
     void Update()
     {
         // デバッグ用：1キーが押されたら周囲の中継地点を消去
@@ -252,7 +236,6 @@ public class VoxelTerrain : MonoBehaviour
                         destroyedOre++;
                         if (!emittedForThisCell)
                         {
-                            destroyedOre++;
                             if (!emittedForThisCell && BlockEffectManager.Instance != null)
                             {
                                 Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
@@ -495,7 +478,7 @@ public class VoxelTerrain : MonoBehaviour
         int intervalY = chunkSizeY * 10;
         int currentStageBottomY = 0;
 
-        while (currentStageBottomY < intervalY)
+        while (currentStageBottomY < heightY)
         {
             int currentStageTopY = Mathf.Min(currentStageBottomY + intervalY, heightY);
             int zoneIndex = GetRelayID(currentStageBottomY);

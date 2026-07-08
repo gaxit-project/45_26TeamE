@@ -136,11 +136,6 @@ public class CylinderReaction : MonoBehaviour, ICollectible
         if (isGot) return; // 既に取得済みなら何もしない
         isGot = true;
 
-        if (VoxelTerrain.Instance != null)
-        {
-            VoxelTerrain.Instance.CollectedJewel(transform.position);
-        }
-
         // 宝石を取得した瞬間にマーカーを消す
         if (currentMarker != null)
         {
