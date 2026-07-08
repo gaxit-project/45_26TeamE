@@ -51,7 +51,7 @@ public class VoxelTerrain : MonoBehaviour
 
     [Header("爆弾設定")]
     [SerializeField] GameObject bombPrefab;
-    [SerializeField] float bombSpawnRatio = 0.2f;
+    [SerializeField] int bombCount = 20;
 
     [Header("宝箱設定")]
     [SerializeField] GameObject treasureBoxPrefab;
@@ -111,7 +111,8 @@ public class VoxelTerrain : MonoBehaviour
         Jewel,
         Oxygen,
         LeatherBag,
-        GoldLeatherBag
+        GoldLeatherBag,
+        Bomb
     }
 
     void Awake()
@@ -506,27 +507,8 @@ public class VoxelTerrain : MonoBehaviour
 
             if(validPositions.Count > 0)
             {
-                List<SpawnItemType> itemSequence = new List<SpawnItemType>();
-                SpawnItemType[] normalPool = {
-                    SpawnItemType.Jewel,
-                    SpawnItemType.Oxygen,
-                    SpawnItemType.LeatherBag,
-                    SpawnItemType.GoldLeatherBag,
-                };
-
-                for (int i = 0; i < itemsPerStage; i++)
-                {
-                    if (i < 3)
-                    {
-                        itemSequence.Add(SpawnItemType.Key);
-                    }
-                    else
-                    {
-                        itemSequence.Add(normalPool[rnd.Next(normalPool.Length)]);
-                    }
-                }
-
-                for(int i = validPositions.Count - 1; i > 0; i--)
+                // 座標リストをシャッフルしてランダム化
+                for (int i = validPositions.Count - 1; i > 0; i--)
                 {
                     int j = rnd.Next(i + 1);
                     var temp = validPositions[i];
@@ -534,13 +516,48 @@ public class VoxelTerrain : MonoBehaviour
                     validPositions[j] = temp;
                 }
 
-                int spawnCount = Mathf.Min(itemSequence.Count, validPositions.Count);
-                for(int i = 0; i < spawnCount; i++)
+                int currentValidIndex = 0;
+
+                // アイテムの出現順序を決定
+                List<SpawnItemType> tresureSequence = new List<SpawnItemType>();
+
+                // 鍵3つ固定
+                for (int i = 0; i < 3; i++)
                 {
-                    SpawnItemAt(itemSequence[i], validPositions[i], zoneIndex);
+                    tresureSequence.Add(SpawnItemType.Key);
+                }
+
+                // 酸素、皮袋、金の皮袋をランダムに追加
+                SpawnItemType[] normalPool = {
+                    SpawnItemType.Oxygen,
+                    SpawnItemType.LeatherBag,
+                    SpawnItemType.GoldLeatherBag,
+                };
+
+                int remainingTresureCount = itemsPerStage - tresureSequence.Count;
+                for(int i = 0; i < remainingTresureCount; i++)
+                {
+                    int poolIndex = rnd.Next(normalPool.Length);
+                    tresureSequence.Add(normalPool[poolIndex]);
+                }
+
+                // 宝石配置
+                int tresureSpawnCount = Mathf.Min(tresureSequence.Count, validPositions.Count);
+                for(int i = 0; i < tresureSpawnCount; i++)
+                {
+                    if(currentValidIndex >= validPositions.Count) break;
+                    SpawnItemAt(tresureSequence[i], validPositions[currentValidIndex], zoneIndex);
+                    currentValidIndex++;
+                }
+
+                int bombSpawnCount = Mathf.Min(bombCount, validPositions.Count - currentValidIndex);
+                for(int i = 0; i < bombSpawnCount; i++)
+                {
+                    if(currentValidIndex >= validPositions.Count) break;
+                    SpawnItemAt(SpawnItemType.Bomb, validPositions[currentValidIndex], zoneIndex);
+                    currentValidIndex++;
                 }
             }
-
             currentStageBottomY = currentStageTopY;
         }
     }
@@ -553,6 +570,15 @@ public class VoxelTerrain : MonoBehaviour
             coord.z * blockSize + (blockSize / 2f)
         );
         Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+
+        if(type == SpawnItemType.Bomb)
+        {
+            if(bombPrefab != null)
+            {
+                GameObject bomb = Instantiate(bombPrefab, pos, rotation, transform);
+            }
+            return;
+        }
 
         if(treasureBoxPrefab == null) return;
 
