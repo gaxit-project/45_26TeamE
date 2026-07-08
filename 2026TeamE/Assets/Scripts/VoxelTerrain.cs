@@ -38,6 +38,9 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] int chunkSizeY = 16;
     [SerializeField] GameObject chunkPrefab;
 
+    [Header("1ステージあたりの出現アイテム数")]
+    [SerializeField] int itemsPerStage = 10;
+
     [Header("宝石設定")]
     [SerializeField] GameObject treasurePrefab;
     [SerializeField] float baseTreasureChance = 1f;
@@ -102,6 +105,15 @@ public class VoxelTerrain : MonoBehaviour
         Quartzite = 6
     }
 
+    private enum SpawnItemType
+    {
+        Key,
+        Jewel,
+        Oxygen,
+        LeatherBag,
+        GoldLeatherBag
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -114,6 +126,7 @@ public class VoxelTerrain : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
     private void OnEnable()
     {
         // シーン切り替えイベントを購読
@@ -204,7 +217,6 @@ public class VoxelTerrain : MonoBehaviour
         HashSet<int> changedYRows = new HashSet<int>();
         int destroyedDirt = 0;
         int destroyedOre = 0;
-        int emittedParticleCount = 0;
 
         for (int y = centerY - r; y <= centerY + r; y++)
         {
@@ -213,7 +225,6 @@ public class VoxelTerrain : MonoBehaviour
                 // 2Dの距離判定
                 float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
                 if (distSq > radius * radius) continue;
-
                 if (y < minLimit.y || y > maxLimit.y || z < minLimit.z || z > maxLimit.z) continue;
 
                 // 画面上（Y,Z）の1マスにつき、エフェクトは1回だけ出すためのフラグ
@@ -229,16 +240,11 @@ public class VoxelTerrain : MonoBehaviour
                     if (currentBlock == (byte)BlockType.Dirt)
                     {
                         destroyedDirt++;
-                        if (!emittedForThisCell)
+                        if (!emittedForThisCell && BlockEffectManager.Instance != null)
                         {
-                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
-                            Vector3 worldPos = transform.TransformPoint(localPos);
-                            if (BlockEffectManager.Instance != null)
-                            {
-                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
-                            }
+                            Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
+                            BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
                             emittedForThisCell = true;
-                            emittedParticleCount++;
                         }
                     }
                     else if (currentBlock == (byte)BlockType.Ore)
@@ -246,14 +252,13 @@ public class VoxelTerrain : MonoBehaviour
                         destroyedOre++;
                         if (!emittedForThisCell)
                         {
-                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
-                            Vector3 worldPos = transform.TransformPoint(localPos);
-                            if (BlockEffectManager.Instance != null)
+                            destroyedOre++;
+                            if (!emittedForThisCell && BlockEffectManager.Instance != null)
                             {
+                                Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
                                 BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Ore);
+                                emittedForThisCell = true;
                             }
-                            emittedForThisCell = true;
-                            emittedParticleCount++;
                         }
                     }
                     else if (currentBlock == (byte)BlockType.Stone)
@@ -261,14 +266,9 @@ public class VoxelTerrain : MonoBehaviour
                         // 石の場合
                         if (!emittedForThisCell)
                         {
-                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
-                            Vector3 worldPos = transform.TransformPoint(localPos);
-                            if (BlockEffectManager.Instance != null)
-                            {
-                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
-                            }
+                            Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
+                            BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
                             emittedForThisCell = true;
-                            emittedParticleCount++;
                         }
                     }
                     else if (currentBlock == (byte)BlockType.HardRock)
@@ -276,14 +276,9 @@ public class VoxelTerrain : MonoBehaviour
                         // 岩の場合
                         if (!emittedForThisCell)
                         {
-                            Vector3 localPos = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize;
-                            Vector3 worldPos = transform.TransformPoint(localPos);
-                            if (BlockEffectManager.Instance != null)
-                            {
-                                BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
-                            }
+                            Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
+                            BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
                             emittedForThisCell = true;
-                            emittedParticleCount++;
                         }
                     }
 
@@ -402,11 +397,13 @@ public class VoxelTerrain : MonoBehaviour
             }
         }
 
+        CleanupIsolatedDirtBlocks();
+
         float offsetX = -(thicknessX * blockSize) / 2f;
         float offsetZ = -(widthZ * blockSize) / 2f;
         transform.position = new Vector3(offsetX, -(heightY * blockSize), offsetZ);
 
-        GenerateChunks();
+        GenerateChunksAndItems(rnd);
         TeleportPlayerToStart(startX, startY, startZ);
         GameObject playerObj = GameObject.FindWithTag("Player");
         if (playerObj != null)
@@ -425,6 +422,182 @@ public class VoxelTerrain : MonoBehaviour
             if (y >= targetY - thickness && y <= targetY + thickness) return true;
         }
         return false;
+    }
+
+    private void CleanupIsolatedDirtBlocks()
+    {
+        bool[,,] visited = new bool[thicknessX, heightY, widthZ];
+        int[] dx = { 1, -1, 0, 0, 0, 0 };
+        int[] dy = { 0, 0, 1, -1, 0, 0 };
+        int[] dz = { 0, 0, 0, 0, 1, -1 };
+
+        for(int y = 0; y < heightY; y++)
+        {
+            for(int x = 0; x < thicknessX; x++)
+            {
+                for(int z = 0; z < widthZ; z++)
+                {
+                    if (mapData[x, y, z] == (byte)BlockType.Dirt && !visited[x, y, z])
+                    {
+                        List<Vector3Int> cluster = new List<Vector3Int>();
+                        Queue<Vector3Int> queue = new Queue<Vector3Int>();
+                        Vector3Int start = new Vector3Int(x, y, z);
+                        queue.Enqueue(start);
+                        visited[x, y, z] = true;
+                        while(queue.Count > 0)
+                        {
+                            Vector3Int current = queue.Dequeue();
+                            cluster.Add(current);
+                            for(int i = 0; i < 6; i++)
+                            {
+                                int nx = current.x + dx[i];
+                                int ny = current.y + dy[i];
+                                int nz = current.z + dz[i];
+                                if(IsInside(nx, ny, nz))
+                                {
+                                    if(mapData[nx, ny, nz] == (byte)BlockType.Dirt && !visited[nx, ny, nz])
+                                    {
+                                        visited[nx, ny, nz] = true;
+                                        queue.Enqueue(new Vector3Int(nx, ny, nz));
+                                    }
+                                }
+                            }
+                        }
+                        if (cluster.Count == 1 || cluster.Count == 2)
+                        {
+                            foreach (var block in cluster)
+                            {
+                                mapData[block.x, block.y, block.z] = (byte)BlockType.Air;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void GenerateChunksAndItems(System.Random rnd)
+    {
+        foreach (Transform child in transform) Destroy(child.gameObject);
+        int numChunks = Mathf.CeilToInt((float)heightY / chunkSizeY);
+        chunks = new Chunk[numChunks];
+
+        for (int i = 0; i < numChunks; i++)
+        {
+            GameObject go = Instantiate(chunkPrefab, transform);
+            go.name = $"Chunk_{i}";
+            go.transform.localPosition = Vector3.zero;
+            chunks[i] = go.GetComponent<Chunk>();
+            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial);
+            UpdateChunkMesh(i);
+        }
+
+        int intervalY = chunkSizeY * 10;
+        int currentStageBottomY = 0;
+
+        while (currentStageBottomY < intervalY)
+        {
+            int currentStageTopY = Mathf.Min(currentStageBottomY + intervalY, heightY);
+            int zoneIndex = GetRelayID(currentStageBottomY);
+
+            if (!zoneInitialGemValues.ContainsKey(zoneIndex))
+            {
+                zoneInitialGemValues[zoneIndex] = 0;
+            }
+
+            List<Vector3Int> validPositions = new List<Vector3Int>();
+            for (int y = currentStageBottomY; y < currentStageTopY; y++)
+            {
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    for (int z = 0; z < widthZ; z++)
+                    {
+                        byte b = mapData[x, y, z];
+                        if (b == (byte)BlockType.Dirt || b == (byte)BlockType.Ore || b == (byte)BlockType.Stone || b == (byte)BlockType.HardRock)
+                        {
+                            validPositions.Add(new Vector3Int(x, y, z));
+                        }
+                    }
+                }
+            }
+
+            if(validPositions.Count > 0)
+            {
+                List<SpawnItemType> itemSequence = new List<SpawnItemType>();
+                SpawnItemType[] normalPool = {
+                    SpawnItemType.Jewel,
+                    SpawnItemType.Oxygen,
+                    SpawnItemType.LeatherBag,
+                    SpawnItemType.GoldLeatherBag,
+                };
+
+                for (int i = 0; i < itemsPerStage; i++)
+                {
+                    if (i < 3)
+                    {
+                        itemSequence.Add(SpawnItemType.Key);
+                    }
+                    else
+                    {
+                        itemSequence.Add(normalPool[rnd.Next(normalPool.Length)]);
+                    }
+                }
+
+                for(int i = validPositions.Count - 1; i > 0; i--)
+                {
+                    int j = rnd.Next(i + 1);
+                    var temp = validPositions[i];
+                    validPositions[i] = validPositions[j];
+                    validPositions[j] = temp;
+                }
+
+                int spawnCount = Mathf.Min(itemSequence.Count, validPositions.Count);
+                for(int i = 0; i < spawnCount; i++)
+                {
+                    SpawnItemAt(itemSequence[i], validPositions[i], zoneIndex);
+                }
+            }
+
+            currentStageBottomY = currentStageTopY;
+        }
+    }
+
+    private void SpawnItemAt(SpawnItemType type, Vector3Int coord, int zoneIndex)
+    {
+        Vector3 pos = transform.position + new Vector3(
+            coord.x * blockSize,
+            coord.y * blockSize + (blockSize / 2f),
+            coord.z * blockSize + (blockSize / 2f)
+        );
+        Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+
+        if(treasureBoxPrefab == null) return;
+
+        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
+        if(box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
+        {
+            tb.zoneIndex = zoneIndex;
+            switch (type)
+            {
+                case SpawnItemType.Key:
+                    tb.contentPrefab = keyPrefab;
+                    break;
+                case SpawnItemType.Jewel:
+                    tb.contentPrefab = treasurePrefab;
+                    spawnedTreasures.Add(box);
+                    zoneInitialGemValues[zoneIndex] += GEM_VALUE;
+                    break;
+                case SpawnItemType.Oxygen:
+                    tb.contentPrefab = oxygenPrefab;
+                    break;
+                case SpawnItemType.LeatherBag:
+                    tb.contentPrefab = leatherBagPrefab;
+                    break;
+                case SpawnItemType.GoldLeatherBag:
+                    tb.contentPrefab = GoldleatherBagPrefab;
+                    break;
+            }
+        }
     }
 
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
@@ -470,282 +643,12 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
-    void GenerateChunks()
-    {
-        foreach (Transform child in transform) Destroy(child.gameObject);
-
-        int numChunks = Mathf.CeilToInt((float)heightY / chunkSizeY);
-        chunks = new Chunk[numChunks];
-
-        for (int i = 0; i < numChunks; i++)
-        {
-            GameObject go = Instantiate(chunkPrefab, transform);
-            go.name = $"Chunk_{i}";
-            go.transform.localPosition = new Vector3(0, 0, 0);
-            chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial);
-
-            UpdateChunkMesh(i);
-            float depthFactor = (float)(numChunks - i);
-            float finalProbability = baseTreasureChance * depthFactor;
-
-            TrySpawnKeysInChunk(i, finalProbability);
-            TrySpawnJewelsInChunk(i, finalProbability);
-            TrySpawnOxygenInChunk(i, finalProbability);
-            TrySpawnLeatherBagInChunk(i, finalProbability);
-            TrySpawnGoldLeatherBagInChunk(i, finalProbability);
-            TrySpawnBombInChunk(i, bombSpawnRatio * depthFactor);
-            // 最下5チャンクでは爆弾+宝石セットを生成しない
-            if (i >= 5)
-            {
-                TrySpawnBombJewelSetInChunk(i, bombJewelSpawnChance * depthFactor);
-            }
-        }
-    }
-
     public void UpdateChunkMesh(int index)
     {
         if (chunks == null || index < 0 || index >= chunks.Length) return;
         int startY = index * chunkSizeY;
         int endY = Mathf.Min(startY + chunkSizeY, heightY);
         chunks[index].RebuildMesh(mapData, startY, endY, thicknessX, heightY, widthZ, blockSize);
-    }
-
-    private void TrySpawnKeysInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        int zoneIndex = GetRelayID(startY);
-        for (int t = 0; t < 3; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-                    if (treasureBoxPrefab != null && keyPrefab != null)
-                    {
-                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
-                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
-                        {
-                            tb.contentPrefab = keyPrefab;
-                            tb.zoneIndex = zoneIndex;
-                        }
-                    }
-                }
-            }
-        }
-    } 
-
-    // チャンク内に宝石をスポーンさせる
-    private void TrySpawnJewelsInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        
-        int zoneIndex = GetRelayID(startY);
-        if (!zoneInitialGemValues.ContainsKey(zoneIndex))
-        {
-            zoneInitialGemValues[zoneIndex] = 0;
-        }
-
-        for (int t = 0; t < 3; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f,0);
-
-                    if (treasureBoxPrefab != null && treasurePrefab != null)
-                    {
-                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
-                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
-                        {
-                            tb.contentPrefab = treasurePrefab;
-                        }
-                        spawnedTreasures.Add(box);
-                        zoneInitialGemValues[zoneIndex] += GEM_VALUE;
-                    }
-                }
-            }
-        }
-    }
-
-    // チャンク内に爆弾をスポーンさせる
-    private void TrySpawnBombInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        for (int t = 0; t < 2; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-                    Instantiate(bombPrefab, pos, rotation, transform);
-                }
-            }
-        }
-    }
-
-
-    private void TrySpawnOxygenInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        for (int t = 0; t < 2; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-                    if (treasureBoxPrefab != null && oxygenPrefab != null)
-                    {
-                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
-                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
-                        {
-                            tb.contentPrefab = oxygenPrefab;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void TrySpawnLeatherBagInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        for (int t = 0; t < 1; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-                    if (treasureBoxPrefab != null && leatherBagPrefab != null)
-                    {
-                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
-                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
-                        {
-                            tb.contentPrefab = leatherBagPrefab;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void TrySpawnGoldLeatherBagInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-        for (int t = 0; t < 1; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-                    if (treasureBoxPrefab != null && leatherBagPrefab != null)
-                    {
-                        GameObject box = Instantiate(treasureBoxPrefab, pos, rotation, transform);
-                        if (box.TryGetComponent<TreasureBoxBehaviour>(out var tb))
-                        {
-                            tb.contentPrefab = GoldleatherBagPrefab;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void TrySpawnBombJewelSetInChunk(int chunkIndex, float spawnChance)
-    {
-        int startY = chunkIndex * chunkSizeY;
-        int endY = Mathf.Min(startY + chunkSizeY, heightY);
-
-        int zonIndex = GetRelayID(Mathf.Abs(startY));
-
-        for (int t = 0; t < 3; t++)
-        {
-            if (UnityEngine.Random.Range(0f, 100f) < spawnChance)
-            {
-                int rx = UnityEngine.Random.Range(0, thicknessX);
-                int ry = UnityEngine.Random.Range(startY, endY);
-                int rz = UnityEngine.Random.Range(0, widthZ);
-
-                // 土・石・硬岩だけに出す（既存と同じ条件）
-                if (mapData[rx, ry, rz] == 1 || mapData[rx, ry, rz] == 4 || mapData[rx, ry, rz] == 5)
-                {
-                    Vector3 pos = transform.position + new Vector3(
-                        rx * blockSize,
-                        ry * blockSize + (blockSize / 2f),
-                        rz * blockSize + (blockSize / 2f)
-                    );
-
-                    Quaternion rotation = Quaternion.Euler(0, -90f, 0);
-
-                    GameObject keyGo = Instantiate(keyPrefab, pos, rotation, transform);
-                    if(keyGo.TryGetComponent<KeyBehaviour>(out var keyBehaviour))
-                    {
-                        keyBehaviour.Setup(zonIndex);
-                    }
-                }
-            }
-        }
     }
 
     public void CollectedKeyDirect(int zoneIndex)
@@ -812,7 +715,7 @@ public class VoxelTerrain : MonoBehaviour
 
     private int GetRelayID(int y)
     {
-        int depthPerZone = 200;
+        int depthPerZone = chunkSizeY * 10;
         return y / depthPerZone;
     }
     public void OnPlayerReachRelayPoint(int y)
@@ -942,29 +845,11 @@ public class VoxelTerrain : MonoBehaviour
         return true;
     }
 
-    public void CollectedJewel(Vector3 worldPos)
-    {
-        Vector3 localPos = transform.InverseTransformPoint(worldPos);
-        int blockY = Mathf.FloorToInt(localPos.y / blockSize);
-
-        int currentDepth = Mathf.Abs(blockY);
-        int zoneIndex = GetRelayID(currentDepth);
-
-        int keyCount = 0;
-        zoneCollectedKeyCounts.TryGetValue(zoneIndex, out keyCount);
-
-        Debug.Log(
-            $"<color=cyan>[ジュエル獲得]</color> 深度:{currentDepth} " +
-            $"(ゾーン:{zoneIndex}) | 現在の鍵:{keyCount}個");
-    }
-
     public void CollectedKey(Vector3 worldPos)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldPos);
-        int blockY = Mathf.FloorToInt(localPos.y / blockSize);
-        int currentDepth = Mathf.Abs(blockY);
-
-        int zoneIndex = GetRelayID(currentDepth);
+        int blockY = Mathf.Clamp(Mathf.FloorToInt(localPos.y / blockSize), 0, heightY - 1);
+        int zoneIndex = GetRelayID(blockY);
 
         if (!zoneCollectedKeyCounts.ContainsKey(zoneIndex))
         {
@@ -973,14 +858,15 @@ public class VoxelTerrain : MonoBehaviour
 
         zoneCollectedKeyCounts[zoneIndex]++;
 
-        Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {currentDepth} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
+        Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {blockY} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
     }
 
     public bool IsZoneCleared(int zoneIndex)
     {
+        const int REQUIRED_KEYS = 3;
         if (zoneCollectedKeyCounts.TryGetValue(zoneIndex, out int count))
         {
-            return count >= 3; // 3個以上で解除
+            return count >= REQUIRED_KEYS;
         }
         return false;
     }
