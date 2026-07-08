@@ -40,10 +40,6 @@ public class JewelryReaction : MonoBehaviour, ICollectible
     {
         if (!isExposed || isGot) return;
         isGot = true;
-        if(VoxelTerrain.Instance != null)
-        {
-            VoxelTerrain.Instance.CollectedJewel(transform.position);
-        }
         if (currentMarker != null)
         {
             Destroy(currentMarker);
