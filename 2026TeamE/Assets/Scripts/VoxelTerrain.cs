@@ -710,6 +710,9 @@ public class VoxelTerrain : MonoBehaviour
             zoneCollectedKeyCounts[zoneIndex] = 0;
         }
         zoneCollectedKeyCounts[zoneIndex]++;
+        {
+            KeyUIController.Instance.UpdateKeyUI(zoneCollectedKeyCounts[zoneIndex]);
+        }
     }
 
     // プレイヤーのYブロック座標から、そのエリアの初期宝石合計額を取得する
@@ -907,9 +910,11 @@ public class VoxelTerrain : MonoBehaviour
         {
             zoneCollectedKeyCounts[zoneIndex] = 0;
         }
-
         zoneCollectedKeyCounts[zoneIndex]++;
-
+        if (KeyUIController.Instance != null)
+        {
+            KeyUIController.Instance.UpdateKeyUI(zoneCollectedKeyCounts[zoneIndex]);
+        }
         Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {blockY} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
     }
 
