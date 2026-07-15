@@ -25,18 +25,20 @@ public class ResultManager : MonoBehaviour
     [SerializeField] private GameObject itemIconPrefab;
     [SerializeField] private float iconInterval = 0.3f;
     [SerializeField] private float iconSize = 64f;
-    [SerializeField, Tooltip("宝石の個数を表示するテキスト（外部配置）")]
-    private TextMeshProUGUI gemCountText;
+    //[SerializeField, Tooltip("宝石の個数を表示するテキスト（外部配置）")]
+    //private TextMeshProUGUI gemCountText;
 
     [Header("宝箱・皮袋の設定")]
     [SerializeField] private Sprite openGoldLeatherBagSprite;
     [SerializeField] private Sprite openLeatherBagSprite;
 
     [Header("ドロップアイテム設定")]
-    [SerializeField] private LootItem lootJewel;
-    [SerializeField] private LootItem lootManyJewels;
+    //[SerializeField] private LootItem lootJewel;
+    //[SerializeField] private LootItem lootManyJewels;
     [SerializeField] private LootItem lootBill;
+    [SerializeField] private LootItem lootManyBill;
     [SerializeField] private LootItem lootBillBundle;
+    [SerializeField] private LootItem lootBillMountain;
 
     [Header("フォーカス設定")]
     [SerializeField, Tooltip("処理完了後にフォーカスを当てるボタン")]
@@ -118,7 +120,7 @@ public class ResultManager : MonoBehaviour
             {
                 gemTotalMoney += gem.moneyValue;
             }
-
+            /*
             if (gemCountText != null)
             {
                 // 0.3秒で一気にカウントアップ
@@ -137,7 +139,7 @@ public class ResultManager : MonoBehaviour
                 }
                 gemCountText.text = "x" + targetCount;
             }
-
+            */
             // 袋の開封前に合計額へ加算
             if (mm != null && gemTotalMoney > 0)
             {
@@ -356,7 +358,7 @@ public class ResultManager : MonoBehaviour
 
     private LootItem RollLoot(ItemType containerType)
     {
-        LootItem[] allLoot = { lootJewel, lootManyJewels, lootBill, lootBillBundle };
+        LootItem[] allLoot = { lootBill, lootManyBill, lootBillBundle, lootBillMountain };
 
         int totalWeight = 0;
         List<(LootItem item, int weight)> weightedList = new List<(LootItem, int)>();
