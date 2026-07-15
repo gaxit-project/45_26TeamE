@@ -7,7 +7,7 @@ public class TimerManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI timerText;
 
-    private float totalTime = 60f;
+    [SerializeField]private float totalTime = 120f;
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
 
@@ -48,7 +48,7 @@ public class TimerManager : MonoBehaviour
     // TimelineのSignalから呼ばれる
     public void StartTimer()
     {
-        totalTime = 60f;
+        totalTime = totalTime;
         isTimerEnded = false;
         isTimerRunning = true;
 
