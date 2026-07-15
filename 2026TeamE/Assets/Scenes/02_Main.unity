@@ -1474,7 +1474,7 @@ MonoBehaviour:
   stoneMaterial: {fileID: 2100000, guid: c9515a36a0139694ea13eb83d33e99b7, type: 2}
   hardRockMaterial: {fileID: 2100000, guid: 0da0cccadecc8664e9e0f15f08c865ad, type: 2}
   quartziteMaterial: {fileID: 2100000, guid: ec369b4f4ee394849b4908482b1af5e0, type: 2}
-  useDeterministicSeed: 1
+  useDeterministicSeed: 0
   seed: 12345
   chunkSizeY: 20
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
@@ -7213,6 +7213,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimerManager
   timerText: {fileID: 976448632}
+  totalTime: 120
   canvasAnimator: {fileID: 1249234868}
   PlayerAnimator: {fileID: 548082335}
   animationSpeed: 5
