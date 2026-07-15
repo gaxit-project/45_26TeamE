@@ -85,10 +85,39 @@ public class PlayerController : MonoBehaviour
     private bool isJumpPressed;
 
     private PoseManager poseManager;
+    private DrillTip drillTip;
+    private bool isRumbling = false;
 
     void Awake()
     {
         Application.targetFrameRate = 60;
+    }
+
+    // 毎フレームドリル状態に応じて振動を開始/停止する
+    private void UpdateRumbleState()
+    {
+        if (HapticsManager.Instance == null) return;
+
+        bool contacting = drillTip != null && drillTip.IsContactingDiggableSurface;
+        bool shouldRumble = drillFlag && HasBattery && contacting;
+
+        if (shouldRumble)
+        {
+            if (!isRumbling)
+            {
+                // 振動強度は必要なら調整
+                HapticsManager.Instance.PlayContinuous(0.2f, 0.4f);
+                isRumbling = true;
+            }
+        }
+        else
+        {
+            if (isRumbling)
+            {
+                HapticsManager.Instance.Stop();
+                isRumbling = false;
+            }
+        }
     }
 
     void Start()
@@ -115,6 +144,9 @@ public class PlayerController : MonoBehaviour
             if (mainCam != null) cameraAnimator = mainCam.GetComponent<Animator>();
         }
         // ------------------------------------------------------------------
+
+        // DrillTip を子から取得
+        drillTip = GetComponentInChildren<DrillTip>();
     }
 
     void FixedUpdate()
@@ -252,6 +284,8 @@ public class PlayerController : MonoBehaviour
         UpdateAnimation();
         HandleDrillRotation();
         UpdateJetpackEffects();
+        // 持続振動の更新
+        UpdateRumbleState();
     }
 
     private void UpdateJetpackEffects()

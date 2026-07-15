@@ -16,6 +16,10 @@ public class DrillTip : MonoBehaviour
     private PlayerController player;
 
     private float lastDirtTouchTime = -1f;
+    [SerializeField] private float contactTimeout = 0.25f; // seconds
+
+    // 外部から掘削接触状態を参照するためのプロパティ
+    public bool IsContactingDiggableSurface => (Time.time - lastDirtTouchTime) <= contactTimeout;
 
     private float CurrentDrillRadius
     {

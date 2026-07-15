@@ -90,6 +90,7 @@ public class VoxelTerrain : MonoBehaviour
     byte[,,] mapData;
 
     private System.Collections.Generic.Dictionary<int, int> zoneCollectedKeyCounts = new System.Collections.Generic.Dictionary<int, int>();
+    private System.Collections.Generic.HashSet<int> zoneUnlockedFlags = new System.Collections.Generic.HashSet<int>();
 
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
@@ -949,5 +950,40 @@ public class VoxelTerrain : MonoBehaviour
         if (IsInside(x, y, z - 1) && mapData[x, y, z - 1] != (byte)BlockType.Air && mapData[x, y, z - 1] != (byte)BlockType.Bedrock) allAir = false;
 
         return allAir;
+    }
+
+    public void ResetRuntime(bool regenerateStage = false)
+    {
+        chunksToUpdate?.Clear();
+        zoneCollectedKeyCounts?.Clear();
+        zoneUnlockedFlags?.Clear();
+        zoneInitialGemValues?.Clear();
+        if (spawnedTreasures != null)
+        {
+            for (int i = spawnedTreasures.Count - 1; i >= 0; i--)
+            {
+                var go = spawnedTreasures[i];
+                if (go != null) Destroy(go);
+            }
+            spawnedTreasures.Clear();
+        }
+        if (regenerateStage)
+        {
+            foreach (Transform child in transform)
+            {
+                Destroy(child.gameObject);
+            }
+            CreateStage(widthZ, heightY, blockSize);
+        }
+        else
+        {
+            if (chunks != null)
+            {
+                for (int i = 0; i < chunks.Length; i++)
+                {
+                    UpdateChunkMesh(i);
+                }
+            }
+        }
     }
 }

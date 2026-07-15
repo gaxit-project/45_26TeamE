@@ -19,7 +19,7 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private float defaultSEVolume = 0.2f;
 
     private bool isInitializing = false;
-    private CriAtomExPlayback loopPlayback;
+    private CriAtomExPlayback? loopPlayback;
     private string currentLoopCueName = "";
 
     // シングルトンの実装
@@ -98,16 +98,26 @@ public class SoundManager : MonoBehaviour
         if(currentLoopCueName == cueName) return;
         
         // 別のループ音が鳴っていれば確実に止める
-        loopPlayback.Stop();
-        
+        if (loopPlayback.HasValue)
+        {
+            try { loopPlayback.Value.Stop(); } catch (System.Exception) { }
+        }
+
         currentLoopCueName = cueName;
-        loopPlayback = seSource.Play(cueName);
+        if (seSource != null)
+        {
+            try { loopPlayback = seSource.Play(cueName); } catch (System.Exception) { loopPlayback = null; }
+        }
     }
 
     public void StopLoopSE()
     {
         // 状態に関わらず確実に止める
-        loopPlayback.Stop();
+        if (loopPlayback.HasValue)
+        {
+            try { loopPlayback.Value.Stop(); } catch (System.Exception) { }
+            loopPlayback = null;
+        }
         currentLoopCueName = "";
     }
 
