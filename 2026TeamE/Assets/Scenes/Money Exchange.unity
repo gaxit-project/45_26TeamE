@@ -3055,16 +3055,16 @@ MonoBehaviour:
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     itemDescriptionText: {fileID: 1256360255}
     starImages:
-    - {fileID: 1942285615}
-    - {fileID: 1659748316}
-    - {fileID: 1819332147}
-    - {fileID: 325623418}
-    - {fileID: 1200731309}
-    - {fileID: 479378053}
-    - {fileID: 148210934}
-    - {fileID: 1387781169}
-    - {fileID: 1962332474}
     - {fileID: 2109279155}
+    - {fileID: 1962332474}
+    - {fileID: 1387781169}
+    - {fileID: 148210934}
+    - {fileID: 479378053}
+    - {fileID: 1200731309}
+    - {fileID: 325623418}
+    - {fileID: 1819332147}
+    - {fileID: 1659748316}
+    - {fileID: 1942285615}
     descriptionVideo: {fileID: 32900000, guid: 254db59a828a92249b56c255d926d54f, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 4053b5f3216284a4190f8d0aba7a1529, type: 3}
     descriptionImage: {fileID: 569968902}
@@ -3080,9 +3080,9 @@ MonoBehaviour:
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     itemDescriptionText: {fileID: 2047429977}
     starImages:
-    - {fileID: 749576796}
-    - {fileID: 19822884}
     - {fileID: 223427908}
+    - {fileID: 19822884}
+    - {fileID: 749576796}
     descriptionVideo: {fileID: 32900000, guid: 25628c988e8d0bf498ee27ebf964521c, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 106594385fbc17c46b8f32fec588dedc, type: 3}
     descriptionImage: {fileID: 718671511}
@@ -3098,10 +3098,10 @@ MonoBehaviour:
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     itemDescriptionText: {fileID: 1026347579}
     starImages:
-    - {fileID: 1144892470}
-    - {fileID: 655983306}
     - {fileID: 1759756297}
-    descriptionVideo: {fileID: 32900000, guid: 7dfd8b5556d336a44b4888605f85f073, type: 3}
+    - {fileID: 655983306}
+    - {fileID: 1144892470}
+    descriptionVideo: {fileID: 32900000, guid: bc447d13e0d6dcc4881ce5e1358d19a5, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 182e176041928c648b3626353a09b418, type: 3}
     descriptionImage: {fileID: 2129949699}
     currentLevel: 0
@@ -3118,11 +3118,11 @@ MonoBehaviour:
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     itemDescriptionText: {fileID: 898744559}
     starImages:
-    - {fileID: 1715663538}
-    - {fileID: 1199027011}
-    - {fileID: 695978553}
-    - {fileID: 1085531125}
     - {fileID: 78070561}
+    - {fileID: 1085531125}
+    - {fileID: 695978553}
+    - {fileID: 1199027011}
+    - {fileID: 1715663538}
     descriptionVideo: {fileID: 32900000, guid: 9d1ba209e8df855498398b6fd1d6189b, type: 3}
     descriptionSprite: {fileID: 21300000, guid: acbc38d709fdc334ebc2b1819c334a7c, type: 3}
     descriptionImage: {fileID: 1149074267}
@@ -3134,6 +3134,8 @@ MonoBehaviour:
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   maxLevelColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   cannotBuyColor: {r: 1, g: 0, b: 0, a: 1}
+  activeStarColor: {r: 1, g: 1, b: 1, a: 1}
+  inactiveStarColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
 --- !u!1 &875033564
 GameObject:
   m_ObjectHideFlags: 0
@@ -6522,7 +6524,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 2
+  m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535

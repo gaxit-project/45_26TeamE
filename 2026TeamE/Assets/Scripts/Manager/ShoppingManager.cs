@@ -12,7 +12,6 @@ public class ShoppingManager : MonoBehaviour
     {
         public string itemName;
         public Button buyButton;
-        // 削除：public TextMeshProUGUI levelText;
         public TextMeshProUGUI priceText;
         public int basePrice = 100;
         public int maxLevel = 10;
@@ -49,7 +48,7 @@ public class ShoppingManager : MonoBehaviour
     [Header("ショップ設定")]
     [SerializeField] private List<ShopItem> shopItems = new List<ShopItem>();
 
-    [Header("UI (不要な場合は削除可)")]
+    [Header("UI (全体共通の説明表示用。不要なら空でOK)")]
     [SerializeField] private TextMeshProUGUI descriptionText;
 
     [Header("動画表示")]
@@ -64,6 +63,10 @@ public class ShoppingManager : MonoBehaviour
     [SerializeField] private Color maxLevelColor = Color.gray;
     [SerializeField] private Color cannotBuyColor = Color.red;
 
+    [Header("星のカラー設定")]
+    [SerializeField] private Color activeStarColor = Color.white;
+    [SerializeField] private Color inactiveStarColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+
     private static Dictionary<string, int> savedLevels = new Dictionary<string, int>();
 
     void Start()
@@ -77,28 +80,21 @@ public class ShoppingManager : MonoBehaviour
             int index = i;
             target.buyButton.onClick.AddListener(() => TryPurchase(target));
 
+            // ホバー/選択時に「全体説明（descriptionText）」や「動画」を切り替えたい場合のみイベントを登録
             EventTrigger trigger = target.buyButton.gameObject.GetComponent<EventTrigger>();
             if (trigger == null) trigger = target.buyButton.gameObject.AddComponent<EventTrigger>();
 
             EventTrigger.Entry enterEntry = new EventTrigger.Entry();
             enterEntry.eventID = EventTriggerType.PointerEnter;
-            enterEntry.callback.AddListener((data) => { ShowDescription(index); });
+            enterEntry.callback.AddListener((data) => { ShowVideoAndCommonDesc(index); });
             trigger.triggers.Add(enterEntry);
 
             EventTrigger.Entry selectEntry = new EventTrigger.Entry();
             selectEntry.eventID = EventTriggerType.Select;
-            selectEntry.callback.AddListener((data) => { ShowDescription(index); });
+            selectEntry.callback.AddListener((data) => { ShowVideoAndCommonDesc(index); });
             trigger.triggers.Add(selectEntry);
 
-            EventTrigger.Entry exitEntry = new EventTrigger.Entry();
-            exitEntry.eventID = EventTriggerType.PointerExit;
-            exitEntry.callback.AddListener((data) => { HideDescription(index); });
-            trigger.triggers.Add(exitEntry);
-
-            EventTrigger.Entry deselectEntry = new EventTrigger.Entry();
-            deselectEntry.eventID = EventTriggerType.Deselect;
-            deselectEntry.callback.AddListener((data) => { HideDescription(index); });
-            trigger.triggers.Add(deselectEntry);
+            // 【変更】カーソルが外れたり、選択解除されたときの非表示処理（HideDescription）は登録しない
 
             if (item.descriptionImage != null)
             {
@@ -106,9 +102,24 @@ public class ShoppingManager : MonoBehaviour
                 item.descriptionImage.enabled = item.descriptionSprite != null;
             }
 
+            if (item.starImages != null)
+            {
+                foreach (var star in item.starImages)
+                {
+                    if (star != null) star.SetActive(true);
+                }
+            }
+
             RefreshUI(target);
         }
-        HideAllDescriptions();
+
+        // 初期状態で個別説明テキストはすべて最新レベルのものに更新しておく
+        UpdateAllItemDescriptions();
+
+        // 全体共有の説明や動画プレイヤーは初期状態でクリアしておく
+        if (descriptionText != null) descriptionText.text = "";
+        if (videoPlayer != null) videoPlayer.Stop();
+
         UpdateAllButtons();
     }
 
@@ -151,7 +162,12 @@ public class ShoppingManager : MonoBehaviour
             item.currentLevel = UpgradeManager.GetLevel(item.itemName);
 
             UpdateAllButtons();
-            ShowDescription(shopItems.IndexOf(item));
+
+            // 購入後にこのアイテムの常時表示説明を新しいレベルのものに更新
+            UpdateItemDescription(item);
+
+            // ホバー時用の全体説明や動画も更新
+            ShowVideoAndCommonDesc(shopItems.IndexOf(item));
         }
         else SoundManager.Instance.PlaySE("つるはしで掘る3");
     }
@@ -162,8 +178,6 @@ public class ShoppingManager : MonoBehaviour
         MoneyManager mm = MoneyManager.Instance;
         bool canBuy = mm != null && mm.GetMoney() >= item.CurrentPrice;
 
-        // 削除：if (item.levelText != null) item.levelText.text = ...
-
         if (item.priceText != null)
             item.priceText.text = isMax ? "---" : $"{item.CurrentPrice:N0}";
 
@@ -173,7 +187,11 @@ public class ShoppingManager : MonoBehaviour
             {
                 if (item.starImages[i] != null)
                 {
-                    item.starImages[i].SetActive(i < item.currentLevel);
+                    Image starImage = item.starImages[i].GetComponent<Image>();
+                    if (starImage != null)
+                    {
+                        starImage.color = (i < item.currentLevel) ? activeStarColor : inactiveStarColor;
+                    }
                 }
             }
         }
@@ -214,12 +232,11 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    public void ShowDescription(int itemIndex)
+    /// <summary>
+    /// 対象アイテムの「個別説明テキスト」を現在のレベルに合わせて更新する（常時表示用）
+    /// </summary>
+    private void UpdateItemDescription(ShopItem item)
     {
-        if (itemIndex < 0 || itemIndex >= shopItems.Count) return;
-
-        ShopItem item = shopItems[itemIndex];
-
         if (item.itemDescriptionText != null &&
             item.levelDescriptions != null &&
             item.levelDescriptions.Count > 0)
@@ -231,41 +248,42 @@ public class ShoppingManager : MonoBehaviour
 
             item.itemDescriptionText.text = item.levelDescriptions[descIndex];
         }
+    }
 
+    /// <summary>
+    /// すべてのアイテムの「個別説明テキスト」を最新レベルのものに更新する
+    /// </summary>
+    private void UpdateAllItemDescriptions()
+    {
+        foreach (var item in shopItems)
+        {
+            UpdateItemDescription(item);
+        }
+    }
+
+    /// <summary>
+    /// カーソルが合わさった時に、全体共通のテキストや説明動画を再生・更新する
+    /// </summary>
+    public void ShowVideoAndCommonDesc(int itemIndex)
+    {
+        if (itemIndex < 0 || itemIndex >= shopItems.Count) return;
+
+        ShopItem item = shopItems[itemIndex];
+
+        // 共有用の説明UIがある場合のみ更新
         if (descriptionText != null && item.levelDescriptions != null && item.levelDescriptions.Count > 0)
         {
             int descIndex = Mathf.Clamp(item.currentLevel - 1, 0, item.levelDescriptions.Count - 1);
             descriptionText.text = item.levelDescriptions[descIndex];
         }
 
+        // 動画の再生
         if (videoPlayer != null && item.descriptionVideo != null)
         {
             videoPlayer.Stop();
             videoPlayer.clip = item.descriptionVideo;
             videoPlayer.isLooping = true;
             videoPlayer.Play();
-        }
-    }
-
-    public void HideDescription(int itemIndex)
-    {
-        if (itemIndex >= 0 && itemIndex < shopItems.Count)
-        {
-            if (shopItems[itemIndex].itemDescriptionText != null)
-            {
-                shopItems[itemIndex].itemDescriptionText.text = "";
-            }
-        }
-
-        if (descriptionText != null) descriptionText.text = "";
-        if (videoPlayer != null) videoPlayer.Stop();
-    }
-
-    private void HideAllDescriptions()
-    {
-        for (int i = 0; i < shopItems.Count; i++)
-        {
-            HideDescription(i);
         }
     }
 

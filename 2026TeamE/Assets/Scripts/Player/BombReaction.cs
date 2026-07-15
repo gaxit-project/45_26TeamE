@@ -281,10 +281,10 @@ public class BombReaction : MonoBehaviour
         {
             // 爆弾の中心位置を取得
             Vector3 centerPos = transform.position;
-            
+
             // ExecuteDig メソッドを使って球状にブロックを破壊
             // 引数: centerX, centerY, centerZ, radius, minLimit, maxLimit
-            
+
             // ローカル座標に変換してブロックのインデックスを計算
             Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(centerPos);
             int centerX = Mathf.RoundToInt(localPos.x / VoxelTerrain.Instance.BlockSize);
@@ -328,7 +328,6 @@ public class BombReaction : MonoBehaviour
         }
 
         // 1.5 爆発範囲内の宝石を破壊する
-        // プレハブのタグが "jewelry" ではなく "VoxelTerrain" 等になっているため、コンポーネントで確実に取得する
         JewelryReaction[] jewels = FindObjectsOfType<JewelryReaction>();
         Vector2 bombPos2D = new Vector2(transform.position.y, transform.position.z);
 
@@ -358,7 +357,7 @@ public class BombReaction : MonoBehaviour
         if (player != null)
         {
             Collider col = player.GetComponent<Collider>();
-            
+
             // プレイヤーの中心座標を取得（足元が基準座標になっている場合を考慮し、コライダーの中心を使う）
             Vector3 playerCenter = col != null ? col.bounds.center : player.transform.position;
 
@@ -378,11 +377,20 @@ public class BombReaction : MonoBehaviour
             // 「爆発の半径」＋「プレイヤーの体の半径」の範囲内なら、体の一部が触れていると判定する
             if (distance <= explosionRadius + playerRadius)
             {
+                // ==================== 【ここに追記しました】 ====================
+                // プレイヤーのコントローラーを取得して被弾アニメーションを再生
+                PlayerController pc = player.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    pc.DamageAnim();
+                }
+                // ================================================================
+
                 if (MoneyManager.Instance != null)
                 {
                     int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
                     int actualPenalty = Mathf.Min(moneyPenalty, currentMoney);
-                    
+
                     if (actualPenalty > 0)
                     {
                         MoneyManager.Instance.MoneyOnHandDecrease(actualPenalty);
@@ -410,12 +418,11 @@ public class BombReaction : MonoBehaviour
         if (explosionEffectPrefab != null)
         {
             GameObject effect = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
-            
+
             // 爆発範囲(explosionRadius)に応じてエフェクトの大きさを自動調整する
-            // ※基準の大きさ（スケール1.0）を半径8.0fとした場合の倍率を計算
             float baseRadius = 8.0f;
             float scale = explosionRadius / baseRadius;
-            
+
             effect.transform.localScale = new Vector3(scale, scale, scale);
         }
 

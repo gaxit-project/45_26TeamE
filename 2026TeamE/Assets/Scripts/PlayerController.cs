@@ -11,6 +11,8 @@ public class PlayerController : MonoBehaviour
 
     private bool CanMove = false;
 
+    public bool onDamaged = false;
+
     public GameObject sonar;
     // --- Added: カメラ連携用の変数 ---
     [Header("カメラ連携")]
@@ -91,6 +93,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        onDamaged = false;
         Time.timeScale = 1f;
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
@@ -385,12 +388,14 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
+        if(onDamaged) return;
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnDrill(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
+        if (onDamaged) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -412,6 +417,7 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
+        if(onDamaged) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -438,6 +444,7 @@ public class PlayerController : MonoBehaviour
     public void OnSonar(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
+        if (onDamaged) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -496,6 +503,20 @@ public class PlayerController : MonoBehaviour
         if (collectible != null)
         {
             collectible.Collect();
+        }
+    }
+
+    public void DamageAnim()
+    {
+        if(onDamaged == false)
+        {
+            onDamaged = true;
+            animator.SetTrigger("Damage");
+        }
+        if(onDamaged == true)
+        {
+            animator.SetTrigger("Damage");
+            onDamaged = false;
         }
     }
 }
