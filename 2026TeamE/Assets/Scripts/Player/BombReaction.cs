@@ -352,6 +352,29 @@ public class BombReaction : MonoBehaviour
             }
         }
 
+        // 1.6 爆発範囲内の宝箱を破壊する
+        TreasureBoxBehaviour[] treasureBoxes = FindObjectsOfType<TreasureBoxBehaviour>();
+
+        foreach (TreasureBoxBehaviour boxScript in treasureBoxes)
+        {
+            GameObject box = boxScript.gameObject;
+            Collider boxCol = box.GetComponent<Collider>();
+            Vector3 boxCenter = boxCol != null ? boxCol.bounds.center : box.transform.position;
+            Vector2 boxPos2D = new Vector2(boxCenter.y, boxCenter.z);
+
+            float distanceToBox = Vector2.Distance(bombPos2D, boxPos2D);
+            float boxRadius = 0f;
+            if (boxCol != null)
+            {
+                boxRadius = Mathf.Max(boxCol.bounds.extents.y, boxCol.bounds.extents.z);
+            }
+
+            if (distanceToBox <= explosionRadius + boxRadius)
+            {
+                Destroy(box);
+            }
+        }
+
         // 2. プレイヤーへのダメージ処理（お金を減らす処理）
         GameObject player = GameObject.FindWithTag("Player");
         if (player != null)

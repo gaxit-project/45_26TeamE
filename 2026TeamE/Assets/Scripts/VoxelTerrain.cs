@@ -653,6 +653,62 @@ public class VoxelTerrain : MonoBehaviour
         }
     }
 
+    public void RespawnKeyTreasureBox(Vector3 originPos, int zoneIndex)
+    {
+        Vector3 localPos = transform.InverseTransformPoint(originPos);
+        int centerX = Mathf.RoundToInt(localPos.x / blockSize);
+        int centerY = Mathf.RoundToInt(localPos.y / blockSize);
+        int centerZ = Mathf.RoundToInt(localPos.z / blockSize);
+
+        int initialSearchRadius = 40; // 最初の探索範囲
+        int radiusIncrement = 20;     // 範囲内に土がなかった場合の拡大定数
+        int maxRadius = 100;          // 無限ループ防止用の最大範囲
+
+        int currentRadius = initialSearchRadius;
+
+        while (currentRadius <= maxRadius)
+        {
+            Vector3Int furthestCoord = new Vector3Int(-1, -1, -1);
+            float maxDistSq = -1f;
+
+            // 指定された半径の範囲内で全てのブロックを走査し、最も遠い土を探す
+            for (int x = centerX - currentRadius; x <= centerX + currentRadius; x++)
+            {
+                for (int y = centerY - currentRadius; y <= centerY + currentRadius; y++)
+                {
+                    for (int z = centerZ - currentRadius; z <= centerZ + currentRadius; z++)
+                    {
+                        if (!IsInside(x, y, z)) continue;
+
+                        if (mapData[x, y, z] == (byte)BlockType.Dirt)
+                        {
+                            float distSq = (x - centerX) * (x - centerX) + (y - centerY) * (y - centerY) + (z - centerZ) * (z - centerZ);
+                            if (distSq > maxDistSq)
+                            {
+                                maxDistSq = distSq;
+                                furthestCoord = new Vector3Int(x, y, z);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // この範囲内で土が見つかった場合はそこに生成して終了
+            if (maxDistSq >= 0f)
+            {
+                SpawnItemAt(SpawnItemType.Key, furthestCoord, zoneIndex);
+                Debug.Log($"[VoxelTerrain] 鍵入り宝箱を範囲内で一番遠い土の中({furthestCoord})に再生成しました。探索半径: {currentRadius}");
+                return;
+            }
+
+            // 見つからなかった場合は範囲を拡大して再試行
+            Debug.Log($"[VoxelTerrain] 探索半径 {currentRadius} の範囲内に土がありませんでした。範囲を +{radiusIncrement} 拡大して再検索します。");
+            currentRadius += radiusIncrement;
+        }
+
+        Debug.LogWarning("[VoxelTerrain] 最大探索範囲まで広げましたが、再生成可能な土ブロックが見つかりませんでした。");
+    }
+
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldCenter);

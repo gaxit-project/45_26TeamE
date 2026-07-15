@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
@@ -207,5 +207,22 @@ public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
         }
 
         Destroy(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        // プレイヤーが正常に取得した（isGot == true）場合や、
+        // アプリ終了・シーン遷移による破棄の場合は何もしない
+        if (isGot || !gameObject.scene.isLoaded) return;
+
+        // 中身が鍵の場合、再生成処理を呼ぶ
+        if (contentPrefab != null && contentPrefab.GetComponent<KeyBehaviour>() != null)
+        {
+            if (VoxelTerrain.Instance != null)
+            {
+                Debug.Log($"[TreasureBoxBehaviour] 鍵入り宝箱が破壊されました！ 再生成を試みます。 zoneIndex: {zoneIndex}");
+                VoxelTerrain.Instance.RespawnKeyTreasureBox(transform.position, zoneIndex);
+            }
+        }
     }
 }
