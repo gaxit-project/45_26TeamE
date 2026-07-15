@@ -1457,6 +1457,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cfbd86c222c7264eb9d17c6687c68db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
+  generationMode: 1
+  patternNoiseScale: 0.05
   thicknessX: 7
   heightY: 800
   widthZ: 400

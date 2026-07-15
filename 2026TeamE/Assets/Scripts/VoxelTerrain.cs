@@ -8,7 +8,15 @@ public class VoxelTerrain : MonoBehaviour
 {
     public static VoxelTerrain Instance { get; private set; }
 
+    public enum GenerationMode
+    {
+        Layered,
+        Pattern
+    }
+
     [Header("生成設定")]
+    [SerializeField] GenerationMode generationMode = GenerationMode.Layered;
+    [SerializeField] float patternNoiseScale = 0.1f;
     [SerializeField] int thicknessX = 5;
     [SerializeField] int heightY = 20;
     [SerializeField] int widthZ = 30;
@@ -360,7 +368,7 @@ public class VoxelTerrain : MonoBehaviour
                     // 4. 通常のブロック生成
                     else
                     {
-                        if (rnd.NextDouble() * 100.0 < oreProbability)
+                        if (generationMode == GenerationMode.Layered && rnd.NextDouble() * 100.0 < oreProbability)
                         {
                             mapData[x, y, z] = (byte)BlockType.Ore;
                         }
@@ -371,10 +379,45 @@ public class VoxelTerrain : MonoBehaviour
                             float bumpyY = y + yOffset;
                             float depthRatio = bumpyY / heightY;
 
-                            if (depthRatio < -0.2f) mapData[x, y, z] = (byte)BlockType.Quartzite;
-                            else if (depthRatio < 0.2f) mapData[x, y, z] = (byte)BlockType.HardRock;
-                            else if (depthRatio < 0.6f) mapData[x, y, z] = (byte)BlockType.Stone;
-                            else mapData[x, y, z] = (byte)BlockType.Dirt;
+                            if (generationMode == GenerationMode.Layered)
+                            {
+                                if (depthRatio < -0.2f) mapData[x, y, z] = (byte)BlockType.Quartzite;
+                                else if (depthRatio < 0.2f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                                else if (depthRatio < 0.6f) mapData[x, y, z] = (byte)BlockType.Stone;
+                                else mapData[x, y, z] = (byte)BlockType.Dirt;
+                            }
+                            else
+                            {
+                                // Pattern mode
+                                float noiseVal = Mathf.PerlinNoise(z * patternNoiseScale + seed * 0.1f, y * patternNoiseScale + seed * 0.1f);
+                                
+                                if (depthRatio >= 0.6f) 
+                                {
+                                    // 土ベース層: 土 と 石
+                                    if (noiseVal > 0.6f) mapData[x, y, z] = (byte)BlockType.Stone;
+                                    else mapData[x, y, z] = (byte)BlockType.Dirt;
+                                }
+                                else if (depthRatio >= 0.2f)
+                                {
+                                    // 石ベース層: 土、石、硬い岩
+                                    if (noiseVal > 0.7f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                                    else if (noiseVal > 0.3f) mapData[x, y, z] = (byte)BlockType.Stone;
+                                    else mapData[x, y, z] = (byte)BlockType.Dirt;
+                                }
+                                else if (depthRatio >= -0.2f)
+                                {
+                                    // 硬い岩ベース層: 石、硬い岩、珪岩
+                                    if (noiseVal > 0.7f) mapData[x, y, z] = (byte)BlockType.Quartzite;
+                                    else if (noiseVal > 0.3f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                                    else mapData[x, y, z] = (byte)BlockType.Stone;
+                                }
+                                else 
+                                {
+                                    // 珪岩ベース層: 硬い岩、珪岩
+                                    if (noiseVal < 0.4f) mapData[x, y, z] = (byte)BlockType.HardRock;
+                                    else mapData[x, y, z] = (byte)BlockType.Quartzite;
+                                }
+                            }
                         }
                     }
                 }
