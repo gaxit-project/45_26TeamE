@@ -76,18 +76,7 @@ public class PoseManager : MonoBehaviour
         Time.timeScale = 1f; // 時間の進行を元に戻す
 
         // 進行状況（ショップの強化状態など）を初期化
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-
-        // お金やステージ進行を保持しているマネージャーを破棄してリセット
-        if (MainManager.Instance != null)
-        {
-            Destroy(MainManager.Instance.gameObject);
-        }
-        if (MoneyManager.Instance != null)
-        {
-            Destroy(MoneyManager.Instance.gameObject);
-        }
+        UpgradeManager.ResetUpgrades();
         
         SceneManager.LoadScene("01_Title"); // タイトルシーンを読み込む
     }

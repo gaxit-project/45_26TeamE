@@ -760,15 +760,16 @@ public class VoxelTerrain : MonoBehaviour
         chunks[index].RebuildMesh(mapData, startY, endY, thicknessX, heightY, widthZ, blockSize);
     }
 
-    public void CollectedKeyDirect(int zoneIndex)
+    public void CollectedKeyDirect(int zoneIndex, Vector3 worldPos)
     {
         if(!zoneCollectedKeyCounts.ContainsKey(zoneIndex))
         {
             zoneCollectedKeyCounts[zoneIndex] = 0;
         }
         zoneCollectedKeyCounts[zoneIndex]++;
+        if (KeyUIController.Instance != null)
         {
-            KeyUIController.Instance.UpdateKeyUI(zoneCollectedKeyCounts[zoneIndex]);
+            KeyUIController.Instance.FlyAndUpdateKeyUI(zoneCollectedKeyCounts[zoneIndex], worldPos);
         }
     }
 
@@ -970,7 +971,7 @@ public class VoxelTerrain : MonoBehaviour
         zoneCollectedKeyCounts[zoneIndex]++;
         if (KeyUIController.Instance != null)
         {
-            KeyUIController.Instance.UpdateKeyUI(zoneCollectedKeyCounts[zoneIndex]);
+            KeyUIController.Instance.FlyAndUpdateKeyUI(zoneCollectedKeyCounts[zoneIndex], worldPos);
         }
         Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {blockY} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
     }

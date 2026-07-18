@@ -19,9 +19,37 @@ public class TitleManager : MonoBehaviour
 
     public void Start()
     {
+        ResetGameState();
         SettingManager.Instance?.CloseSettingPanel(false);
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
+    }
+
+    private void ResetGameState()
+    {
+        // 1. ã‚¢ã‚¤ãƒ†ãƒ ã®ãƒªã‚»ãƒƒãƒˆï¼ˆstaticãƒªã‚¹ãƒˆã®ã‚¯ãƒªã‚¢ï¼‰
+        ItemInventoryManager.ClearCollectedData();
+
+        // 2. é€²è¡ŒçŠ¶æ³ã‚’ä¿æŒã™ã‚‹ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã®ç ´æ£„ï¼ˆæ¬¡å›ãƒ¡ã‚¤ãƒ³ã‚·ãƒ¼ãƒ³ãƒ­ãƒ¼ãƒ‰æ™‚ã«å†ç”Ÿæˆã•ã‚Œã‚‹ï¼‰
+        if (MainManager.Instance != null)
+        {
+            Destroy(MainManager.Instance.gameObject);
+        }
+        if (MoneyManager.Instance != null)
+        {
+            Destroy(MoneyManager.Instance.gameObject);
+        }
+        if (CheckpointManager.Instance != null)
+        {
+            Destroy(CheckpointManager.Instance.gameObject);
+        }
+        if (VoxelTerrain.Instance != null)
+        {
+            Destroy(VoxelTerrain.Instance.gameObject);
+        }
+        
+        // 3. ã‚¿ã‚¤ãƒ ãƒ©ã‚¤ãƒ³ã®å†ç”ŸçŠ¶æ…‹ã‚’ãƒªã‚»ãƒƒãƒˆ
+        TimelineManager.ResetTimeline();
     }
 
     private void Update()
@@ -52,7 +80,7 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    // “ü—Í‘Ò‚¿ó‘Ô‚ÅAŒ»İ‘I‘ğ‚³‚ê‚Ä‚¢‚éUI—v‘f‚ª‚È‚¢ê‡‚ÉÅ‰‚Ìƒ{ƒ^ƒ“‚ğ‘I‘ğ‚·‚é
+    // å…¥åŠ›å¾…ã¡çŠ¶æ…‹ã§ã€ç¾åœ¨é¸æŠã•ã‚Œã¦ã„ã‚‹UIè¦ç´ ãŒãªã„å ´åˆã«æœ€åˆã®ãƒœã‚¿ãƒ³ã‚’é¸æŠã™ã‚‹
     private void LateUpdate()
     {
         if(EventSystem.current.currentSelectedGameObject == null && !isWaitingInput)
@@ -61,47 +89,47 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    // ƒXƒ^[ƒg‰æ–Ê‚ÌƒAƒjƒ[ƒVƒ‡ƒ“‚ğŠJn‚·‚éƒƒ\ƒbƒh
+    // ã‚¹ã‚¿ãƒ¼ãƒˆç”»é¢ã®ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’é–‹å§‹ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     private void PushToStart()
     {
         isWaitingInput = false;
         pressAnyButtonText.SetActive(false);
         mainMenuAnimator.SetTrigger("SlideIn");
-        SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é1");
+        SoundManager.Instance?.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹1");
         Invoke(nameof(SelectFirstButton), 0.5f);
     }
 
-    // Å‰‚Ìƒ{ƒ^ƒ“‚ğ‘I‘ğ‚·‚éƒƒ\ƒbƒh
+    // æœ€åˆã®ãƒœã‚¿ãƒ³ã‚’é¸æŠã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     private void SelectFirstButton()
     {
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // ƒIƒvƒVƒ‡ƒ“ƒpƒlƒ‹‚ğŠJ‚­ƒƒ\ƒbƒh
+    // ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãƒ‘ãƒãƒ«ã‚’é–‹ããƒ¡ã‚½ãƒƒãƒ‰
     public void OpenOptionPanel()
     {
         SettingManager.Instance?.OpenSettingPanel();
         EventSystem.current.SetSelectedGameObject(optionFirstSelected);
     }
 
-    // ƒIƒvƒVƒ‡ƒ“ƒpƒlƒ‹‚ğ•Â‚¶‚éƒƒ\ƒbƒh
+    // ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãƒ‘ãƒãƒ«ã‚’é–‰ã˜ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void CloseOptionPanel()
     {
         SettingManager.Instance?.CloseSettingPanel();
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // ƒQ[ƒ€ŠJn‚Ìƒƒ\ƒbƒh
+    // ã‚²ãƒ¼ãƒ é–‹å§‹ã®ãƒ¡ã‚½ãƒƒãƒ‰
     public void StartGame()
     {
-        SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é1");
+        SoundManager.Instance?.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹1");
         SceneLoader.Instance.LoadScene("02_Main");
     }
 
-    // ƒQ[ƒ€I—¹‚Ìƒƒ\ƒbƒh
+    // ã‚²ãƒ¼ãƒ çµ‚äº†ã®ãƒ¡ã‚½ãƒƒãƒ‰
     public void QuitGame()
     {
-        SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é1");
+        SoundManager.Instance?.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹1");
         //UnityEditor.EditorApplication.isPlaying = false;
         Application.Quit();
     }

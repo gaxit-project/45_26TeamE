@@ -18,16 +18,16 @@ public class KeyBehaviour : MonoBehaviour, ICollectible
 
         if(VoxelTerrain.Instance != null)
         {
-            VoxelTerrain.Instance.CollectedKeyDirect(myZoneIndex);
+            VoxelTerrain.Instance.CollectedKeyDirect(myZoneIndex, transform.position);
         }
         if(SoundManager.Instance != null && data != null && !string.IsNullOrEmpty(data.seName))
         {
             SoundManager.Instance.PlaySE(data.seName);
         }
-        if(ItemInventoryManager.Instance != null)
-        {
-            ItemInventoryManager.Instance.AddItem(ItemType.Key, data.uiIcon, transform.position);
-        }
+        // if(ItemInventoryManager.Instance != null)
+        // {
+        //     ItemInventoryManager.Instance.AddItem(ItemType.Key, data.uiIcon, transform.position);
+        // }
         if(data != null && data.effectPrefab != null)
         {
             Instantiate(data.effectPrefab, transform.position, Quaternion.identity);

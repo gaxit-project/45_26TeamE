@@ -8,6 +8,11 @@ public class TimelineManager : MonoBehaviour
     private static bool hasPlayed = false;
     public static bool HasPlayed => hasPlayed;
 
+    public static void ResetTimeline()
+    {
+        hasPlayed = false;
+    }
+
     private void Awake()
     {
         DontDestroyOnLoad(gameObject);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -48,11 +48,8 @@ public class FinalResultManager : MonoBehaviour
             }
             else
             {
-                // タイトルへ戻る前の初期化処理
+                // タイトルへ戻る前の処理
                 if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
-                if (MoneyManager.Instance != null) Destroy(MoneyManager.Instance.gameObject);
-                if (CheckpointManager.Instance != null) Destroy(CheckpointManager.Instance.gameObject);
-                if (MainManager.Instance != null) Destroy(MainManager.Instance.gameObject);
                 UpgradeManager.ResetUpgrades();
 
                 SceneManager.LoadScene(nextSceneName);

@@ -107,6 +107,8 @@ public class ItemInventoryManager : MonoBehaviour
 
     public void AddItem(ItemType type, Sprite icon, Vector3 worldPosition, int moneyValue = 0)
     {
+        if (type == ItemType.Key) return; // 鍵はインベントリで管理しない
+
         ItemData data = new ItemData
         {
             type = type,
@@ -425,6 +427,7 @@ public class ItemInventoryManager : MonoBehaviour
         // インスペクターで設定されたアイテムを x0 として最初から表示
         foreach (var setting in displaySettings)
         {
+            if (setting.type == ItemType.Key) continue; // 鍵はインベントリUIに表示しない
             CreateOrUpdateSlot(setting.type, setting.icon, true);
         }
     }
