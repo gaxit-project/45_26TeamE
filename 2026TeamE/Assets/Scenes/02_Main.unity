@@ -9709,6 +9709,104 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 930800452}
   m_CullTransparentMesh: 1
+--- !u!1 &941572583
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 941572584}
+  - component: {fileID: 941572586}
+  - component: {fileID: 941572585}
+  - component: {fileID: 941572587}
+  m_Layer: 5
+  m_Name: Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &941572584
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941572583}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1249234867}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &941572585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941572583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &941572586
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941572583}
+  m_CullTransparentMesh: 1
+--- !u!95 &941572587
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 941572583}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &949468189
 GameObject:
   m_ObjectHideFlags: 0
@@ -11348,6 +11446,7 @@ RectTransform:
   - {fileID: 1197769852}
   - {fileID: 1448264613}
   - {fileID: 1306437918}
+  - {fileID: 941572584}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -11511,6 +11610,9 @@ MonoBehaviour:
   unlockedColor: {r: 1, g: 1, b: 1, a: 1}
   punchScaleAmount: 1.3
   animationDuration: 0.3
+  flyDuration: 0.6
+  arcHeight: 150
+  startScale: 1.5
 --- !u!1 &1338049808
 GameObject:
   m_ObjectHideFlags: 0
@@ -17434,10 +17536,14 @@ PlayableDirector:
     value: {fileID: 2036039923}
   - key: {fileID: 8380201413544131389, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 1982867676}
-  - key: {fileID: -4993708449075935004, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
-    value: {fileID: 1982867681}
   - key: {fileID: 6701192413451630123, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 1546445454}
+  - key: {fileID: -8343381239736924353, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+    value: {fileID: 1982867681}
+  - key: {fileID: -1649724918752602822, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+    value: {fileID: 941572583}
+  - key: {fileID: -8316287115560039232, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+    value: {fileID: 941572587}
   m_ExposedReferences:
     m_References: []
 --- !u!114 &1546445453

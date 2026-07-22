@@ -1290,7 +1290,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: RePlay
+  m_text: Replay
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3131,9 +3131,9 @@ MonoBehaviour:
   videoPlayer: {fileID: 1069075293}
   jewelSparkEffect: {fileID: 2770810700285028621, guid: 2bfa1d91e294b794da8d2a708241a360, type: 3}
   player: {fileID: 230889150}
-  normalColor: {r: 1, g: 1, b: 1, a: 1}
-  maxLevelColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  cannotBuyColor: {r: 1, g: 0, b: 0, a: 1}
+  normalColor: {r: 0.8705883, g: 0.8705883, b: 0.8705883, a: 1}
+  maxLevelColor: {r: 0.87058824, g: 0.87058824, b: 0.87058824, a: 1}
+  cannotBuyColor: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
   activeStarColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveStarColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
 --- !u!1 &875033564
@@ -4256,6 +4256,7 @@ MonoBehaviour:
   dirtEffect: {fileID: 0}
   effectKeepTime: 0.2
   forwardOffset: 0.2
+  contactTimeout: 0.25
 --- !u!1 &1144892470
 GameObject:
   m_ObjectHideFlags: 0
