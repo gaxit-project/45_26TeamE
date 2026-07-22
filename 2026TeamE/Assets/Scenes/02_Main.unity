@@ -1457,12 +1457,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cfbd86c222c7264eb9d17c6687c68db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
+  zoneSettings:
+  - zoneName: "1\u5C64"
+    widthZ: 150
+    heightChunks: 6
+  - zoneName: "2\u5C64"
+    widthZ: 450
+    heightChunks: 12
+  - zoneName: "3\u5C64"
+    widthZ: 750
+    heightChunks: 16
+  thicknessX: 7
+  maxStageWidthZ: 51
+  blockSize: 0.5
   generationMode: 1
   patternNoiseScale: 0.05
-  thicknessX: 7
-  heightY: 800
-  widthZ: 400
-  blockSize: 0.5
   oreProbability: 0.5
   startOffsetX: 0
   startDepthFromSurface: 15
@@ -1480,20 +1489,13 @@ MonoBehaviour:
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
   itemsPerStage: 10
   treasurePrefab: {fileID: 1077105864719006209, guid: a5c3993a5a86db142b4e7f45d9e05b86, type: 3}
-  baseTreasureChance: 5
   keyPrefab: {fileID: 1077105864719006209, guid: b144154cd100ffa49ac413a153c945c7, type: 3}
-  baseKeyChance: 1
   bombPrefab: {fileID: 1077105864719006209, guid: e7a80b686dca789439aca5724de67a2c, type: 3}
   bombCount: 20
   treasureBoxPrefab: {fileID: 1077105864719006209, guid: cb247c172210f034fa831397953d8b43, type: 3}
   oxygenPrefab: {fileID: 1077105864719006209, guid: 63c1888e0e6699f4a931821c81bc58a4, type: 3}
-  baseOxygenChance: 1
   leatherBagPrefab: {fileID: 1077105864719006209, guid: d466b68b6ecfa4442afb6b04c1aa16e7, type: 3}
-  baseLeatherBagChance: 1
   GoldleatherBagPrefab: {fileID: 1077105864719006209, guid: 332bf8569b80f5b4a869f8baa1d2eab1, type: 3}
-  GoldbaseLeatherBagChance: 1
-  bombJewelSetPrefab: {fileID: 3721176966014536097, guid: 11367ace4010a094497823d8194a5091, type: 3}
-  bombJewelSpawnChance: 0.5
   hardnessScale: 0.3
 --- !u!4 &221685966
 Transform:
