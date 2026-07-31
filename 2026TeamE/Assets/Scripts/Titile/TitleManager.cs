@@ -23,6 +23,20 @@ public class TitleManager : MonoBehaviour
         SettingManager.Instance?.CloseSettingPanel(false);
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
+
+        // 再読み込み時に生き残ったSettingManager内のCloseButtonの参照先を新しいTitleManagerに繋ぎ直す
+        if (SettingManager.Instance != null)
+        {
+            var buttons = SettingManager.Instance.GetComponentsInChildren<UnityEngine.UI.Button>(true);
+            foreach (var btn in buttons)
+            {
+                if (btn.gameObject.name == "CloseButton")
+                {
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(CloseOptionPanel);
+                }
+            }
+        }
     }
 
     private void ResetGameState()
@@ -109,7 +123,6 @@ public class TitleManager : MonoBehaviour
     public void OpenOptionPanel()
     {
         SettingManager.Instance?.OpenSettingPanel();
-        EventSystem.current.SetSelectedGameObject(optionFirstSelected);
     }
 
     // オプションパネルを閉じるメソッド

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 [System.Serializable]
 public class FrameRateOption
@@ -31,7 +32,7 @@ public class SettingManager : MonoBehaviour
         new FrameRateOption { Label = "120 FPS", Value = 120 },
         new FrameRateOption { Label = "144 FPS", Value = 144 },
         new FrameRateOption { Label = "240 FPS", Value = 240 },
-        new FrameRateOption { Label = "–³§ŒÀ", Value = -1 }
+        new FrameRateOption { Label = "ç„¡åˆ¶é™", Value = -1 }
     };
     [SerializeField] private int defaultFramerateIndex = 1;
 
@@ -60,27 +61,33 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // İ’èƒpƒlƒ‹‚ğŠJ‚­ƒƒ\ƒbƒh
+    // è¨­å®šãƒ‘ãƒãƒ«ã‚’é–‹ããƒ¡ã‚½ãƒƒãƒ‰
     public void OpenSettingPanel()
     {
         settingCanvas.SetActive(true);
-        SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é1");
+        SoundManager.Instance?.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹1");
         SoundManager.Instance?.InitSlider();
         InitResolutionSettings();
         InitFrameRateSettings();
+
+        if (EventSystem.current != null && resolutionDropdown != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(resolutionDropdown.gameObject);
+        }
     }
 
-    // İ’èƒpƒlƒ‹‚ğ•Â‚¶‚éƒƒ\ƒbƒh
+    // è¨­å®šãƒ‘ãƒãƒ«ã‚’é–‰ã˜ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void CloseSettingPanel(bool playSound = true)
     {
         settingCanvas.SetActive(false);
         if (playSound)
         {
-            SoundManager.Instance?.PlaySE("‚Â‚é‚Í‚µ‚ÅŒ@‚é3");
+            SoundManager.Instance?.PlaySE("ã¤ã‚‹ã¯ã—ã§æ˜ã‚‹3");
         }
     }
 
-    // ‰ğ‘œ“x‚Ì‘I‘ğˆ‚ğ‰Šú‰»‚·‚éƒƒ\ƒbƒh
+    // è§£åƒåº¦ã®é¸æŠè‚¢ã‚’åˆæœŸåŒ–ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void InitResolutionSettings()
     {
         resolutionDropdown.ClearOptions();
@@ -100,7 +107,7 @@ public class SettingManager : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
     }
 
-    // ƒtƒŒ[ƒ€ƒŒ[ƒg‚Ì‘I‘ğˆ‚ğ‰Šú‰»‚·‚éƒƒ\ƒbƒh
+    // ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¬ãƒ¼ãƒˆã®é¸æŠè‚¢ã‚’åˆæœŸåŒ–ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void InitFrameRateSettings()
     {
         framerateDropdown.ClearOptions();
@@ -115,7 +122,7 @@ public class SettingManager : MonoBehaviour
         framerateDropdown.RefreshShownValue();
     }
 
-    // ‰ğ‘œ“x‚ğ•ÏX‚·‚éƒƒ\ƒbƒh
+    // è§£åƒåº¦ã‚’å¤‰æ›´ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void SetResolution(int index)
     {
         string selectedText = fixedResolutionOptions[index];
@@ -129,7 +136,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // ƒtƒŒ[ƒ€ƒŒ[ƒg‚ğ•ÏX‚·‚éƒƒ\ƒbƒh
+    // ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ¬ãƒ¼ãƒˆã‚’å¤‰æ›´ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void SetFrameRate(int index)
     {
         if(index < 0 || index >= fpsOptions.Count)
@@ -143,7 +150,7 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // ‰æ–Êƒ‚[ƒh‚ğ•ÏX‚·‚éƒƒ\ƒbƒh
+    // ç”»é¢ãƒ¢ãƒ¼ãƒ‰ã‚’å¤‰æ›´ã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
     public void SetScreenMode(int index)
     {
         Screen.fullScreenMode = (index == 0) ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;

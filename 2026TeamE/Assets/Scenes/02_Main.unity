@@ -1459,13 +1459,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
   zoneSettings:
   - zoneName: "1\u5C64"
-    widthZ: 150
+    widthZ: 30
     heightChunks: 6
   - zoneName: "2\u5C64"
-    widthZ: 450
+    widthZ: 90
     heightChunks: 12
   - zoneName: "3\u5C64"
-    widthZ: 750
+    widthZ: 180
     heightChunks: 16
   thicknessX: 7
   maxStageWidthZ: 51
