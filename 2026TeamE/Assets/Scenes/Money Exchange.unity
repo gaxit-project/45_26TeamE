@@ -3075,8 +3075,8 @@ MonoBehaviour:
     basePrice: 80000
     maxLevel: 3
     levelDescriptions:
-    - "\u63A2\u77E5\u7BC4\u56F2\u304C\u62E1\u5927"
-    - "\u63A2\u77E5\u7BC4\u56F2\u304C\u62E1\u5927"
+    - "\u30A2\u30A4\u30C6\u30E0\u306E\u8B58\u5225\u80FD\u529B\u304C\u30A2\u30C3\u30D7"
+    - "\u8B58\u5225\u80FD\u529B\u3068\u7BC0\u96FB\u80FD\u529B\u304C\u30A2\u30C3\u30D7"
     - "\u6700\u5927\u30EC\u30D9\u30EB\u5230\u9054"
     itemDescriptionText: {fileID: 2047429977}
     starImages:
@@ -7025,7 +7025,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u63A2\u77E5\u7BC4\u56F2\u304C\u62E1\u5927"
+  m_text: "\u30A2\u30A4\u30C6\u30E0\u306E\u8B58\u5225\u80FD\u529B\u304C\u30A2\u30C3\u30D7"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}
   m_sharedMaterial: {fileID: -5337730745417588167, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}

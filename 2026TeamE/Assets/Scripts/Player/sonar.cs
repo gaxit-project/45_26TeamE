@@ -22,7 +22,7 @@ public class Sonar : MonoBehaviour
 
     void Start()
     {
-        sonarLV = UpgradeManager.GetLevel("Soner");
+        sonarLV = UpgradeManager.GetLevel("Sonar");
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.useWorldSpace = false;
 

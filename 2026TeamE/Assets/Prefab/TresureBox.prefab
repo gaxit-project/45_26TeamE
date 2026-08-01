@@ -158,6 +158,10 @@ MonoBehaviour:
   contentPrefab: {fileID: 0}
   zoneIndex: 0
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
+  visualEchoPrefabV3: {fileID: 8559125908501948008, guid: 4776068dceb0c444893f30c7d0821ecf, type: 3}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
+  markerV3: {fileID: 4524295200723672389, guid: 63cba78d50b57f345897e0e39b07cf75, type: 3}
   cooldownTime: 1
   isExposed: 0
+  GLeatherBagPrefab: {fileID: 1077105864719006209, guid: 332bf8569b80f5b4a869f8baa1d2eab1, type: 3}
+  exposureSize: {x: 1, y: 3, z: 3}

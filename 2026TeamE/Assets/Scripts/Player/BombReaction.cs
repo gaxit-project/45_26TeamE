@@ -20,8 +20,12 @@ public class BombReaction : MonoBehaviour
 
     [Header("ソナー検知時のエコープレハブ")]
     public GameObject visualEchoPrefab;
+    [Header("レベル2以上でのソナー検知時のエコープレハブ")]
+    public GameObject visualEchoPrefabV2;
     [Header("ソナー検知時のマーカー")]
     public GameObject marker;
+    [Header("レベル2以上でのソナー検知時のマーカー")]
+    public GameObject markerV2;
 
     [Header("爆発範囲表示用のLineRenderer")]
     public LineRenderer rangeCircle;
@@ -121,17 +125,22 @@ public class BombReaction : MonoBehaviour
     void ExecuteReaction()
     {
         isCoolingDown = true;
+        int sonarLV = UpgradeManager.GetLevel("Sonar");
 
         if (visualEchoPrefab != null)
         {
-            Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
-            
+            if(sonarLV>=2)
+                Instantiate(visualEchoPrefabV2, transform.position, Quaternion.identity);
+            else
+                Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
             if (currentMarker != null)
             {
-                Destroy(currentMarker);
+                Destroy(currentMarker);//前のマーカーを一度消すことで前のマーカーの消える時間をリセット
             }
-
-            currentMarker = Instantiate(marker, transform);
+            if(sonarLV>=2)
+                currentMarker = Instantiate(markerV2, transform);
+            else 
+                currentMarker = Instantiate(marker, transform);
             currentMarker.transform.localPosition = new Vector3(0, 0, -4);
             currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
 

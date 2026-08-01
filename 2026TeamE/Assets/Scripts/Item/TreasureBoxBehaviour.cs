@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
 {
@@ -12,12 +13,18 @@ public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
 
     [Header("エコープレハブ")]
     public GameObject visualEchoPrefab;
+    [Header("レベル3以上で金の袋を探知した際のエコープレハブ")]
+    public GameObject visualEchoPrefabV3;
     [Header("マーカー")]
     public GameObject marker;
+    [Header("レベル3以上で金の袋を探知した際のマーカー")]
+    public GameObject markerV3;
     [Header("クールダウン")]
     public float cooldownTime = 1.0f;
     [Header("ソナー用（取得可能状態）")]
     public bool isExposed = false;
+    [Header("判別用プレハブ")]
+    public GameObject GLeatherBagPrefab;      // エディタから金の袋をセットする
 
     [Header("露出判定の厳しさ")]
     [Tooltip("このサイズが大きいほど、より周りを広く掘らないと取得可能になりません")]
@@ -67,12 +74,19 @@ public class TreasureBoxBehaviour : MonoBehaviour, ICollectible
     private void ExecuteReaction()
     {
         isCoolingDown = true;
+        int sonarLV = UpgradeManager.GetLevel("Sonar");
         if (visualEchoPrefab != null)
         {
-            Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
+            if (contentPrefab == GLeatherBagPrefab&&sonarLV>=3)
+                Instantiate(visualEchoPrefabV3, transform.position, Quaternion.identity);
+            else
+                Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
             if (currentMarker != null) Destroy(currentMarker);
 
-            currentMarker = Instantiate(marker, transform);
+            if(contentPrefab == GLeatherBagPrefab&&sonarLV>=3)
+                currentMarker = Instantiate(markerV3, transform);
+            else
+                currentMarker = Instantiate(marker, transform);
             currentMarker.transform.localPosition = new Vector3(0, 0, -4);
             currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
 
