@@ -9744,10 +9744,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1249234867}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 1829}
+  m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &941572585
 MonoBehaviour:
@@ -11436,6 +11436,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 941572584}
   - {fileID: 899159440}
   - {fileID: 1900301481}
   - {fileID: 525658500}
@@ -11448,7 +11449,6 @@ RectTransform:
   - {fileID: 1197769852}
   - {fileID: 1448264613}
   - {fileID: 1306437918}
-  - {fileID: 941572584}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -17540,11 +17540,9 @@ PlayableDirector:
     value: {fileID: 1982867676}
   - key: {fileID: 6701192413451630123, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 1546445454}
-  - key: {fileID: -8343381239736924353, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+  - key: {fileID: -5389381291053514651, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 1982867681}
-  - key: {fileID: -1649724918752602822, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
-    value: {fileID: 941572583}
-  - key: {fileID: -8316287115560039232, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+  - key: {fileID: -4496951596470982597, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 941572587}
   m_ExposedReferences:
     m_References: []
