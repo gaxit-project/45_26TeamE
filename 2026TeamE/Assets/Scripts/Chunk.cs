@@ -13,11 +13,14 @@ public class Chunk : MonoBehaviour
     List<Vector2> uvs = new List<Vector2>();
     List<int> dirtTriangles = new List<int>();
     List<int> oreTriangles = new List<int>();
+    List<int> bedrockTriangles = new List<int>();
     List<int> stoneTriangles = new List<int>();
     List<int> hardRockTriangles = new List<int>();
-    List<int> bedrockTriangles = new List<int>();
+    List<int> quartziteTriangles = new List<int>();
+    List<int> boundaryTriangles = new List<int>();
+    const int SUBMESH_COUNT = 7;
 
-    public void Init(Material dirtMat, Material oreMat, Material stoneMat, Material hardRockMat, Material bedRockMat, Material quartzite)
+    public void Init(Material dirtMat, Material oreMat, Material bedrockMat, Material stoneMat, Material hardRockMat, Material quartziteMat, Material boundaryMat)
     {
         meshFilter = GetComponent<MeshFilter>();
         meshRenderer = GetComponent<MeshRenderer>();
@@ -26,7 +29,7 @@ public class Chunk : MonoBehaviour
         mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         meshFilter.mesh = mesh;
-        meshRenderer.materials = new Material[] { dirtMat, oreMat, stoneMat, hardRockMat, bedRockMat, quartzite};
+        meshRenderer.materials = new Material[] { dirtMat, oreMat, bedrockMat, stoneMat, hardRockMat, quartziteMat, boundaryMat };
     }
 
     public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize)
@@ -35,9 +38,11 @@ public class Chunk : MonoBehaviour
         uvs.Clear();
         dirtTriangles.Clear();
         oreTriangles.Clear();
+        bedrockTriangles.Clear();
         stoneTriangles.Clear();
         hardRockTriangles.Clear();
-        bedrockTriangles.Clear();
+        quartziteTriangles.Clear();
+        boundaryTriangles.Clear();
 
         for (int x = 0; x < thicknessX; x++)
         {
@@ -75,6 +80,13 @@ public class Chunk : MonoBehaviour
             case VoxelTerrain.BlockType.HardRock:
                 tris = hardRockTriangles;
                 break;
+            case VoxelTerrain.BlockType.Quartzite:
+                tris = quartziteTriangles;
+                break;
+            case VoxelTerrain.BlockType.Boundary:
+                tris = boundaryTriangles;
+                break;
+            case VoxelTerrain.BlockType.Dirt:
             default:
                 tris = dirtTriangles;
                 break;
@@ -126,13 +138,15 @@ public class Chunk : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.uv = uvs.ToArray();
 
-        mesh.subMeshCount = 5; // マテリアルの数を変えたらここも忘れずに変える！
+        mesh.subMeshCount = SUBMESH_COUNT; // マテリアルの数を変えたらここも忘れずに変える！
 
         mesh.SetTriangles(dirtTriangles.ToArray(), 0);
         mesh.SetTriangles(oreTriangles.ToArray(), 1);
         mesh.SetTriangles(bedrockTriangles.ToArray(), 2);
         mesh.SetTriangles(stoneTriangles.ToArray(), 3);
         mesh.SetTriangles(hardRockTriangles.ToArray(), 4);
+        mesh.SetTriangles(quartziteTriangles.ToArray(), 5);
+        mesh.SetTriangles(boundaryTriangles.ToArray(), 6);
 
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();

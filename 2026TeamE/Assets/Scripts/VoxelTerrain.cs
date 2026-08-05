@@ -10,6 +10,12 @@ public class ZoneData
     public string zoneName = "第1層";
     public int widthZ = 35;
     public int heightChunks = 4;
+
+    [Header("このゾーンのアイテム設定")]
+    [Tooltip("このゾーンに出現する宝箱系アイテムの総数（鍵3個を含む）")]
+    public int itemsPerStage = 10;
+    [Tooltip("このゾーンに出現する爆弾の数")]
+    public int bombCount = 20;
 }
 
 public class VoxelTerrain : MonoBehaviour
@@ -30,7 +36,8 @@ public class VoxelTerrain : MonoBehaviour
         Bedrock = 3,
         Stone = 4,
         HardRock = 5,
-        Quartzite = 6
+        Quartzite = 6,
+        Boundary = 7
     }
 
     private enum SpawnItemType
@@ -76,6 +83,8 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] private Material stoneMaterial;
     [SerializeField] private Material hardRockMaterial;
     [SerializeField] private Material quartziteMaterial;
+    [Tooltip("ステージ端（Z軸両端）の境界壁専用マテリアル。Bedrock（中継地点用）とは別に設定してください。")]
+    [SerializeField] private Material boundaryMaterial;
 
     [Header("同期オプション")]
     [SerializeField] private bool useDeterministicSeed = true;
@@ -85,18 +94,18 @@ public class VoxelTerrain : MonoBehaviour
     [SerializeField] private int chunkSizeY = 16;
     [SerializeField] private GameObject chunkPrefab;
 
-    [Header("1ステージあたりの出現アイテム数")]
-    [SerializeField] private int itemsPerStage = 10;
-
     [Header("アイテムPrefab設定")]
     [SerializeField] private GameObject treasurePrefab;
     [SerializeField] private GameObject keyPrefab;
     [SerializeField] private GameObject bombPrefab;
-    [SerializeField] private int bombCount = 20;
     [SerializeField] private GameObject treasureBoxPrefab;
     [SerializeField] private GameObject oxygenPrefab;
     [SerializeField] private GameObject leatherBagPrefab;
     [SerializeField] private GameObject GoldleatherBagPrefab;
+
+    [Header("中継地点設定")]
+    [Tooltip("各ゾーンの最下部に自動配置される中継地点のプレハブ")]
+    [SerializeField] private GameObject relayPointPrefab;
 
     [Header("硬度設定")]
     [SerializeField] private float hardnessScale = 0.5f;
@@ -248,6 +257,19 @@ public class VoxelTerrain : MonoBehaviour
         return (z >= minZ && z <= maxZ);
     }
 
+    /// <summary>
+    /// 指定ゾーンの最下部のY座標を取得（中継地点の設置基準）
+    /// </summary>
+    public int GetZoneBottomY(int zoneIndex)
+    {
+        int currentY = heightY;
+        for (int i = 0; i <= zoneIndex && i < zoneSettings.Count; i++)
+        {
+            currentY -= zoneSettings[i].heightChunks * chunkSizeY;
+        }
+        return currentY;
+    }
+
     #endregion
 
     #region --- ステージ生成 ---
@@ -255,6 +277,17 @@ public class VoxelTerrain : MonoBehaviour
     public void CreateStage(int width, int height, float size)
     {
         heightY = GetTotalHeight();
+        int widestZone = 0;
+        foreach (var zone in zoneSettings)
+        {
+            widestZone = Mathf.Max(widestZone, zone.widthZ);
+        }
+        if (widestZone > width)
+        {
+            Debug.LogWarning($"[VoxelTerrain] 最も幅の広いゾーン（{widestZone}）が maxStageWidthZ（{width}）を超えていたため、{widestZone} に自動拡張しました。");
+            width = widestZone;
+        }
+
         maxStageWidthZ = width;
         blockSize = size;
         int totalChunksY = 0;
@@ -284,7 +317,7 @@ public class VoxelTerrain : MonoBehaviour
                 {
                     if (!IsInside(x, y, z))
                     {
-                        mapData[x, y, z] = (byte)BlockType.Air;
+                        mapData[x, y, z] = (byte)BlockType.Boundary;
                         continue;
                     }
 
@@ -368,6 +401,7 @@ public class VoxelTerrain : MonoBehaviour
         transform.position = new Vector3(offsetX, -(heightY * blockSize), offsetZ);
 
         GenerateChunksAndItems(rnd);
+        SpawnRelayPoints();
         TeleportPlayerToStart(startX, startY, startZ);
 
         GameObject playerObj = GameObject.FindWithTag("Player");
@@ -410,7 +444,7 @@ public class VoxelTerrain : MonoBehaviour
             go.name = $"Chunk_{i}";
             go.transform.localPosition = Vector3.zero;
             chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial);
+            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial, boundaryMaterial);
             UpdateChunkMesh(i);
         }
 
@@ -456,7 +490,8 @@ public class VoxelTerrain : MonoBehaviour
                 int currentValidIndex = 0;
                 List<SpawnItemType> tresureSequence = new List<SpawnItemType>();
 
-                for (int i = 0; i < 3; i++) tresureSequence.Add(SpawnItemType.Key);
+                const int REQUIRED_KEY_COUNT = 3;
+                for (int i = 0; i < REQUIRED_KEY_COUNT; i++) tresureSequence.Add(SpawnItemType.Key);
 
                 SpawnItemType[] normalPool = {
                     SpawnItemType.Oxygen,
@@ -464,7 +499,8 @@ public class VoxelTerrain : MonoBehaviour
                     SpawnItemType.GoldLeatherBag,
                 };
 
-                int remainingTresureCount = itemsPerStage - tresureSequence.Count;
+                int zoneItemsPerStage = Mathf.Max(REQUIRED_KEY_COUNT, zoneSettings[zIdx].itemsPerStage);
+                int remainingTresureCount = zoneItemsPerStage - tresureSequence.Count;
                 for (int i = 0; i < remainingTresureCount; i++)
                 {
                     tresureSequence.Add(normalPool[rnd.Next(normalPool.Length)]);
@@ -478,7 +514,8 @@ public class VoxelTerrain : MonoBehaviour
                     currentValidIndex++;
                 }
 
-                int bombSpawnCount = Mathf.Min(bombCount, validPositions.Count - currentValidIndex);
+                int zoneBombCount = Mathf.Max(0, zoneSettings[zIdx].bombCount);
+                int bombSpawnCount = Mathf.Min(zoneBombCount, validPositions.Count - currentValidIndex);
                 for (int i = 0; i < bombSpawnCount; i++)
                 {
                     if (currentValidIndex >= validPositions.Count) break;
@@ -488,6 +525,27 @@ public class VoxelTerrain : MonoBehaviour
             }
 
             currentStageTopY = currentStageBottomY; ;
+        }
+    }
+
+    /// <summary>
+    /// 各ゾーンの最下部に中継地点を自動生成する。
+    /// 最終ゾーン（最深部）の下にはさらに続くゾーンが無いため配置しない。
+    /// </summary>
+    private void SpawnRelayPoints()
+    {
+        if (relayPointPrefab == null) return;
+
+        int centerZ = maxStageWidthZ / 2;
+
+        for (int zoneIndex = 0; zoneIndex < zoneSettings.Count - 1; zoneIndex++)
+        {
+            int relayY = GetZoneBottomY(zoneIndex);
+            Vector3 localPos = new Vector3(startOffsetX * blockSize, relayY * blockSize, centerZ * blockSize);
+            Vector3 worldPos = transform.position + localPos;
+
+            GameObject relay = Instantiate(relayPointPrefab, worldPos, Quaternion.identity, transform);
+            relay.name = $"RelayPoint_{zoneIndex}";
         }
     }
 
@@ -564,7 +622,7 @@ public class VoxelTerrain : MonoBehaviour
                 {
                     if (!IsInside(x, y, z)) continue;
                     byte currentBlock = mapData[x, y, z];
-                    if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock) continue;
+                    if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock || currentBlock == (byte)BlockType.Boundary) continue;
 
                     if (currentBlock == (byte)BlockType.Dirt)
                     {
@@ -919,7 +977,7 @@ public class VoxelTerrain : MonoBehaviour
         if (!IsInside(x, y, z)) return 1.0f;
         byte blockType = mapData[x, y, z];
 
-        if ((BlockType)blockType == BlockType.Bedrock) return float.MaxValue;
+        if ((BlockType)blockType == BlockType.Bedrock || (BlockType)blockType == BlockType.Boundary) return float.MaxValue;
 
         float baseHardness = (BlockType)blockType switch
         {
