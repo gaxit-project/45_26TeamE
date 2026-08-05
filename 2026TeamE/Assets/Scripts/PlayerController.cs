@@ -239,15 +239,6 @@ public class PlayerController : MonoBehaviour
         float zMove = moveInput.x;
         moveDirection = new Vector3(0, 0, zMove).normalized;
 
-        if(drillFlag && HasBattery)
-        {
-            SoundManager.Instance.PlayLoopSE("ドリル");
-        }
-        else
-        {
-            SoundManager.Instance.StopLoopSE();
-        }
-
         if (moveInput.x > 0)
         {
             if (transform.rotation.eulerAngles.y != 0)

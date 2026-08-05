@@ -9,6 +9,7 @@ public class SoundManager : MonoBehaviour
     [Header("CriAtomSource")]
     [SerializeField] private CriAtomSource bgmSource;
     [SerializeField] private CriAtomSource seSource;
+    [SerializeField] private CriAtomSource loopSeSource;
 
     [Header("Slider")]
     [SerializeField] private Slider bgmSlider;
@@ -32,6 +33,8 @@ public class SoundManager : MonoBehaviour
             if(bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
             if(bgmSource != null) bgmSource.volume = defaultBGMVolume;
             if(seSource != null) seSource.volume = defaultSEVolume;
+            if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
+            if (loopSeSource != null) loopSeSource.volume = defaultSEVolume;
         }
         else
         {
@@ -51,8 +54,6 @@ public class SoundManager : MonoBehaviour
         {
             bgmSlider.minValue = 0f;
             bgmSlider.maxValue = 1f;
-
-            // スライダーのイベントリスナーをリセットして、現在の音量に合わせてスライダーの値を更新
             bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
             bgmSlider.value = bgmSource.volume;
             bgmSlider.onValueChanged.AddListener(SetBGMVolume);
@@ -62,8 +63,6 @@ public class SoundManager : MonoBehaviour
         {
             seSlider.minValue = 0f;
             seSlider.maxValue = 1f;
-
-            // SEのスライダーも同様にリセットして更新
             seSlider.onValueChanged.RemoveListener(SetSEVolume);
             seSlider.value = seSource.volume;
             seSlider.onValueChanged.AddListener(SetSEVolume);
@@ -94,28 +93,24 @@ public class SoundManager : MonoBehaviour
 
     public void PlayLoopSE(string cueName)
     {
-        // 既に同じ音が鳴っている（または準備中）なら何もしない
-        if(currentLoopCueName == cueName) return;
-        
-        // 別のループ音が鳴っていれば確実に止める
-        if (loopPlayback.HasValue)
+        if (loopSeSource == null) return;
+        if (currentLoopCueName == cueName && loopSeSource.status == CriAtomSourceBase.Status.Playing)
         {
-            try { loopPlayback.Value.Stop(); } catch (System.Exception) { }
+            return;
         }
-
         currentLoopCueName = cueName;
-        if (seSource != null)
-        {
-            try { loopPlayback = seSource.Play(cueName); } catch (System.Exception) { loopPlayback = null; }
-        }
+        loopPlayback = loopSeSource.Play(cueName);
     }
 
     public void StopLoopSE()
     {
-        // 状態に関わらず確実に止める
+        if (loopSeSource != null)
+        {
+            loopSeSource.Stop();
+        }
         if (loopPlayback.HasValue)
         {
-            try { loopPlayback.Value.Stop(); } catch (System.Exception) { }
+            try { loopPlayback.Value.Stop(true); } catch (System.Exception) { }
             loopPlayback = null;
         }
         currentLoopCueName = "";
@@ -130,7 +125,7 @@ public class SoundManager : MonoBehaviour
     // BGMの音量を変更するメソッド
     public void SetBGMVolume(float volume)
     {
-        bgmSource.volume = volume;
+        if (bgmSource != null) bgmSource.volume = volume;
     }
 
     // SEの音量を変更するメソッド
@@ -138,6 +133,7 @@ public class SoundManager : MonoBehaviour
     {
         if(isInitializing) return;
         seSource.volume = volume;
+        if (loopSeSource != null) loopSeSource.volume = volume;
     }
 
     public void PlaySERestart(string cueName)

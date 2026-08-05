@@ -12,13 +12,16 @@ public class DrillTip : MonoBehaviour
 
     [SerializeField] private float forwardOffset = 0.2f;
 
+    [Header("サウンド設定")]
+    [SerializeField] private string drillSECueName = "ドリル";
+    [SerializeField] private bool requireTerrainContact = true;
+
     private float lastDrillTime;
     private PlayerController player;
 
-    private float lastDirtTouchTime = -1f;
-    [SerializeField] private float contactTimeout = 0.25f; // seconds
+    private float lastDirtTouchTime = -100f;
+    [SerializeField] private float contactTimeout = 0.5f;
 
-    // 外部から掘削接触状態を参照するためのプロパティ
     public bool IsContactingDiggableSurface => (Time.time - lastDirtTouchTime) <= contactTimeout;
 
     private float CurrentDrillRadius
@@ -45,23 +48,41 @@ public class DrillTip : MonoBehaviour
     {
         player = GetComponentInParent<PlayerController>();
 
-        // 古いドリル先端のエフェクトがオンのままだと勝手に出続けてしまうため、ここで無効化します
         if (dirtEffect != null)
         {
             dirtEffect.gameObject.SetActive(false);
         }
     }
 
+    private void Update()
+    {
+        HandleDrillSound();
+    }
+
+    private void HandleDrillSound()
+    {
+        if (SoundManager.Instance == null || player == null || string.IsNullOrEmpty(drillSECueName)) return;
+
+        bool isDrilling = player.IsDrilling && player.HasBattery;
+        bool shouldPlaySound = requireTerrainContact ? (isDrilling && IsContactingDiggableSurface) : isDrilling;
+
+        if (shouldPlaySound)
+        {
+            SoundManager.Instance.PlayLoopSE(drillSECueName);
+        }
+        else
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+    }
 
     private void OnTriggerStay(Collider other)
     {
         if (player == null || !player.IsDrilling) return;
-
         if (other.CompareTag("VoxelTerrain") || other.CompareTag("Block_dirt"))
         {
             lastDirtTouchTime = Time.time;
         }
-
         if (other.CompareTag("VoxelTerrain"))
         {
             VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
@@ -119,7 +140,7 @@ public class DrillTip : MonoBehaviour
                 float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
 
                 terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
-
+                lastDirtTouchTime = Time.time;
                 lastDrillTime = Time.time;
             }
         }
@@ -129,7 +150,6 @@ public class DrillTip : MonoBehaviour
     {
         Gizmos.color = Color.cyan;
 
-        // ★ Gizmosもワールド+X固定にする
         Vector3 center = transform.position + Vector3.right * forwardOffset;
 
         int segments = 40;
