@@ -64,6 +64,9 @@ public class TitleManager : MonoBehaviour
         
         // 3. タイムラインの再生状態をリセット
         TimelineManager.ResetTimeline();
+
+        // 4. アップグレード（強化レベル）のリセット
+        UpgradeManager.ResetUpgrades();
     }
 
     private void Update()

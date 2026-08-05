@@ -75,9 +75,7 @@ public class PoseManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.1f);
         Time.timeScale = 1f; // 時間の進行を元に戻す
 
-        // 進行状況（ショップの強化状態など）を初期化
-        UpgradeManager.ResetUpgrades();
-        
+        // 状態のリセットは TitleManager.Start() で一括して行われるため、ここではシーン遷移のみを行う
         SceneManager.LoadScene("01_Title"); // タイトルシーンを読み込む
     }
 

@@ -50,7 +50,6 @@ public class FinalResultManager : MonoBehaviour
             {
                 // タイトルへ戻る前の処理
                 if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
-                UpgradeManager.ResetUpgrades();
 
                 SceneManager.LoadScene(nextSceneName);
             }
