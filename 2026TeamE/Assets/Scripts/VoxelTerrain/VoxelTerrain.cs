@@ -16,6 +16,10 @@ public class ZoneData
     public int itemsPerStage = 10;
     [Tooltip("このゾーンに出現する爆弾の数")]
     public int bombCount = 20;
+
+    [Header("ゴールゾーン設定")]
+    [Tooltip("trueにすると、このゾーンは鍵・爆弾・通常アイテムを一切生成せず、中央にゴールのお宝だけを最初から取得可能な状態で配置する")]
+    public bool isGoalZone = false;
 }
 
 // フィールド定義、ライフサイクル
@@ -107,6 +111,12 @@ public partial class VoxelTerrain : MonoBehaviour
     [Header("中継地点設定")]
     [Tooltip("各ゾーンの最下部に自動配置される中継地点のプレハブ")]
     [SerializeField] private GameObject relayPointPrefab;
+
+    [Header("ゴール設定")]
+    [Tooltip("isGoalZoneがtrueのゾーンの中央に配置する、最初から取得可能なゴールのお宝プレハブ")]
+    [SerializeField] private GameObject goalTreasurePrefab;
+    [Tooltip("ゴールゾーンの中央に掘る開けた部屋の半径（ブロック数）")]
+    [SerializeField] private float goalChamberRadius = 6f;
 
     [Header("硬度設定")]
     [SerializeField] private float hardnessScale = 0.5f;

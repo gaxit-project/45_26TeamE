@@ -31,6 +31,14 @@ public partial class VoxelTerrain
                 zoneInitialGemValues[zIdx] = 0;
             }
 
+            if (zoneSettings[zIdx].isGoalZone)
+            {
+                // ゴールゾーンは通常の鍵・爆弾・アイテム抽選を行わず、中央にゴールのお宝だけを配置する
+                SpawnGoalTreasure(zIdx, currentStageBottomY, currentStageTopY);
+                currentStageTopY = currentStageBottomY;
+                continue;
+            }
+
             List<Vector3Int> validPositions = new List<Vector3Int>();
             for (int y = currentStageBottomY; y < currentStageTopY; y++)
             {
@@ -119,6 +127,29 @@ public partial class VoxelTerrain
             GameObject relay = Instantiate(relayPointPrefab, worldPos, Quaternion.identity, transform);
             relay.name = $"RelayPoint_{zoneIndex}";
         }
+    }
+
+    /// <summary>
+    /// ゴールゾーンの中央に、最初から取得可能なゴールのお宝を配置する
+    /// </summary>
+    private void SpawnGoalTreasure(int zoneIndex, int bottomY, int topY)
+    {
+        if (goalTreasurePrefab == null) return;
+
+        int centerX = thicknessX / 2;
+        int centerY = (bottomY + topY) / 2;
+        int centerZ = maxStageWidthZ / 2;
+
+        Vector3 pos = transform.position + new Vector3(
+            centerX * blockSize,
+            centerY * blockSize + (blockSize / 2f),
+            centerZ * blockSize + (blockSize / 2f)
+        );
+        Quaternion rotation = Quaternion.Euler(0, -90f, 0);
+
+        GameObject goal = Instantiate(goalTreasurePrefab, pos, rotation, transform);
+        spawnedTreasures.Add(goal);
+        zoneInitialGemValues[zoneIndex] += GEM_VALUE;
     }
 
     private void SpawnItemAt(SpawnItemType type, Vector3Int coord, int zoneIndex)

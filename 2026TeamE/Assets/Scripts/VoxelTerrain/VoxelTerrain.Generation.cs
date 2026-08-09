@@ -38,6 +38,23 @@ public partial class VoxelTerrain
 
         int goalThresholdY = 80;
 
+        // ゴールゾーン（isGoalZone）の中央に開けた部屋を掘るための位置を算出
+        int goalZoneIndex = zoneSettings.FindIndex(z => z.isGoalZone);
+        bool hasGoalZone = goalZoneIndex >= 0;
+        int goalChamberCenterY = 0;
+        int goalChamberCenterZ = maxStageWidthZ / 2;
+        if (hasGoalZone)
+        {
+            int goalZoneTopY = heightY;
+            for (int i = 0; i < goalZoneIndex; i++)
+            {
+                goalZoneTopY -= zoneSettings[i].heightChunks * chunkSizeY;
+            }
+            int goalZoneBottomY = goalZoneTopY - zoneSettings[goalZoneIndex].heightChunks * chunkSizeY;
+            goalChamberCenterY = (goalZoneTopY + goalZoneBottomY) / 2;
+        }
+        int goalChamberHalfSize = Mathf.RoundToInt(goalChamberRadius);
+
         for (int y = 0; y < heightY; y++)
         {
             for (int x = 0; x < thicknessX; x++)
@@ -54,7 +71,21 @@ public partial class VoxelTerrain
                     float dy = y - startY;
                     float distSphere = Mathf.Sqrt(dy * dy + dz * dz);
 
-                    if (distSphere < startHoleRadius || (y > startY && Mathf.Abs(dz) < startShaftRadius))
+                    // ゴールゾーンの中央付近を部屋として掘る（最下段は床として残す。岩盤層(y<=5)は掘らない）
+                    bool inGoalChamber = false;
+                    if (hasGoalZone && y > 5)
+                    {
+                        int dyToChamber = y - goalChamberCenterY;
+                        int dzToChamber = z - goalChamberCenterZ;
+                        if (Mathf.Abs(dzToChamber) <= goalChamberHalfSize
+                            && dyToChamber > -goalChamberHalfSize
+                            && dyToChamber <= goalChamberHalfSize)
+                        {
+                            inGoalChamber = true;
+                        }
+                    }
+
+                    if (distSphere < startHoleRadius || (y > startY && Mathf.Abs(dz) < startShaftRadius) || inGoalChamber)
                     {
                         mapData[x, y, z] = (byte)BlockType.Air;
                         continue;
