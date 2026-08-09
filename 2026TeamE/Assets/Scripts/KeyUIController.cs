@@ -173,4 +173,52 @@ public class KeyUIController : MonoBehaviour
 
         target.localScale = Vector3.one;
     }
+
+    private Coroutine warningCoroutine; // 連打防止用の変数
+    public void ShowWarning()
+    {
+        // 既にアニメーション中なら一旦止める（連打対策）
+        if (warningCoroutine != null)
+        {
+            StopCoroutine(warningCoroutine);
+        }
+        // 新しくアニメーションを開始
+        warningCoroutine = StartCoroutine(AnimateWarning());
+    }
+    private IEnumerator AnimateWarning()
+    {
+        Color warningColor = Color.red;
+        float elapsed = 0f;
+        float duration = 0.3f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+
+            // スケールを 1.0 → 1.3 → 1.0 に変化
+            float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.3f;
+
+            for (int i = 0; i < keyImages.Length; i++)
+            {
+                // ★ まだ持っていない鍵（unlockedColor ではないもの）だけを対象にする
+                if (keyImages[i].color != unlockedColor)
+                {
+                    keyImages[i].color = warningColor; // 赤くする
+                    keyImages[i].rectTransform.localScale = Vector3.one * scale; // 大きくする
+                }
+            }
+            yield return null; // 1フレーム待つ
+        }
+        // アニメーションが終わったら、持っていない鍵を元の「暗い色(lockedColor)」とサイズに戻す
+        for (int i = 0; i < keyImages.Length; i++)
+        {
+            if (keyImages[i].color != unlockedColor)
+            {
+                keyImages[i].rectTransform.localScale = Vector3.one;
+                keyImages[i].color = lockedColor;
+            }
+        }
+
+        warningCoroutine = null;
+    }
 }

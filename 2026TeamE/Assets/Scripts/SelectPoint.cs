@@ -55,7 +55,23 @@ public class SelectPoint : MonoBehaviour
                 }
                 if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
                 {
-                    GoToResult();
+                    // プレイヤーのいる深さから、今のゾーンのIDを取得
+                    int currentID = VoxelTerrain.Instance.GetRelayID(py);
+                    // 鍵が3つ集まっているか（クリアしているか）確認
+                    bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID);
+                    if (hasKeys)
+                    {
+                        // 鍵が足りていればリザルトへ！
+                        GoToResult();
+                    }
+                    else
+                    {
+                        // 鍵が足りない場合は、さっき作った警告アニメーションを呼ぶ
+                        if (KeyUIController.Instance != null)
+                        {
+                            KeyUIController.Instance.ShowWarning();
+                        }
+                    }
                 }
                 if (selectPanel != null && selectPanel.activeSelf && Camera.main != null)
                 {
