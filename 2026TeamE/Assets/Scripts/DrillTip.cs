@@ -168,10 +168,8 @@ public class DrillTip : MonoBehaviour
             prev = next;
         }
     }
-
     private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
     {
-        int interval = terrain.ChunkSizeY * 10;
-        return y > 0 && (y % interval == 0);
+        return terrain.IsRelayZoneBottom(y);
     }
 }

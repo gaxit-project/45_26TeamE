@@ -414,7 +414,7 @@ public class VoxelTerrain : MonoBehaviour
     /// <summary>
     /// 最下層かどうか判定する
     /// </summary>
-    private bool IsRelayZoneBottom(int y)
+    public bool IsRelayZoneBottom(int y)
     {
         int currentY = heightY;
         for (int i = 0; i < zoneSettings.Count - 1; i++)
