@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class BombReaction : MonoBehaviour
+public class BombReaction : BuriedItemBase
 {
     [Header("爆風の半径")]
     [SerializeField] private float explosionRadius = 3f;
@@ -36,41 +36,24 @@ public class BombReaction : MonoBehaviour
     [Header("円を手前に表示するためのXオフセット")]
     public float circleXOffset = 5.0f;
 
-    private GameObject currentMarker;
-    private bool isCoolingDown = false;
-    public float cooldownTime = 1.0f;
-
-    private bool isExposed = false;
     private bool isExploding = false;
     private bool isChainReacting = false;
 
-    private float checkDelay = 3.0f;
-    private float startTime;
-
-    void Start()
+    protected override void Start()
     {
-        startTime = Time.time;
+        base.Start();
 
-        //生成時、空中に露出していたら自分を削除
+        // 生成時、空中に露出していたら自分を削除
         if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
         {
             Destroy(this);
         }
     }
 
-    void Update()
+    protected override void Update()
     {
         if (isExploding) return;
-
-        if (Time.time - startTime < checkDelay)
-        {
-            return;
-        }
-
-        if (!isExposed)
-        {
-            CheckExposed();
-        }
+        base.Update();
     }
 
     public void TriggerChainReaction()
@@ -86,73 +69,39 @@ public class BombReaction : MonoBehaviour
         if (!isExposed)
         {
             isExposed = true;
-            if (currentMarker != null)
-            {
-                Destroy(currentMarker);
-            }
-            StartCoroutine(ExplosionRoutine());
+            OnExposed();
         }
     }
 
-    void CheckExposed()
+    protected override bool IsExposedCheck()
     {
-        if (VoxelTerrain.Instance == null) return;
-
         // VoxelTerrainのマップデータから、自身のサイズに合わせて周囲がAirか確認する
-        if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
-        {
-            isExposed = true;
-
-            // 露出してカウントダウンが始まったらマーカーを消す
-            if (currentMarker != null)
-            {
-                Destroy(currentMarker);
-            }
-
-            StartCoroutine(ExplosionRoutine());
-        }
+        return VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale);
     }
 
-    void OnTriggerEnter(Collider other)
+    protected override void OnExposed()
+    {
+        // 露出してカウントダウンが始まったらマーカーを消す
+        if (currentMarker != null)
+        {
+            Destroy(currentMarker);
+        }
+
+        StartCoroutine(ExplosionRoutine());
+    }
+
+    protected override void OnTriggerEnter(Collider other)
     {
         // 爆発中はソナーに反応させない
-        if (!isExploding && other.gameObject.name.Contains("sonar") && !isCoolingDown)
-        {
-            ExecuteReaction();
-        }
+        if (isExploding) return;
+        base.OnTriggerEnter(other);
     }
 
-    void ExecuteReaction()
+    // レベル2以上でのソナー検知時は専用のエコー/マーカーを使う
+    protected override (GameObject echoPrefab, GameObject markerPrefab) GetReactionPrefabs()
     {
-        isCoolingDown = true;
         int sonarLV = UpgradeManager.GetLevel("Sonar");
-
-        if (visualEchoPrefab != null)
-        {
-            if(sonarLV>=2)
-                Instantiate(visualEchoPrefabV2, transform.position, Quaternion.identity);
-            else
-                Instantiate(visualEchoPrefab, transform.position, Quaternion.identity);
-            if (currentMarker != null)
-            {
-                Destroy(currentMarker);//前のマーカーを一度消すことで前のマーカーの消える時間をリセット
-            }
-            if(sonarLV>=2)
-                currentMarker = Instantiate(markerV2, transform);
-            else 
-                currentMarker = Instantiate(marker, transform);
-            currentMarker.transform.localPosition = new Vector3(0, 0, -4);
-            currentMarker.transform.localRotation = Quaternion.Euler(0, -90, 0);
-
-            Destroy(currentMarker, 5f);
-        }
-
-        Invoke("ResetReaction", cooldownTime);
-    }
-
-    void ResetReaction()
-    {
-        isCoolingDown = false;
+        return sonarLV >= 2 ? (visualEchoPrefabV2, markerV2) : (visualEchoPrefab, marker);
     }
 
     private void DrawExplosionRangeCircle()
@@ -168,7 +117,7 @@ public class BombReaction : MonoBehaviour
         for (int i = 0; i <= circleSegments; i++)
         {
             float angle = (float)i / circleSegments * Mathf.PI * 2f;
-            
+
             // Y座標とZ座標で円を描く
             float y = Mathf.Sin(angle) * explosionRadius;
             float z = Mathf.Cos(angle) * explosionRadius;
@@ -195,7 +144,7 @@ public class BombReaction : MonoBehaviour
 
         // 自身および子オブジェクトの Renderer を取得
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        
+
         // マテリアルの元の色を保存
         Color[] origColors = new Color[renderers.Length];
         for (int i = 0; i < renderers.Length; i++)
@@ -228,7 +177,7 @@ public class BombReaction : MonoBehaviour
 
             // 爆破が近づくにつれて点滅を速くする（スピード5から20へ変化）
             float currentSpeed = Mathf.Lerp(5f, 20f, elapsedTime / calculatedTimeToExplode);
-            
+
             // 0〜1の間を往復する値（pingPong）を生成
             float pingPong = Mathf.PingPong(elapsedTime * currentSpeed, 1f);
 
@@ -258,7 +207,7 @@ public class BombReaction : MonoBehaviour
                 float t = elapsedTime / calculatedTimeToExplode;
                 // 現在の半径 (0 から explosionRadius へ広がる)
                 float currentExpandingRadius = Mathf.Lerp(0f, explosionRadius, t);
-                
+
                 Vector3 center = transform.position;
 
                 for (int i = 0; i <= circleSegments; i++)
@@ -409,14 +358,12 @@ public class BombReaction : MonoBehaviour
             // 「爆発の半径」＋「プレイヤーの体の半径」の範囲内なら、体の一部が触れていると判定する
             if (distance <= explosionRadius + playerRadius)
             {
-                // ==================== 【ここに追記しました】 ====================
                 // プレイヤーのコントローラーを取得して被弾アニメーションを再生
                 PlayerController pc = player.GetComponent<PlayerController>();
                 if (pc != null)
                 {
                     pc.DamageAnim();
                 }
-                // ================================================================
 
                 if (MoneyManager.Instance != null)
                 {
