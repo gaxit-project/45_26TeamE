@@ -108,6 +108,9 @@ public class TimerManager : MonoBehaviour
         timerText.color = Color.Lerp(Color.white, Color.red, wave);
     }
 
+    [Header("タイムアップ後の演出待機時間")]
+    [SerializeField] private float timeUpToTitleDelay = 2.0f;
+
     private void EndTimer()
     {
         if (canvasAnimator != null)
@@ -115,6 +118,19 @@ public class TimerManager : MonoBehaviour
 
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
+
+        // 酸素切れ：演出を見せた後、タイトルへ戻して状態を一括リセットする
+        StartCoroutine(ReturnToTitleAfterTimeUp());
+    }
+
+    private System.Collections.IEnumerator ReturnToTitleAfterTimeUp()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
+
+        yield return new WaitForSecondsRealtime(timeUpToTitleDelay);
+
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("01_Title");
     }
 
     /// <summary>
@@ -126,5 +142,13 @@ public class TimerManager : MonoBehaviour
 
         totalTime += seconds;
         isTimerRunning = true;
+    }
+
+    /// <summary>
+    /// タイトルに戻った時に呼ばれる。次のプレイでイントロ演出の合図を待つ状態に戻す。
+    /// </summary>
+    public static void ResetFirstLoad()
+    {
+        firstLoad = true;
     }
 }

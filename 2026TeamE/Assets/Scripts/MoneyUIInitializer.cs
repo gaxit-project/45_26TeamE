@@ -6,13 +6,40 @@ public class MoneyUIInitializer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI onHandText;
     [SerializeField] private TextMeshProUGUI targetPartText;
 
-    void Start()
+    private MoneyManager mm;
+
+    void Awake()
     {
-        MoneyManager mm = MoneyManager.Instance;
-        if (mm != null)
-        {
-            // MoneyManagerに、このシーンの新しいUIを登録し直す関数を呼ぶ
-            mm.SetMainSceneUI(onHandText, targetPartText);
-        }
+        mm = MoneyManager.Instance;
+    }
+
+    void OnEnable()
+    {
+        if (mm == null) return;
+
+        mm.OnMoneyOnHandChanged += UpdateOnHandText;
+        mm.OnTargetAmountOnPartChanged += UpdateTargetPartText;
+
+        // 迴ｾ蝨ｨ縺ｮ蛟､縺ｧ蛻晄悄陦ｨ遉ｺ
+        UpdateOnHandText(mm.GetMoneyOnHand());
+        UpdateTargetPartText(mm.GetTargetAmountOnPart());
+    }
+
+    void OnDisable()
+    {
+        if (mm == null) return;
+
+        mm.OnMoneyOnHandChanged -= UpdateOnHandText;
+        mm.OnTargetAmountOnPartChanged -= UpdateTargetPartText;
+    }
+
+    private void UpdateOnHandText(int value)
+    {
+        if (onHandText != null) onHandText.text = value.ToString("N0");
+    }
+
+    private void UpdateTargetPartText(int value)
+    {
+        if (targetPartText != null) targetPartText.text = value.ToString("N0");
     }
 }

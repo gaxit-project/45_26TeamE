@@ -4,10 +4,6 @@ public class MainManager : MonoBehaviour
 {
     public static MainManager Instance { get; private set; }
 
-    [Header("お金や鉱石")]
-    [SerializeField] private long currentMoney = 0;
-    [SerializeField] private int oreValue = 0;
-
     [Header("ステージ設定")]
     [SerializeField] private int targetHeight = 500;
     [SerializeField] private int targetWidth = 80;

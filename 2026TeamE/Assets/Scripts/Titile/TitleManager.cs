@@ -41,32 +41,8 @@ public class TitleManager : MonoBehaviour
 
     private void ResetGameState()
     {
-        // 1. アイテムのリセット（staticリストのクリア）
-        ItemInventoryManager.ClearCollectedData();
-
-        // 2. 進行状況を保持するマネージャーの破棄（次回メインシーンロード時に再生成される）
-        if (MainManager.Instance != null)
-        {
-            Destroy(MainManager.Instance.gameObject);
-        }
-        if (MoneyManager.Instance != null)
-        {
-            Destroy(MoneyManager.Instance.gameObject);
-        }
-        if (CheckpointManager.Instance != null)
-        {
-            Destroy(CheckpointManager.Instance.gameObject);
-        }
-        if (VoxelTerrain.Instance != null)
-        {
-            Destroy(VoxelTerrain.Instance.gameObject);
-        }
-        
-        // 3. タイムラインの再生状態をリセット
-        TimelineManager.ResetTimeline();
-
-        // 4. アップグレード（強化レベル）のリセット
-        UpgradeManager.ResetUpgrades();
+        // ゲーム全体の進行状態の一括リセットはResetManagerに集約
+        ResetManager.ResetAll();
     }
 
     private void Update()

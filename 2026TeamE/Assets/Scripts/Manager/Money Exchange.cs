@@ -3,24 +3,39 @@ using TMPro;
 
 public class MoneyExchange : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI totalMoneyText; // ‚±‚ÌƒV[ƒ“‚Å‚ÌŠ‹à•\¦—p
+    [SerializeField] private TextMeshProUGUI totalMoneyText;
+
+    private MoneyManager mm;
 
     void Awake()
     {
-        MoneyManager mm = MoneyManager.Instance;
+        mm = MoneyManager.Instance;
 
         if (mm != null)
         {
-            // 1. ‚±‚ÌƒV[ƒ“‚ÌUI‚ğƒ}ƒl[ƒWƒƒ[‚É“o˜^i‚±‚ê‚Åmm“à•”‚ÌMoneyText‚ªXV‚³‚ê‚éj
-            mm.SetMoneyText(totalMoneyText);
-
-            // 2. Š·‹àˆ—‚ğÀsiOnHand‚ğMoney‚É‡Zj
+            // æ›é‡‘å‡¦ç†ã‚’å®Ÿè¡Œ
             mm.Cash();
+            UpdateMoneyText(mm.GetMoney());
 
-            // 3. ƒ}ƒl[ƒWƒƒ[‚É•\¦‚ğXV‚³‚¹‚é
-            mm.UpdateTotalMoneyText();
+            Debug.Log($"æ›é‡‘å®Œäº†ï¼ ç¾åœ¨ã®æ‰€æŒé‡‘: {mm.GetMoney()}");
+        }
+    }
 
-            Debug.Log($"Š·‹àŠ®—¹I Œ»İ‚Ì‘‘Y: {mm.GetMoney()}");
+    void OnEnable()
+    {
+        if (mm != null) mm.OnMoneyChanged += UpdateMoneyText;
+    }
+
+    void OnDisable()
+    {
+        if (mm != null) mm.OnMoneyChanged -= UpdateMoneyText;
+    }
+
+    private void UpdateMoneyText(int value)
+    {
+        if (totalMoneyText != null)
+        {
+            totalMoneyText.text = value.ToString("N0");
         }
     }
 }
