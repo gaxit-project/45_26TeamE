@@ -4,11 +4,11 @@ using UnityEngine;
 public class VisualEcho : MonoBehaviour
 {
     public float currentRadius = 0.5f;
-    public float expansionSpeed = 15.0f; // ­‚µ‘‚ß‚ÉL‚ª‚éİ’è
-    public float maxRadius = 5.0f;       // ©‹@‚Ì”g–ä‚æ‚è¬‚³‚ß‚ÉÁ‚¦‚é
+    public float expansionSpeed = 15.0f; // åºƒãŒã‚‹é€Ÿã•
+    public float maxRadius = 5.0f;       // æ³¢ç´‹ãŒæ¶ˆãˆã‚‹ã¾ã§ã®æœ€å¤§åŠå¾„
     public int segments = 36;
 
-    // ƒCƒ“ƒXƒyƒNƒ^[‚Å”g–ä‚ÌF‚ğŒˆ‚ß‚ç‚ê‚é‚æ‚¤‚É‚·‚éi—áF‰©F‚â…Fj
+    // ã‚¤ãƒ³ã‚¹ãƒšã‚¯ã‚¿ãƒ¼ã§æ³¢ç´‹ã®è‰²ã‚’æ±ºã‚ã‚‰ã‚Œã‚‹ã‚ˆã†ã«ã™ã‚‹ï¼ˆåŸºæœ¬è‰²ãƒ»æ°´è‰²ãªã©ï¼‰
     public Color echoColor = Color.blue;
 
     private LineRenderer lineRenderer;
@@ -17,9 +17,9 @@ public class VisualEcho : MonoBehaviour
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.useWorldSpace = false; // ƒ[ƒJƒ‹‹óŠÔ‚ğg—p
+        lineRenderer.useWorldSpace = false; // ãƒ­ãƒ¼ã‚«ãƒ«ç©ºé–“ã‚’ä½¿ç”¨
 
-        // ƒ}ƒeƒŠƒAƒ‹‚ğæ“¾‚µ‚ÄA‰ŠúF‚ğİ’è
+        // ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’å–å¾—ã—ã¦ãŠãã€ã‚ã¨ã§è‰²ã‚’è¨­å®šã™ã‚‹
         lineMaterial = lineRenderer.material;
     }
 
@@ -27,40 +27,24 @@ public class VisualEcho : MonoBehaviour
     {
         currentRadius += expansionSpeed * Time.deltaTime;
 
-        // --- ƒtƒF[ƒhƒAƒEƒg‚ÌŒvZ ---
-        // Œ»İ‚Ì”¼Œa‚ªÅ‘å”¼Œa‚É‹ß‚Ã‚­‚Ù‚ÇAƒAƒ‹ƒtƒ@’li“§–¾“xj‚ğ1‚©‚ç0‚É‹ß‚Ã‚¯‚é
+        // --- ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã®è¨ˆç®— ---
+        // ç¾åœ¨ã®åŠå¾„ãŒæœ€å¤§åŠå¾„ã«è¿‘ã¥ãã»ã©ã€ã‚¢ãƒ«ãƒ•ã‚¡å€¤ï¼ˆé€æ˜åº¦ï¼‰ãŒ1ã‹ã‚‰0ã«è¿‘ã¥ã
         float alpha = 1.0f - (currentRadius / maxRadius);
 
-        // F‚ÉƒAƒ‹ƒtƒ@’l‚ğ“K—p
+        // è‰²ã«ã‚¢ãƒ«ãƒ•ã‚¡å€¤ã‚’é©ç”¨
         Color currentColor = echoColor;
         currentColor.a = alpha;
 
-        // Line Renderer‚ÌF‚ğXV
+        // Line Rendererã®è‰²ã‚’æ›´æ–°
         lineRenderer.startColor = currentColor;
         lineRenderer.endColor = currentColor;
 
         if (currentRadius > maxRadius)
         {
-            Destroy(gameObject); // Á–Å
+            Destroy(gameObject); // æ¶ˆæ»…
             return;
         }
 
-        DrawCircle();
-    }
-
-    void DrawCircle()
-    {
-        lineRenderer.positionCount = segments;
-        for (int i = 0; i < segments; i++)
-        {
-            float angle = i * 2f * Mathf.PI / segments;
-
-            // ciYj‚Æ‰¡iZj‚ÉL‚°‚é
-            float z = Mathf.Cos(angle) * currentRadius;
-            float y = Mathf.Sin(angle) * currentRadius;
-
-            // ’n–Ê‚É‰B‚ê‚È‚¢‚æ‚¤‚É X=5 ‚Ìè‘O‚É•`‰æ‚·‚é
-            lineRenderer.SetPosition(i, new Vector3(5f, y, z));
-        }
+        LineRendererCircleUtil.DrawCircle(lineRenderer, currentRadius, segments);
     }
 }

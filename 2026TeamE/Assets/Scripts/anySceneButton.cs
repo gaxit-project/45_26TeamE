@@ -15,17 +15,12 @@ public class anySceneButton : MonoBehaviour
 
     private void Start()
     {
-        // UI Button component auto-hookup if present
         UnityEngine.UI.Button uiButton = GetComponent<UnityEngine.UI.Button>();
         if (uiButton != null)
         {
             uiButton.onClick.AddListener(OnClick);
         }
     }
-
-    /// <summary>
-    /// UIボタンのOnClickイベントから呼び出す、または自動フックされます。
-    /// </summary>
     public void OnClick()
     {
         if (isTransitioning) return;
@@ -36,7 +31,6 @@ public class anySceneButton : MonoBehaviour
     {
         isTransitioning = true;
 
-        // SEを鳴らす (SoundManagerが存在する場合)
         if (!string.IsNullOrEmpty(seCueName) && SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySE(seCueName);
@@ -50,14 +44,13 @@ public class anySceneButton : MonoBehaviour
         {
             string targetScene = sceneName;
 
-            // もしゴールの宝石を取得して換金画面（Result）に来ている場合は、最終リザルト（FinalResult）に遷移する
+            // もしゴールの宝石を取得して換金画面に来ている場合は、リザルトに遷移する
             if (GoalJewelry.isGoalReached && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Result")
             {
                 targetScene = "FinalResult";
-                GoalJewelry.isGoalReached = false; // フラグをリセット
+                GoalJewelry.isGoalReached = false;
             }
 
-            // SceneLoaderがある場合、そちらを利用し、なければ通常のSceneManagerを利用
             if (SceneLoader.Instance != null)
             {
                 SceneLoader.Instance.LoadScene(targetScene);
