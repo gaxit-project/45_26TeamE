@@ -23,6 +23,9 @@ public class SoundManager : MonoBehaviour
     private CriAtomExPlayback? loopPlayback;
     private string currentLoopCueName = "";
 
+    private const string BGM_VOLUME_SAVE_KEY = "SavedBGMVolume";
+    private const string SE_VOLUME_SAVE_KEY = "SavedSEVolume";
+
     // シングルトンの実装
     void Awake()
     {
@@ -31,10 +34,15 @@ public class SoundManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             if(bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
-            if(bgmSource != null) bgmSource.volume = defaultBGMVolume;
-            if(seSource != null) seSource.volume = defaultSEVolume;
+
+            // 保存された音量があればそれを使い、なければInspectorのデフォルト値を使う
+            float savedBGMVolume = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMVolume);
+            float savedSEVolume = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSEVolume);
+
+            if(bgmSource != null) bgmSource.volume = savedBGMVolume;
+            if(seSource != null) seSource.volume = savedSEVolume;
             if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
-            if (loopSeSource != null) loopSeSource.volume = defaultSEVolume;
+            if (loopSeSource != null) loopSeSource.volume = savedSEVolume;
         }
         else
         {
@@ -126,6 +134,9 @@ public class SoundManager : MonoBehaviour
     public void SetBGMVolume(float volume)
     {
         if (bgmSource != null) bgmSource.volume = volume;
+
+        PlayerPrefs.SetFloat(BGM_VOLUME_SAVE_KEY, volume);
+        PlayerPrefs.Save();
     }
 
     // SEの音量を変更するメソッド
@@ -134,6 +145,9 @@ public class SoundManager : MonoBehaviour
         if(isInitializing) return;
         seSource.volume = volume;
         if (loopSeSource != null) loopSeSource.volume = volume;
+
+        PlayerPrefs.SetFloat(SE_VOLUME_SAVE_KEY, volume);
+        PlayerPrefs.Save();
     }
 
     public void PlaySERestart(string cueName)
