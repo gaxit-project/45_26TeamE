@@ -123,13 +123,6 @@ public class ShoppingManager : MonoBehaviour
         UpdateAllButtons();
     }
 
-    private void Update()
-    {
-        if (videoPlayer != null && videoPlayer.isPlaying)
-        {
-            Debug.Log(videoPlayer.texture);
-        }
-    }
 
     private void TryPurchase(ShopItem item)
     {
