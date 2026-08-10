@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 857fe1b30de815d498480d09179fef60
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - jewelryData: {fileID: 11400000, guid: 2e988a96ed6b8974899e00ba1fbf0285, type: 2}
+  - bigJewelryData: {instanceID: 0}
+  - leatherBagData: {fileID: 11400000, guid: f2d93955d2edcf34db9ae6a6295a4d67, type: 2}
+  - keyData: {fileID: 11400000, guid: f30ef3234a6452c4ab75924dcf66343b, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
