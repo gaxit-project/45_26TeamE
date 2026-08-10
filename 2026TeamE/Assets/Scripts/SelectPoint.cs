@@ -71,6 +71,7 @@ public class SelectPoint : MonoBehaviour
                         {
                             KeyUIController.Instance.ShowWarning();
                         }
+                        SoundManager.Instance.PlaySE("つるはしで掘る3");
                     }
                 }
                 if (selectPanel != null && selectPanel.activeSelf && Camera.main != null)

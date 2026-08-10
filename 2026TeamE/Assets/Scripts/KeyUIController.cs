@@ -131,7 +131,9 @@ public class KeyUIController : MonoBehaviour
                 if (keyImages[i].color != unlockedColor)
                 {
                     keyImages[i].color = unlockedColor;
-                    StartCoroutine(AnimateKeyGet(keyImages[i].rectTransform));
+
+                    // ▼ 変更：第2引数に collectedCount を渡すようにする
+                    StartCoroutine(AnimateKeyGet(keyImages[i].rectTransform, collectedCount));
                 }
             }
             else
@@ -150,8 +152,14 @@ public class KeyUIController : MonoBehaviour
         }
     }
 
-    private IEnumerator AnimateKeyGet(RectTransform target)
+    private IEnumerator AnimateKeyGet(RectTransform target,int collectedCount=0)
     {
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("鍵ゲット");
+        }
+
         float elapsed = 0f;
         Vector3 initialScale = Vector3.one;
         Vector3 targetScale = Vector3.one * punchScaleAmount;
@@ -172,6 +180,12 @@ public class KeyUIController : MonoBehaviour
         }
 
         target.localScale = Vector3.one;
+
+        // ② アニメーションが完了したタイミング（ちょうど約0.3秒後）でコンプリート音を鳴らす
+        if (collectedCount == 3 && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("A_luxurious_upgrade");
+        }
     }
 
     private Coroutine warningCoroutine; // 連打防止用の変数
