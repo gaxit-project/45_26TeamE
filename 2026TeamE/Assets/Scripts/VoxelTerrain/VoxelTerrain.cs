@@ -135,6 +135,7 @@ public partial class VoxelTerrain : MonoBehaviour
 
     public float BlockSize => blockSize;
     public int ChunkSizeY => chunkSizeY;
+    public bool IsStageGenerated => mapData != null;
 
     // イベント
     public event Action<int, int, byte> OnBlockChanged;
@@ -168,6 +169,7 @@ public partial class VoxelTerrain : MonoBehaviour
         if (scene.name == "02_Main")
         {
             SetActiveAllChildren(true);
+            zoneCollectedKeyCounts.Clear();
         }
         else
         {

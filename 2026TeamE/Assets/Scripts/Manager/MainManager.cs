@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class MainManager : MonoBehaviour
 {
@@ -42,7 +42,7 @@ public class MainManager : MonoBehaviour
     public void SpawnNewLevel()
     {
         VoxelTerrain vt = VoxelTerrain.Instance;
-        if (vt != null)
+        if (vt != null && !vt.IsStageGenerated)
         {
             vt.CreateStage(targetWidth, targetHeight, vt.BlockSize);
         }

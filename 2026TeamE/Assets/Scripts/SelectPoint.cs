@@ -42,8 +42,18 @@ public class SelectPoint : MonoBehaviour
             Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(player.transform.position);
             float s = VoxelTerrain.Instance.BlockSize;
             int py = Mathf.FloorToInt(localPos.y / s);
-            // ★変更点：新しい岩盤判定メソッドを直接使う
-            bool isTouchingBedrock = VoxelTerrain.Instance.IsRelayZoneBottom(py) || VoxelTerrain.Instance.IsRelayZoneBottom(py - 1);
+            // 今いる深さの中継地点IDを取得
+            int currentID = VoxelTerrain.Instance.GetRelayID(py);
+
+            // すでに使った（現在地と同じ）中継地点かどうかチェック
+            bool isAlreadyUsed = false;
+            if (CheckpointManager.Instance != null && currentID == CheckpointManager.Instance.GetUsedCheckpointID())
+            {
+                isAlreadyUsed = true;
+            }
+
+            // 岩盤の深さにいて、かつ「まだ使っていない」時だけ true にする
+            bool isTouchingBedrock = (VoxelTerrain.Instance.IsRelayZoneBottom(py) || VoxelTerrain.Instance.IsRelayZoneBottom(py - 1)) && !isAlreadyUsed;
             if (isTouchingBedrock)
             {
                 // 岩盤にいる間、UIが出ていなければ出す
@@ -56,9 +66,9 @@ public class SelectPoint : MonoBehaviour
                 if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
                 {
                     // プレイヤーのいる深さから、今のゾーンのIDを取得
-                    int currentID = VoxelTerrain.Instance.GetRelayID(py);
+                    int currentID2 = VoxelTerrain.Instance.GetRelayID(py);
                     // 鍵が3つ集まっているか（クリアしているか）確認
-                    bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID);
+                    bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID2);
                     if (hasKeys)
                     {
                         // 鍵が足りていればリザルトへ！
