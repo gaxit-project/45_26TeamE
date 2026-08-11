@@ -6974,7 +6974,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimerManager
   timerText: {fileID: 976448632}
-  totalTime: 120
+  totalTime: 180
   canvasAnimator: {fileID: 1249234868}
   PlayerAnimator: {fileID: 548082335}
   animationSpeed: 5
@@ -7197,7 +7197,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DrillTip
   baseDrillInterval: 0.2
-  baseDrillRadius: 3
+  baseDrillRadius: 4.5
   miningZone: {fileID: 820273196}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2
