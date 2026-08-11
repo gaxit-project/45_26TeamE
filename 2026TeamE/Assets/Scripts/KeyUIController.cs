@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -188,51 +188,62 @@ public class KeyUIController : MonoBehaviour
         }
     }
 
-    private Coroutine warningCoroutine; // 連打防止用の変数
-    public void ShowWarning()
+    private bool isWarningActive = false;
+    private Coroutine warningCoroutine;
+    
+    public void SetWarningActive(bool active)
     {
-        // 既にアニメーション中なら一旦止める（連打対策）
-        if (warningCoroutine != null)
-        {
-            StopCoroutine(warningCoroutine);
-        }
-        // 新しくアニメーションを開始
-        warningCoroutine = StartCoroutine(AnimateWarning());
-    }
-    private IEnumerator AnimateWarning()
-    {
-        Color warningColor = Color.red;
-        float elapsed = 0f;
-        float duration = 0.3f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = elapsed / duration;
+        if (isWarningActive == active) return;
+        isWarningActive = active;
 
-            // スケールを 1.0 → 1.3 → 1.0 に変化
-            float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.3f;
+        if (active)
+        {
+            if (warningCoroutine != null) StopCoroutine(warningCoroutine);
+            warningCoroutine = StartCoroutine(AnimateWarningContinuous());
+        }
+        else
+        {
+            if (warningCoroutine != null)
+            {
+                StopCoroutine(warningCoroutine);
+                warningCoroutine = null;
+            }
 
             for (int i = 0; i < keyImages.Length; i++)
             {
-                // ★ まだ持っていない鍵（unlockedColor ではないもの）だけを対象にする
                 if (keyImages[i].color != unlockedColor)
                 {
-                    keyImages[i].color = warningColor; // 赤くする
-                    keyImages[i].rectTransform.localScale = Vector3.one * scale; // 大きくする
+                    keyImages[i].rectTransform.localScale = Vector3.one;
+                    keyImages[i].color = lockedColor;
                 }
             }
-            yield return null; // 1フレーム待つ
         }
-        // アニメーションが終わったら、持っていない鍵を元の「暗い色(lockedColor)」とサイズに戻す
-        for (int i = 0; i < keyImages.Length; i++)
-        {
-            if (keyImages[i].color != unlockedColor)
-            {
-                keyImages[i].rectTransform.localScale = Vector3.one;
-                keyImages[i].color = lockedColor;
-            }
-        }
+    }
 
-        warningCoroutine = null;
+    private IEnumerator AnimateWarningContinuous()
+    {
+        Color warningColor = Color.red;
+        float elapsed = 0f;
+        float cycleDuration = 0.6f;
+
+        while (true)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = (elapsed % cycleDuration) / cycleDuration;
+
+            float pingPong = Mathf.PingPong(t * 2f, 1f);
+            float scale = 1f + pingPong * 0.3f;
+            Color currentColor = Color.Lerp(lockedColor, warningColor, pingPong);
+
+            for (int i = 0; i < keyImages.Length; i++)
+            {
+                if (keyImages[i].color != unlockedColor)
+                {
+                    keyImages[i].color = currentColor;
+                    keyImages[i].rectTransform.localScale = Vector3.one * scale;
+                }
+            }
+            yield return null;
+        }
     }
 }

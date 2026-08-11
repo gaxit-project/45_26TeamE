@@ -12,6 +12,7 @@ public class SelectPoint : MonoBehaviour
 
     [Header("シーン移動用のボタン設定")]
     [SerializeField] private InputAction jumpSceneAction;
+    [SerializeField] public GameObject X;
 
     [Header("UIの表示位置調整")]
     [SerializeField] private Vector3 uiOffset = new Vector3(-2.0f, 2.0f, 0);
@@ -52,10 +53,29 @@ public class SelectPoint : MonoBehaviour
                 isAlreadyUsed = true;
             }
 
-            // 岩盤の深さにいて、かつ「まだ使っていない」時だけ true にする
             bool isTouchingBedrock = (VoxelTerrain.Instance.IsRelayZoneBottom(py) || VoxelTerrain.Instance.IsRelayZoneBottom(py - 1)) && !isAlreadyUsed;
             if (isTouchingBedrock)
             {
+                int currentID2 = VoxelTerrain.Instance.GetRelayID(py);
+                bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID2);
+
+                if (!hasKeys)
+                {
+                    if (KeyUIController.Instance != null)
+                    {
+                        KeyUIController.Instance.SetWarningActive(true);
+                        X.SetActive(true);
+                    }
+                }
+                else
+                {
+                    if (KeyUIController.Instance != null)
+                    {
+                        KeyUIController.Instance.SetWarningActive(false);
+                        X.SetActive(false);
+                    }
+                }
+
                 // 岩盤にいる間、UIが出ていなければ出す
                 if (selectPanel != null && !selectPanel.activeSelf)
                 {
@@ -65,10 +85,6 @@ public class SelectPoint : MonoBehaviour
                 }
                 if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
                 {
-                    // プレイヤーのいる深さから、今のゾーンのIDを取得
-                    int currentID2 = VoxelTerrain.Instance.GetRelayID(py);
-                    // 鍵が3つ集まっているか（クリアしているか）確認
-                    bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID2);
                     if (hasKeys)
                     {
                         // 鍵が足りていればリザルトへ！
@@ -76,11 +92,6 @@ public class SelectPoint : MonoBehaviour
                     }
                     else
                     {
-                        // 鍵が足りない場合は、さっき作った警告アニメーションを呼ぶ
-                        if (KeyUIController.Instance != null)
-                        {
-                            KeyUIController.Instance.ShowWarning();
-                        }
                         SoundManager.Instance.PlaySE("つるはしで掘る3");
                     }
                 }
@@ -104,6 +115,11 @@ public class SelectPoint : MonoBehaviour
                 if (selectPanel != null && selectPanel.activeSelf)
                 {
                     selectPanel.SetActive(false);
+                }
+
+                if (KeyUIController.Instance != null)
+                {
+                    KeyUIController.Instance.SetWarningActive(false);
                 }
             }
             
