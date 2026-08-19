@@ -8,7 +8,8 @@ public partial class VoxelTerrain
         Debug.Log($"中継地点到達. 深度：{y}");
         if (CheckpointManager.Instance == null) return;
 
-        int currentID = GetRelayID(y);
+        int currentID = GetBoundaryZoneIndex(y);
+        if (currentID < 0) return;
 
         if (currentID == CheckpointManager.Instance.GetUsedCheckpointID())
         {

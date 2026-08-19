@@ -69,4 +69,27 @@ public partial class VoxelTerrain
         }
         return currentY;
     }
+
+    /// <summary>
+    /// 指定したYが、どのゾーンの中継地点（最下部境界）付近にあるかを返す。
+    /// IsRelayZoneBottomと同じ許容範囲（境界行の前後1行）で判定し、一致した場合は
+    /// その境界の上側＝掘り終えた（鍵を集めた）ゾーンのインデックスを返す。
+    /// GetRelayIDは厳密な範囲判定のため、この許容範囲内でも1行違うだけで
+    /// 隣（まだ手をつけていない）ゾーンを返してしまうことがあり、中継地点の
+    /// 判定にはGetRelayIDではなくこちらを使うこと。
+    /// 一致しなければ-1を返す。
+    /// </summary>
+    public int GetBoundaryZoneIndex(int y)
+    {
+        int currentY = heightY;
+        for (int i = 0; i < zoneSettings.Count - 1; i++)
+        {
+            currentY -= zoneSettings[i].heightChunks * chunkSizeY;
+            if (y == currentY || y == currentY - 1 || y == currentY + 1)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

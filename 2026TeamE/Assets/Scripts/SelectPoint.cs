@@ -16,6 +16,10 @@ public class SelectPoint : MonoBehaviour
 
     [Header("UIの表示位置調整")]
     [SerializeField] private Vector3 uiOffset = new Vector3(-2.0f, 2.0f, 0);
+
+    // パネルを表示した瞬間に確定させるゾーンID。押下時などはこれを使い回し、毎フレーム再計算しない。
+    private int activeZoneID = -1;
+
     private void Start()
     {
         FindPanelInScene();
@@ -43,46 +47,56 @@ public class SelectPoint : MonoBehaviour
             Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(player.transform.position);
             float s = VoxelTerrain.Instance.BlockSize;
             int py = Mathf.FloorToInt(localPos.y / s);
-            // 今いる深さの中継地点IDを取得
-            int currentID = VoxelTerrain.Instance.GetRelayID(py);
 
-            // すでに使った（現在地と同じ）中継地点かどうかチェック
-            bool isAlreadyUsed = false;
-            if (CheckpointManager.Instance != null && currentID == CheckpointManager.Instance.GetUsedCheckpointID())
+            // 岩盤（中継地点）の近く3行以内にいるかどうか。一致した場合はそのままゾーンIDも得られる
+            // （GetRelayIDだと同じ許容範囲内でも1行のズレで隣のゾーンを指してしまうため使わない）
+            int boundaryZoneID = VoxelTerrain.Instance.GetBoundaryZoneIndex(py);
+            bool nearBoundary = boundaryZoneID != -1;
+
+            // パネルがまだ出ていない＝この中継地点に新しく到達した瞬間にのみゾーンIDと使用済み判定を確定させる。
+            // 以降、この帯域にいる間は毎フレーム再計算せず、確定した値を使い回す。
+            bool suppressedAsAlreadyUsed = false;
+            if (nearBoundary && selectPanel != null && !selectPanel.activeSelf)
             {
-                isAlreadyUsed = true;
+                int candidateZoneID = boundaryZoneID;
+                bool candidateIsAlreadyUsed = CheckpointManager.Instance != null && candidateZoneID == CheckpointManager.Instance.GetUsedCheckpointID();
+
+                if (candidateIsAlreadyUsed)
+                {
+                    // 直前にリスポーンした地点と同じ中継地点なので、何も表示せず素通りさせる
+                    suppressedAsAlreadyUsed = true;
+                }
+                else
+                {
+                    activeZoneID = candidateZoneID;
+
+                    // チェックポイント保存などの処理
+                    VoxelTerrain.Instance.OnPlayerReachRelayPoint(py);
+                    ShowButton(); // UI表示
+                }
             }
 
-            bool isTouchingBedrock = (VoxelTerrain.Instance.IsRelayZoneBottom(py) || VoxelTerrain.Instance.IsRelayZoneBottom(py - 1)) && !isAlreadyUsed;
-            if (isTouchingBedrock)
+            if (nearBoundary && !suppressedAsAlreadyUsed && activeZoneID != -1)
             {
-                int currentID2 = VoxelTerrain.Instance.GetRelayID(py);
-                bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID2);
+                bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(activeZoneID);
 
                 if (!hasKeys)
                 {
                     if (KeyUIController.Instance != null)
                     {
                         KeyUIController.Instance.SetWarningActive(true);
-                        X.SetActive(true);
                     }
+                    if (X != null) X.SetActive(true);
                 }
                 else
                 {
                     if (KeyUIController.Instance != null)
                     {
                         KeyUIController.Instance.SetWarningActive(false);
-                        X.SetActive(false);
                     }
+                    if (X != null) X.SetActive(false);
                 }
 
-                // 岩盤にいる間、UIが出ていなければ出す
-                if (selectPanel != null && !selectPanel.activeSelf)
-                {
-                    // チェックポイント保存などの処理
-                    VoxelTerrain.Instance.OnPlayerReachRelayPoint(py);
-                    ShowButton(); // UI表示
-                }
                 if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
                 {
                     if (hasKeys)
@@ -121,6 +135,9 @@ public class SelectPoint : MonoBehaviour
                 {
                     KeyUIController.Instance.SetWarningActive(false);
                 }
+
+                // 帯域を離れたら確定ゾーンIDをクリアし、次に入った時に改めて確定させる
+                activeZoneID = -1;
             }
             
         }
