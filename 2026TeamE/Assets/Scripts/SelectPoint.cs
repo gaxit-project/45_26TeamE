@@ -7,12 +7,14 @@ public class SelectPoint : MonoBehaviour
 {
     [Header("選択パネルのタグ名")]
     [SerializeField] private string panelTag = "SelectPanel";
+    [SerializeField] private string XimageName = "X";
     [SerializeField] private GameObject selectPanel;
     [SerializeField] private GameObject firstSelectButton;
+    [SerializeField] public GameObject X;
 
     [Header("シーン移動用のボタン設定")]
     [SerializeField] private InputAction jumpSceneAction;
-    [SerializeField] public GameObject X;
+    
 
     [Header("UIの表示位置調整")]
     [SerializeField] private Vector3 uiOffset = new Vector3(-2.0f, 2.0f, 0);
@@ -86,7 +88,7 @@ public class SelectPoint : MonoBehaviour
                     {
                         KeyUIController.Instance.SetWarningActive(true);
                     }
-                    if (X != null) X.SetActive(true);
+                    if (X != null && !X.activeSelf) X.SetActive(true);
                 }
                 else
                 {
@@ -94,7 +96,7 @@ public class SelectPoint : MonoBehaviour
                     {
                         KeyUIController.Instance.SetWarningActive(false);
                     }
-                    if (X != null) X.SetActive(false);
+                    if (X != null && X.activeSelf) X.SetActive(false);
                 }
 
                 if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
@@ -136,6 +138,11 @@ public class SelectPoint : MonoBehaviour
                     KeyUIController.Instance.SetWarningActive(false);
                 }
 
+                if (X != null && X.activeSelf)
+                {
+                    X.SetActive(false);
+                }
+
                 // 帯域を離れたら確定ゾーンIDをクリアし、次に入った時に改めて確定させる
                 activeZoneID = -1;
             }
@@ -166,6 +173,22 @@ public class SelectPoint : MonoBehaviour
                 }
             }
 
+            // シーン移動でXの参照が外れる対策：パネル内のXマークを名前で自動取得する
+            if (X == null)
+            {
+                // "X" という名前の子オブジェクトを探す（深い階層にある場合はGetComponentsInChildrenを使う）
+                Transform[] children = selectPanel.GetComponentsInChildren<Transform>(true);
+                foreach (Transform t in children)
+                {
+                    // もしユーザーがつけた名前が "X"であればそれを取得
+                    if (t.name == XimageName)
+                    {
+                        X = t.gameObject;
+                        break;
+                    }
+                }
+            }
+
             selectPanel.SetActive(false);
         }
     }
@@ -178,14 +201,6 @@ public class SelectPoint : MonoBehaviour
         {
             
             selectPanel.SetActive(true);
-            //ボタンを選べる必要はないのでコメントアウト
-            /*
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-            if (firstSelectButton != null)
-            {
-                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectButton);
-            }
-            */
         }
         else
         {

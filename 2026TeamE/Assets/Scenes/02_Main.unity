@@ -1346,8 +1346,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SelectPoint
   panelTag: SelectPanel
+  XimageName: X
   selectPanel: {fileID: 116572835}
   firstSelectButton: {fileID: 185070318}
+  X: {fileID: 183941252}
   jumpSceneAction:
     m_Name: Jump Scene
     m_Type: 0
@@ -1373,7 +1375,6 @@ MonoBehaviour:
       m_Action: Jump Scene
       m_Flags: 0
     m_Flags: 0
-  X: {fileID: 183941252}
   uiOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &226284680
 GameObject:
@@ -10107,7 +10108,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainManager
   targetHeight: 800
-  targetWidth: 400
+  targetWidth: 1200
   blockSize: 1
 --- !u!4 &1037431501
 Transform:
