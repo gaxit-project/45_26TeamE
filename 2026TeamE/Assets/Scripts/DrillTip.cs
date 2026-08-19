@@ -133,6 +133,11 @@ public class DrillTip : MonoBehaviour
                 int dy = Mathf.FloorToInt(digLocal.y / s);
                 int dz = Mathf.FloorToInt(digLocal.z / s);
 
+                if (terrain.IsRelayZoneBottom(dy))
+                {
+                    return;
+                }
+
                 BoxCollider box = miningZone.GetComponent<BoxCollider>();
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
@@ -168,6 +173,7 @@ public class DrillTip : MonoBehaviour
             prev = next;
         }
     }
+
     private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
     {
         return terrain.IsRelayZoneBottom(y);
