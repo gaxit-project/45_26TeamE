@@ -16,15 +16,26 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private Slider seSlider;
 
     [Header("Volume Settings")]
-    [SerializeField] private float defaultBGMVolume = 0.2f;
-    [SerializeField] private float defaultSEVolume = 0.2f;
+    [Tooltip("スライダーを最大(100%)にした時の実際の音量。全体的に音がデカい場合はここを下げる")]
+    [Range(0f, 1f)][SerializeField] private float maxBGMVolume = 0.3f;
+    [Tooltip("スライダーを最大(100%)にした時の実際の音量。全体的に音がデカい場合はここを下げる")]
+    [Range(0f, 1f)][SerializeField] private float maxSEVolume = 0.3f;
+
+    [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
+    [Range(0f, 1f)][SerializeField] private float defaultBGMSlider = 0.5f;
+    [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
+    [Range(0f, 1f)][SerializeField] private float defaultSESlider = 0.5f;
+
+    // スライダーの位置(0〜1)。実際の音量は「この値 × maxVolume」で決まる
+    private float bgmSliderValue;
+    private float seSliderValue;
 
     private bool isInitializing = false;
     private CriAtomExPlayback? loopPlayback;
     private string currentLoopCueName = "";
 
-    private const string BGM_VOLUME_SAVE_KEY = "SavedBGMVolume";
-    private const string SE_VOLUME_SAVE_KEY = "SavedSEVolume";
+    private const string BGM_VOLUME_SAVE_KEY = "SavedBGMSliderValue";
+    private const string SE_VOLUME_SAVE_KEY = "SavedSESliderValue";
 
     // シングルトンの実装
     void Awake()
@@ -33,16 +44,16 @@ public class SoundManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            if(bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
 
-            // 保存された音量があればそれを使い、なければInspectorのデフォルト値を使う
-            float savedBGMVolume = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMVolume);
-            float savedSEVolume = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSEVolume);
-
-            if(bgmSource != null) bgmSource.volume = savedBGMVolume;
-            if(seSource != null) seSource.volume = savedSEVolume;
+            if (bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
             if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
-            if (loopSeSource != null) loopSeSource.volume = savedSEVolume;
+
+            // 保存されたスライダー位置があればそれを使い、なければInspectorの初期位置を使う
+            bgmSliderValue = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMSlider);
+            seSliderValue = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSESlider);
+
+            ApplyBGMVolume();
+            ApplySEVolume();
         }
         else
         {
@@ -55,6 +66,24 @@ public class SoundManager : MonoBehaviour
         InitSlider();
     }
 
+    /// <summary>
+    /// スライダー位置から実際のBGM音量を反映する
+    /// </summary>
+    private void ApplyBGMVolume()
+    {
+        if (bgmSource != null) bgmSource.volume = bgmSliderValue * maxBGMVolume;
+    }
+
+    /// <summary>
+    /// スライダー位置から実際のSE音量を反映する
+    /// </summary>
+    private void ApplySEVolume()
+    {
+        float volume = seSliderValue * maxSEVolume;
+        if (seSource != null) seSource.volume = volume;
+        if (loopSeSource != null) loopSeSource.volume = volume;
+    }
+
     public void InitSlider()
     {
         isInitializing = true;
@@ -63,7 +92,7 @@ public class SoundManager : MonoBehaviour
             bgmSlider.minValue = 0f;
             bgmSlider.maxValue = 1f;
             bgmSlider.onValueChanged.RemoveListener(SetBGMVolume);
-            bgmSlider.value = bgmSource.volume;
+            bgmSlider.value = bgmSliderValue;
             bgmSlider.onValueChanged.AddListener(SetBGMVolume);
         }
 
@@ -72,7 +101,7 @@ public class SoundManager : MonoBehaviour
             seSlider.minValue = 0f;
             seSlider.maxValue = 1f;
             seSlider.onValueChanged.RemoveListener(SetSEVolume);
-            seSlider.value = seSource.volume;
+            seSlider.value = seSliderValue;
             seSlider.onValueChanged.AddListener(SetSEVolume);
         }
 
@@ -130,23 +159,27 @@ public class SoundManager : MonoBehaviour
         seSource.Stop();
     }
 
-    // BGMの音量を変更するメソッド
-    public void SetBGMVolume(float volume)
+    // BGMスライダーが動かされた時に呼ばれる（引数はスライダーの位置 0〜1）
+    public void SetBGMVolume(float sliderValue)
     {
-        if (bgmSource != null) bgmSource.volume = volume;
+        if (isInitializing) return;
 
-        PlayerPrefs.SetFloat(BGM_VOLUME_SAVE_KEY, volume);
+        bgmSliderValue = Mathf.Clamp01(sliderValue);
+        ApplyBGMVolume();
+
+        PlayerPrefs.SetFloat(BGM_VOLUME_SAVE_KEY, bgmSliderValue);
         PlayerPrefs.Save();
     }
 
-    // SEの音量を変更するメソッド
-    public void SetSEVolume(float volume)
+    // SEスライダーが動かされた時に呼ばれる（引数はスライダーの位置 0〜1）
+    public void SetSEVolume(float sliderValue)
     {
-        if(isInitializing) return;
-        seSource.volume = volume;
-        if (loopSeSource != null) loopSeSource.volume = volume;
+        if (isInitializing) return;
 
-        PlayerPrefs.SetFloat(SE_VOLUME_SAVE_KEY, volume);
+        seSliderValue = Mathf.Clamp01(sliderValue);
+        ApplySEVolume();
+
+        PlayerPrefs.SetFloat(SE_VOLUME_SAVE_KEY, seSliderValue);
         PlayerPrefs.Save();
     }
 
@@ -156,16 +189,16 @@ public class SoundManager : MonoBehaviour
         seSource.Play(cueName);
     }
 
-    // BGMの音量を取得するメソッド
+    // BGMの音量を取得するメソッド（実際に鳴っている音量）
     public float GetBGMVolume()
     {
-        return bgmSource.volume;
+        return bgmSource != null ? bgmSource.volume : 0f;
     }
 
-    // SEの音量を取得するメソッド
+    // SEの音量を取得するメソッド（実際に鳴っている音量）
     public float GetSEVolume()
     {
-        return seSource.volume;
+        return seSource != null ? seSource.volume : 0f;
     }
 
     // BGMが再生中かどうかを確認するメソッド
