@@ -22,6 +22,9 @@ public class DrillTip : MonoBehaviour
     private float lastDirtTouchTime = -100f;
     [SerializeField] private float contactTimeout = 0.5f;
 
+    private SphereCollider myCollider;
+    private Vector3 initialLocalCenter;
+
     public bool IsContactingDiggableSurface => (Time.time - lastDirtTouchTime) <= contactTimeout;
 
     private float CurrentDrillRadius
@@ -48,9 +51,26 @@ public class DrillTip : MonoBehaviour
     {
         player = GetComponentInParent<PlayerController>();
 
+        myCollider = GetComponent<SphereCollider>();
+        if (myCollider != null)
+        {
+            initialLocalCenter = myCollider.center;
+        }
+
         if (dirtEffect != null)
         {
             dirtEffect.gameObject.SetActive(false);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // アニメーション等でズレた分を逆算し、SphereColliderのワールドX座標が常に0になるようcenterを補正
+        if (myCollider != null)
+        {
+            Vector3 worldCenter = transform.TransformPoint(initialLocalCenter);
+            worldCenter.x = 0f;
+            myCollider.center = transform.InverseTransformPoint(worldCenter);
         }
     }
 
@@ -101,6 +121,7 @@ public class DrillTip : MonoBehaviour
                 foreach (Vector3 offset in checkOffsets)
                 {
                     Vector3 checkPos = transform.position + offset;
+                    checkPos.x = 0f; // 2D平面対応: 判定位置のXを0に固定
                     Vector3 lp = terrain.transform.InverseTransformPoint(checkPos);
                     int tx = Mathf.FloorToInt(lp.x / s);
                     int ty = Mathf.FloorToInt(lp.y / s);
@@ -128,7 +149,9 @@ public class DrillTip : MonoBehaviour
 
                 if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
-                Vector3 digLocal = terrain.transform.InverseTransformPoint(transform.position);
+                Vector3 digPos = transform.position;
+                digPos.x = 0f; // 2D平面対応: 掘削中心位置のXを0に固定
+                Vector3 digLocal = terrain.transform.InverseTransformPoint(digPos);
                 int dx = Mathf.FloorToInt(digLocal.x / s);
                 int dy = Mathf.FloorToInt(digLocal.y / s);
                 int dz = Mathf.FloorToInt(digLocal.z / s);
