@@ -492,6 +492,7 @@ public class PlayerController : MonoBehaviour
     public void EnablePlayerControl()
     {
         CanMove = true;
+        TextManager.Instance.ShowText("鍵を集めて下へ進もう！");
     }
 
     private void OnTriggerEnter(Collider other)

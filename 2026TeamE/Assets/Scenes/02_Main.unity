@@ -1386,6 +1386,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cfbd86c222c7264eb9d17c6687c68db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VoxelTerrain
+  blockSizeX: 1.2
   zoneSettings:
   - zoneName: "1\u5C64"
     widthZ: 150
@@ -9622,7 +9623,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 1829}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &941572585
@@ -17398,7 +17399,7 @@ PlayableDirector:
     value: {fileID: 1546445454}
   - key: {fileID: -5389381291053514651, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 1982867681}
-  - key: {fileID: -4496951596470982597, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+  - key: {fileID: 6328203690980723654, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 941572587}
   m_ExposedReferences:
     m_References: []
@@ -19034,8 +19035,8 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 15
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2

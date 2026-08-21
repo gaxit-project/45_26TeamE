@@ -2033,6 +2033,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
   bgmSource: {fileID: 523647036}
   seSource: {fileID: 523647035}
+  loopSeSource: {fileID: 0}
   bgmSlider: {fileID: 0}
   seSlider: {fileID: 0}
   defaultBGMVolume: 0.2
@@ -3131,9 +3132,9 @@ MonoBehaviour:
   videoPlayer: {fileID: 1069075293}
   jewelSparkEffect: {fileID: 2770810700285028621, guid: 2bfa1d91e294b794da8d2a708241a360, type: 3}
   player: {fileID: 230889150}
-  normalColor: {r: 0.8705883, g: 0.8705883, b: 0.8705883, a: 1}
-  maxLevelColor: {r: 0.87058824, g: 0.87058824, b: 0.87058824, a: 1}
-  cannotBuyColor: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  maxLevelColor: {r: 0.49685526, g: 0.49685526, b: 0.49685526, a: 1}
+  cannotBuyColor: {r: 1, g: 0.47484267, b: 0.47484267, a: 1}
   activeStarColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveStarColor: {r: 0.3, g: 0.3, b: 0.3, a: 1}
 --- !u!1 &875033564
@@ -4256,6 +4257,8 @@ MonoBehaviour:
   dirtEffect: {fileID: 0}
   effectKeepTime: 0.2
   forwardOffset: 0.2
+  drillSECueName: "\u30C9\u30EA\u30EB"
+  requireTerrainContact: 1
   contactTimeout: 0.25
 --- !u!1 &1144892470
 GameObject:
