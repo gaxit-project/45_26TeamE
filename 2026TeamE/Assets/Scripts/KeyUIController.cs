@@ -181,10 +181,11 @@ public class KeyUIController : MonoBehaviour
 
         target.localScale = Vector3.one;
 
-        // ② アニメーションが完了したタイミング（ちょうど約0.3秒後）でコンプリート音を鳴らす
-        if (collectedCount == 3 && SoundManager.Instance != null)
+        if (collectedCount == 3)
         {
-            SoundManager.Instance.PlaySE("A_luxurious_upgrade");
+            TextManager.Instance.ShowText("先へ進めるようになった！");
+            if(SoundManager.Instance != null)
+                SoundManager.Instance.PlaySE("A_luxurious_upgrade");
         }
     }
 
