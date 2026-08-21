@@ -210,10 +210,6 @@ public partial class VoxelTerrain
 
                     bool hasNeighbor = false;
 
-                    int[] dx = { 1, -1, 0, 0, 0, 0 };
-                    int[] dy = { 0, 0, 1, -1, 0, 0 };
-                    int[] dz = { 0, 0, 0, 0, 1, -1 };
-
                     for (int i = 0; i < 6; i++)
                     {
                         int nx = x + dx[i];
