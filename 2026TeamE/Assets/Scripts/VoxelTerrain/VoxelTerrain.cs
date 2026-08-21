@@ -137,6 +137,12 @@ public partial class VoxelTerrain : MonoBehaviour
     public int ChunkSizeY => chunkSizeY;
     public bool IsStageGenerated => mapData != null;
 
+    /// <summary>
+    /// ステージ生成中かどうか。生成は重いため複数フレームにまたがって実行される。
+    /// 生成完了に依存する処理は、このフラグが false になるのを待つこと。
+    /// </summary>
+    public bool IsGenerating { get; private set; }
+
     // イベント
     public event Action<int, int, byte> OnBlockChanged;
     public event Action<int, int> OnBlocksDestroyedByPlayer;
@@ -198,6 +204,13 @@ public partial class VoxelTerrain : MonoBehaviour
 
     private System.Collections.IEnumerator RestartRoutine()
     {
+        // ステージ生成は複数フレームに分割して行われるため、
+        // 地形が出来上がる前にプレイヤーを移動させてしまわないよう完了を待つ
+        while (IsGenerating)
+        {
+            yield return null;
+        }
+
         yield return null;
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())

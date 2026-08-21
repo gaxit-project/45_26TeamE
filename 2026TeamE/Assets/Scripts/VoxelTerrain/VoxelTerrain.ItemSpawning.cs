@@ -1,110 +1,193 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 // アイテム、チャンク生成
 public partial class VoxelTerrain
 {
-    private void GenerateChunksAndItems(System.Random rnd)
-    {
-        foreach (Transform child in transform) Destroy(child.gameObject);
-        int numChunks = Mathf.CeilToInt((float)heightY / chunkSizeY);
-        chunks = new Chunk[numChunks];
+    /// <summary>1ゾーンをクリアするために必要な鍵の数。</summary>
+    private const int RequiredKeyCount = 3;
 
-        for (int i = 0; i < numChunks; i++)
+    /// <summary>鍵以外の、通常の宝箱から出るアイテムの抽選対象。</summary>
+    private static readonly SpawnItemType[] NormalItemPool =
+    {
+        SpawnItemType.Oxygen,
+        SpawnItemType.LeatherBag,
+        SpawnItemType.GoldLeatherBag,
+    };
+
+    // --- チャンク構築 ---------------------------------------------------
+
+    /// <summary>
+    /// 既存の子オブジェクトを破棄し、チャンクを生成してメッシュを構築する。
+    /// メッシュ構築は非常に重いため、時間予算に応じてフレームをまたぎながら進める。
+    /// </summary>
+    private IEnumerator BuildChunksRoutine(FrameBudget budget)
+    {
+        foreach (Transform child in transform)
         {
-            GameObject go = Instantiate(chunkPrefab, transform);
-            go.name = $"Chunk_{i}";
-            go.transform.localPosition = Vector3.zero;
-            chunks[i] = go.GetComponent<Chunk>();
-            chunks[i].Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial, boundaryMaterial);
-            UpdateChunkMesh(i);
+            Destroy(child.gameObject);
         }
 
-        int currentStageTopY = heightY;
-        for (int zIdx = 0; zIdx < zoneSettings.Count; zIdx++)
-        {
-            int zoneHeight = zoneSettings[zIdx].heightChunks * chunkSizeY;
-            int currentStageBottomY = currentStageTopY - zoneHeight;
+        int chunkCount = Mathf.CeilToInt((float)heightY / chunkSizeY);
+        chunks = new Chunk[chunkCount];
 
-            if (!zoneInitialGemValues.ContainsKey(zIdx))
+        for (int i = 0; i < chunkCount; i++)
+        {
+            chunks[i] = CreateChunk(i);
+            UpdateChunkMesh(i);
+
+            if (budget.IsExhausted)
             {
-                zoneInitialGemValues[zIdx] = 0;
+                yield return null;
+                budget.Renew();
+            }
+        }
+    }
+
+    private Chunk CreateChunk(int index)
+    {
+        GameObject chunkObject = Instantiate(chunkPrefab, transform);
+        chunkObject.name = $"Chunk_{index}";
+        chunkObject.transform.localPosition = Vector3.zero;
+
+        Chunk chunk = chunkObject.GetComponent<Chunk>();
+        chunk.Init(dirtMaterial, oreMaterial, bedrockMaterial, stoneMaterial, hardRockMaterial, quartziteMaterial, boundaryMaterial);
+
+        return chunk;
+    }
+
+    // --- アイテム配置 ---------------------------------------------------
+
+    /// <summary>
+    /// 全ゾーンを上から順に走査し、それぞれのゾーンにアイテムを配置する。
+    /// </summary>
+    private void SpawnZoneItems(System.Random rnd)
+    {
+        int zoneTopY = heightY;
+
+        for (int zoneIndex = 0; zoneIndex < zoneSettings.Count; zoneIndex++)
+        {
+            int zoneBottomY = zoneTopY - zoneSettings[zoneIndex].heightChunks * chunkSizeY;
+
+            if (!zoneInitialGemValues.ContainsKey(zoneIndex))
+            {
+                zoneInitialGemValues[zoneIndex] = 0;
             }
 
-            if (zoneSettings[zIdx].isGoalZone)
+            if (zoneSettings[zoneIndex].isGoalZone)
             {
                 // ゴールゾーンは通常の鍵・爆弾・アイテム抽選を行わず、中央にゴールのお宝だけを配置する
-                SpawnGoalTreasure(zIdx, currentStageBottomY, currentStageTopY);
-                currentStageTopY = currentStageBottomY;
-                continue;
+                SpawnGoalTreasure(zoneIndex, zoneBottomY, zoneTopY);
+            }
+            else
+            {
+                SpawnItemsInZone(zoneIndex, zoneBottomY, zoneTopY, rnd);
             }
 
-            List<Vector3Int> validPositions = new List<Vector3Int>();
-            for (int y = currentStageBottomY; y < currentStageTopY; y++)
-            {
-                for (int x = 0; x < thicknessX; x++)
-                {
-                    for (int z = 0; z < maxStageWidthZ; z++)
-                    {
-                        if (!IsInside(x, y, z)) continue;
+            zoneTopY = zoneBottomY;
+        }
+    }
 
-                        byte b = mapData[x, y, z];
-                        if (b == (byte)BlockType.Dirt || b == (byte)BlockType.Ore || b == (byte)BlockType.Stone || b == (byte)BlockType.HardRock)
-                        {
-                            validPositions.Add(new Vector3Int(x, y, z));
-                        }
+    /// <summary>
+    /// 1つのゾーンに、宝箱（鍵を含む）と爆弾をランダムな位置へ配置する。
+    /// </summary>
+    private void SpawnItemsInZone(int zoneIndex, int bottomY, int topY, System.Random rnd)
+    {
+        List<Vector3Int> candidates = CollectDiggablePositions(bottomY, topY);
+        if (candidates.Count == 0) return;
+
+        Shuffle(candidates, rnd);
+
+        // シャッフル済みの候補を先頭から消費していくことで、配置が重複しないようにする
+        int nextIndex = 0;
+
+        List<SpawnItemType> treasureSequence = BuildTreasureSequence(zoneIndex, rnd);
+        for (int i = 0; i < treasureSequence.Count; i++)
+        {
+            if (nextIndex >= candidates.Count) break;
+
+            SpawnItemAt(treasureSequence[i], candidates[nextIndex], zoneIndex);
+            nextIndex++;
+        }
+
+        int bombCount = Mathf.Max(0, zoneSettings[zoneIndex].bombCount);
+        for (int i = 0; i < bombCount; i++)
+        {
+            if (nextIndex >= candidates.Count) break;
+
+            SpawnItemAt(SpawnItemType.Bomb, candidates[nextIndex], zoneIndex);
+            nextIndex++;
+        }
+    }
+
+    /// <summary>
+    /// このゾーンに配置する宝箱の中身を並べたリストを作る。
+    /// 先頭には必ずクリアに必要な数の鍵が入り、残りは通常アイテムから抽選される。
+    /// </summary>
+    private List<SpawnItemType> BuildTreasureSequence(int zoneIndex, System.Random rnd)
+    {
+        var sequence = new List<SpawnItemType>();
+
+        for (int i = 0; i < RequiredKeyCount; i++)
+        {
+            sequence.Add(SpawnItemType.Key);
+        }
+
+        int totalItemCount = Mathf.Max(RequiredKeyCount, zoneSettings[zoneIndex].itemsPerStage);
+        for (int i = sequence.Count; i < totalItemCount; i++)
+        {
+            sequence.Add(NormalItemPool[rnd.Next(NormalItemPool.Length)]);
+        }
+
+        return sequence;
+    }
+
+    /// <summary>
+    /// 指定した深さの範囲から、アイテムを埋め込める（掘って出せる）ブロックの座標を集める。
+    /// </summary>
+    private List<Vector3Int> CollectDiggablePositions(int bottomY, int topY)
+    {
+        var positions = new List<Vector3Int>();
+
+        for (int y = bottomY; y < topY; y++)
+        {
+            for (int x = 0; x < thicknessX; x++)
+            {
+                for (int z = 0; z < maxStageWidthZ; z++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+
+                    if (IsDiggable(mapData[x, y, z]))
+                    {
+                        positions.Add(new Vector3Int(x, y, z));
                     }
                 }
             }
+        }
 
-            if (validPositions.Count > 0)
-            {
-                for (int i = validPositions.Count - 1; i > 0; i--)
-                {
-                    int j = rnd.Next(i + 1);
-                    var temp = validPositions[i];
-                    validPositions[i] = validPositions[j];
-                    validPositions[j] = temp;
-                }
+        return positions;
+    }
 
-                int currentValidIndex = 0;
-                List<SpawnItemType> tresureSequence = new List<SpawnItemType>();
+    /// <summary>プレイヤーが掘って壊せるブロックかどうか（空洞・岩盤・境界壁は対象外）。</summary>
+    private static bool IsDiggable(byte block)
+    {
+        return block == (byte)BlockType.Dirt
+            || block == (byte)BlockType.Ore
+            || block == (byte)BlockType.Stone
+            || block == (byte)BlockType.HardRock;
+    }
 
-                const int REQUIRED_KEY_COUNT = 3;
-                for (int i = 0; i < REQUIRED_KEY_COUNT; i++) tresureSequence.Add(SpawnItemType.Key);
+    /// <summary>フィッシャー・イェーツ法でリストの並びをランダムに入れ替える。</summary>
+    private static void Shuffle(List<Vector3Int> items, System.Random rnd)
+    {
+        for (int i = items.Count - 1; i > 0; i--)
+        {
+            int j = rnd.Next(i + 1);
 
-                SpawnItemType[] normalPool = {
-                    SpawnItemType.Oxygen,
-                    SpawnItemType.LeatherBag,
-                    SpawnItemType.GoldLeatherBag,
-                };
-
-                int zoneItemsPerStage = Mathf.Max(REQUIRED_KEY_COUNT, zoneSettings[zIdx].itemsPerStage);
-                int remainingTresureCount = zoneItemsPerStage - tresureSequence.Count;
-                for (int i = 0; i < remainingTresureCount; i++)
-                {
-                    tresureSequence.Add(normalPool[rnd.Next(normalPool.Length)]);
-                }
-
-                int tresureSpawnCount = Mathf.Min(tresureSequence.Count, validPositions.Count);
-                for (int i = 0; i < tresureSpawnCount; i++)
-                {
-                    if (currentValidIndex >= validPositions.Count) break;
-                    SpawnItemAt(tresureSequence[i], validPositions[currentValidIndex], zIdx);
-                    currentValidIndex++;
-                }
-
-                int zoneBombCount = Mathf.Max(0, zoneSettings[zIdx].bombCount);
-                int bombSpawnCount = Mathf.Min(zoneBombCount, validPositions.Count - currentValidIndex);
-                for (int i = 0; i < bombSpawnCount; i++)
-                {
-                    if (currentValidIndex >= validPositions.Count) break;
-                    SpawnItemAt(SpawnItemType.Bomb, validPositions[currentValidIndex], zIdx);
-                    currentValidIndex++;
-                }
-            }
-
-            currentStageTopY = currentStageBottomY; ;
+            Vector3Int temp = items[i];
+            items[i] = items[j];
+            items[j] = temp;
         }
     }
 
@@ -214,32 +297,14 @@ public partial class VoxelTerrain
         }
         int currentStageTopY = currentStageBottomY + zoneHeight;
 
-        List<Vector3Int> validPositions = new List<Vector3Int>();
-        for (int y = currentStageBottomY; y < currentStageTopY; y++)
-        {
-            for (int x = 0; x < thicknessX; x++)
-            {
-                for (int z = 0; z < maxStageWidthZ; z++)
-                {
-                    if (!IsInside(x, y, z)) continue;
+        List<Vector3Int> validPositions = CollectDiggablePositions(currentStageBottomY, currentStageTopY);
+        if (validPositions.Count == 0) return;
 
-                    byte b = mapData[x, y, z];
-                    if (b == (byte)BlockType.Dirt || b == (byte)BlockType.Ore || b == (byte)BlockType.Stone || b == (byte)BlockType.HardRock)
-                    {
-                        validPositions.Add(new Vector3Int(x, y, z));
-                    }
-                }
-            }
-        }
+        var rnd = new System.Random();
+        Vector3Int targetCoord = validPositions[rnd.Next(validPositions.Count)];
 
-        if (validPositions.Count > 0)
-        {
-            var rnd = new System.Random();
-            Vector3Int targetCoord = validPositions[rnd.Next(validPositions.Count)];
-
-            // 鍵のタイプで宝箱を再生成
-            SpawnItemAt(SpawnItemType.Key, targetCoord, zoneIndex);
-            Debug.Log($"<color=orange>[鍵リスポーン]</color> ゾーン {zoneIndex} の空きブロック ({targetCoord.x}, {targetCoord.y}, {targetCoord.z}) に再配置しました。");
-        }
+        // 鍵のタイプで宝箱を再生成
+        SpawnItemAt(SpawnItemType.Key, targetCoord, zoneIndex);
+        Debug.Log($"<color=orange>[鍵リスポーン]</color> ゾーン {zoneIndex} の空きブロック ({targetCoord.x}, {targetCoord.y}, {targetCoord.z}) に再配置しました。");
     }
 }

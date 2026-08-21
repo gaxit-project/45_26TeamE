@@ -7,6 +7,9 @@ public class introduction : MonoBehaviour
     [Header("最初にフォーカスするボタン")]
     public GameObject firstSelectedButton;
 
+    /// <summary>ゲーム開始からイントロダクション画面を表示するまでの待ち時間（秒）。カメラ演出の尺に合わせている。</summary>
+    private const float ShowDelaySeconds = 9f;
+
     // 他のスクリプトから「今イントロダクション画面が開いているか」を確認できるようにする
     public static bool IsActive { get; private set; }
     private static bool hasAlreadyShown = false;
@@ -42,10 +45,16 @@ public class introduction : MonoBehaviour
         group.interactable = false;
         group.blocksRaycasts = false;
 
-        // 8秒待機
-        yield return new WaitForSecondsRealtime(9f);
+        // ローディング画面が出ている間は待機を始めない。
+        // ここで待たないと、ロードにかかった時間の分だけ表示が早まってしまう。
+        while (SceneLoader.Instance != null && SceneLoader.Instance.IsLoading)
+        {
+            yield return null;
+        }
 
-        // 8秒後に表示
+        yield return new WaitForSecondsRealtime(ShowDelaySeconds);
+
+        // 待機後に表示
         group.alpha = 1f;
         group.interactable = true;
         group.blocksRaycasts = true;

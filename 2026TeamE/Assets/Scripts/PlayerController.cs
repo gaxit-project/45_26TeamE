@@ -117,7 +117,15 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         onDamaged = false;
-        Time.timeScale = 1f;
+
+        // ポーズ中にシーン遷移した場合などに時間が止まったままにならないよう復帰させる。
+        // ただしローディング中はSceneLoaderが意図的に時間を止めているため上書きしない。
+        bool isLoading = SceneLoader.Instance != null && SceneLoader.Instance.IsLoading;
+        if (!isLoading)
+        {
+            Time.timeScale = 1f;
+        }
+
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;

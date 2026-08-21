@@ -23,6 +23,13 @@ public class SceneLoader : MonoBehaviour
 
     private Coroutine textWaveRoutine;
 
+    /// <summary>
+    /// ローディング画面を表示中かどうか。
+    /// 表示中は Time.timeScale を 0 にしているため、他の処理が時間を操作しないよう
+    /// この間はポーズなどを受け付けないようにする。
+    /// </summary>
+    public bool IsLoading { get; private set; }
+
     private void Awake()
     {
         if (Instance == null)
@@ -44,63 +51,87 @@ public class SceneLoader : MonoBehaviour
     }
 
     // 非同期でシーンをロードするコルーチン
+    // ローディング中はゲーム内の時間を止めるため、このコルーチン自身は
+    // timeScale の影響を受けない unscaled な時間で動かしている。
     private IEnumerator LoadAsynchronously(string sceneName)
     {
         SoundManager.Instance?.StopBGM();
 
-        // フェードイン
-        loadingCanvas.SetActive(true);
-        float fadeTime = 0.5f;
-        while (canvasGroup.alpha < 1)
+        // ローディング画面を出している間、遷移先シーンのタイマーや演出が
+        // 裏側で進んでしまわないようにゲーム内の時間を止める
+        IsLoading = true;
+        Time.timeScale = 0f;
+
+        try
         {
-            canvasGroup.alpha += Time.deltaTime / fadeTime;
-            yield return null;
-        }
+            // フェードイン
+            loadingCanvas.SetActive(true);
+            float fadeTime = 0.5f;
+            while (canvasGroup.alpha < 1)
+            {
+                canvasGroup.alpha += Time.unscaledDeltaTime / fadeTime;
+                yield return null;
+            }
 
-        // 波打ちアニメーションを開始
-        if (progressText != null)
+            // 1文字ずつ弾むアニメーションを開始
+            if (progressText != null)
+            {
+                progressText.text = loadingMessage;
+                textWaveRoutine = StartCoroutine(AnimateLoadingText());
+            }
+
+            // シーンの非同期ロード
+            float displayedProgress = 0f;
+            AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
+            operation.allowSceneActivation = false;
+
+            while (operation.progress < 0.9f || displayedProgress < 0.99f)
+            {
+                float targetProgress = Mathf.Clamp01(operation.progress / 0.9f);
+                displayedProgress = Mathf.MoveTowards(displayedProgress, targetProgress, Time.unscaledDeltaTime * 2);
+                yield return null;
+            }
+
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            // シーンの切り替え
+            operation.allowSceneActivation = true;
+
+            while (!operation.isDone)
+            {
+                yield return null;
+            }
+
+            // シーンを切り替えた直後に走る重い初期化（地形生成など）の完了を待つ。
+            // ここで待たないと、生成中の重いフレームがローディング画面の裏側で走り、
+            // 画面が固まったように見えてしまう。
+            while (SceneInitializationGate.IsBusy)
+            {
+                yield return null;
+            }
+
+            // 弾むアニメーションを停止
+            if (textWaveRoutine != null)
+            {
+                StopCoroutine(textWaveRoutine);
+                textWaveRoutine = null;
+            }
+
+            // フェードアウト
+            while (canvasGroup.alpha > 0)
+            {
+                canvasGroup.alpha -= Time.unscaledDeltaTime / fadeTime;
+                yield return null;
+            }
+
+            loadingCanvas.SetActive(false);
+        }
+        finally
         {
-            progressText.text = loadingMessage;
-            textWaveRoutine = StartCoroutine(AnimateLoadingText());
+            // 途中で中断された場合でも時間が止まったままにならないよう、必ず元に戻す
+            Time.timeScale = 1f;
+            IsLoading = false;
         }
-
-        // シーンの非同期ロード
-        float displayedProgress = 0f;
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
-        operation.allowSceneActivation = false;
-
-        while (operation.progress < 0.9f || displayedProgress < 0.99f)
-        {
-            float targetProgress = Mathf.Clamp01(operation.progress / 0.9f);
-            displayedProgress = Mathf.MoveTowards(displayedProgress, targetProgress, Time.deltaTime * 2);
-            yield return null;
-        }
-
-        yield return new WaitForSeconds(0.5f);
-
-        // シーンの切り替え
-        operation.allowSceneActivation = true;
-
-        while (!operation.isDone)
-        {
-            yield return null;
-        }
-
-        // 波打ちアニメーションを停止
-        if (textWaveRoutine != null)
-        {
-            StopCoroutine(textWaveRoutine);
-            textWaveRoutine = null;
-        }
-
-        // フェードアウト
-        while (canvasGroup.alpha > 0)
-        {
-            canvasGroup.alpha -= Time.deltaTime / fadeTime;
-            yield return null;
-        }
-
-        loadingCanvas.SetActive(false);
     }
 
     /// <summary>
@@ -119,9 +150,10 @@ public class SceneLoader : MonoBehaviour
 
             if (characterCount > 0 && secondsPerCharacter > 0f)
             {
-                // 全文字を一巡するのにかかる時間の中で、今どの文字が担当かを求める
+                // 全文字を一巡するのにかかる時間の中で、今どの文字が担当かを求める。
+                // ローディング中はtimeScaleが0のため、影響を受けないunscaledTimeを使う。
                 float cycleDuration = characterCount * secondsPerCharacter;
-                float cycleTime = Time.time % cycleDuration;
+                float cycleTime = Time.unscaledTime % cycleDuration;
                 int activeIndex = Mathf.Clamp(Mathf.FloorToInt(cycleTime / secondsPerCharacter), 0, characterCount - 1);
                 float t = (cycleTime - activeIndex * secondsPerCharacter) / secondsPerCharacter; // 0〜1
 
