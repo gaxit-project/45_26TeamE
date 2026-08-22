@@ -99,6 +99,14 @@ public partial class VoxelTerrain : MonoBehaviour
     [SerializeField] private int chunkSizeY = 16;
     [SerializeField] private GameObject chunkPrefab;
 
+    [Header("アイテム配置設定")]
+    [Tooltip("宝箱同士の最低距離（ブロック数）。狭い場所で置ききれない場合は無視されます。")]
+    [SerializeField] private float treasureMinDistance = 10f;
+    [Tooltip("爆弾が宝箱から離れるほど生成確率が下がる減衰率（大きいほど宝箱の近くに集中する）")]
+    [SerializeField] private float bombWeightFalloff = 10f;
+    [Tooltip("宝箱から爆弾を離す最低距離（ブロック数）。これより近い場所には爆弾は生成されません。")]
+    [SerializeField] private float bombSafeDistanceFromTreasure = 2f;
+
     [Header("アイテムPrefab設定")]
     [SerializeField] private GameObject treasurePrefab;
     [SerializeField] private GameObject keyPrefab;
