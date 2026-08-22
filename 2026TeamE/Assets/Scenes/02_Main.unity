@@ -1575,9 +1575,6 @@ MonoBehaviour:
   seed: 12345
   chunkSizeY: 20
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
-  treasureMinDistance: 30
-  bombWeightFalloff: 30
-  bombSafeDistanceFromTreasure: 2
   treasurePrefab: {fileID: 1077105864719006209, guid: a5c3993a5a86db142b4e7f45d9e05b86, type: 3}
   keyPrefab: {fileID: 1077105864719006209, guid: b144154cd100ffa49ac413a153c945c7, type: 3}
   bombPrefab: {fileID: 1077105864719006209, guid: e7a80b686dca789439aca5724de67a2c, type: 3}
@@ -23042,6 +23039,8 @@ PlayableDirector:
     value: {fileID: 1982867681}
   - key: {fileID: 6328203690980723654, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
     value: {fileID: 941572587}
+  - key: {fileID: 3938539836541744583, guid: 9c311e1b360012b448ffd1e2cc0b2ae0, type: 2}
+    value: {fileID: 941572583}
   m_ExposedReferences:
     m_References: []
 --- !u!114 &1546445453
