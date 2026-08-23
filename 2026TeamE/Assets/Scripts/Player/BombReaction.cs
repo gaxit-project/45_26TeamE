@@ -291,6 +291,8 @@ public class BombReaction : BuriedItemBase
 
         foreach (JewelryReaction jewelScript in jewels)
         {
+            if (jewelScript.IsGot) continue;
+
             GameObject jewel = jewelScript.gameObject;
             Collider jewelCol = jewel.GetComponent<Collider>();
             Vector3 jewelCenter = jewelCol != null ? jewelCol.bounds.center : jewel.transform.position;
@@ -315,6 +317,8 @@ public class BombReaction : BuriedItemBase
 
         foreach (TreasureBoxBehaviour boxScript in treasureBoxes)
         {
+            if (boxScript.IsGot) continue;
+
             GameObject box = boxScript.gameObject;
             Collider boxCol = box.GetComponent<Collider>();
             Vector3 boxCenter = boxCol != null ? boxCol.bounds.center : box.transform.position;

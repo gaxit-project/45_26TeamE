@@ -17,6 +17,7 @@ public class JewelryReaction : BuriedItemBase, ICollectible
     public GameObject EfectPrefab;
 
     private bool isGot = false;
+    public bool IsGot => isGot;
 
     protected override (GameObject echoPrefab, GameObject markerPrefab) GetReactionPrefabs()
     {

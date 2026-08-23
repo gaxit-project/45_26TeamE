@@ -26,6 +26,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
     public Vector3 exposureSize = new Vector3(1, 3, 3);
 
     private bool isGot = false;
+    public bool IsGot => isGot;
     private SpriteRenderer spriteRenderer;
 
     protected override void Awake()
