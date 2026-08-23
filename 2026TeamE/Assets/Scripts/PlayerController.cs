@@ -94,7 +94,7 @@ public class PlayerController : MonoBehaviour
         if (HapticsManager.Instance == null) return;
 
         bool contacting = drillTip != null && drillTip.IsContactingDiggableSurface;
-        bool shouldRumble = drillFlag && HasBattery && contacting;
+        bool shouldRumble = drillFlag && contacting;
 
         if (shouldRumble)
         {
