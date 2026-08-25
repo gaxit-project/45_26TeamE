@@ -2,12 +2,17 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class TextManager : MonoBehaviour
 {
-    [Header("�\������I�u�W�F�N�g")]
+    [Header("検索するUIのオブジェクト名 (インスペクターで設定)")]
+    public string imageName = "UI_Image"; // 背景画像のオブジェクト名
+    public string textName = "UI_Text";   // テキストのオブジェクト名
+
+    [Header("表示オブジェクト")]
     public Image Image;
-    [Header("�e�L�X�g")]
+    [Header("テキスト")]
     public TextMeshProUGUI Text;
     public float targetAlphaImg = 0.4f;
     public float targetAlphaTxt = 0.8f;
@@ -20,13 +25,62 @@ public class TextManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance == null) { Instance = this; }
-        else { Destroy(gameObject); }
+        if (Instance == null) 
+        { 
+            Instance = this; 
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+        else 
+        { 
+            Destroy(gameObject); 
+        }
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 背景画像のUIを探す
+        GameObject imgObj = GameObject.Find(imageName);
+        if (imgObj != null)
+        {
+            Image = imgObj.GetComponent<Image>();
+        }
+        else
+        {
+            Debug.LogWarning($"TextManager: '{imageName}' という名前の画像オブジェクトが見つかりません。");
+        }
+
+        // テキストのUIを探す
+        GameObject textObj = GameObject.Find(textName);
+        if (textObj != null)
+        {
+            Text = textObj.GetComponent<TextMeshProUGUI>();
+        }
+        else
+        {
+            Debug.LogWarning($"TextManager: '{textName}' という名前のテキストオブジェクトが見つかりません。");
+        }
+        
+        // 再割り当てできたら非表示にしておく
+        if (Image != null)
+        {
+            Image.gameObject.SetActive(false);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
     }
 
     void Start()
     {
-        Image.gameObject.SetActive(false);
+        if (Image != null)
+        {
+            Image.gameObject.SetActive(false);
+        }
     }
 
     public void ShowText(string text)
@@ -51,7 +105,7 @@ public class TextManager : MonoBehaviour
             time += Time.deltaTime;
             float t = time / fadeDuration;
             SetAlpha(Mathf.Lerp(0f, targetAlphaImg, t), Mathf.Lerp(0f, targetAlphaTxt, t));
-            yield return null; // 1�t���[���ҋ@
+            yield return null; // 1フレーム待機
         }
         SetAlpha(targetAlphaImg, targetAlphaTxt);
 

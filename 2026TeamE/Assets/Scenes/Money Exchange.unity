@@ -2036,8 +2036,10 @@ MonoBehaviour:
   loopSeSource: {fileID: 0}
   bgmSlider: {fileID: 0}
   seSlider: {fileID: 0}
-  defaultBGMVolume: 0.2
-  defaultSEVolume: 0.2
+  maxBGMVolume: 0.3
+  maxSEVolume: 0.3
+  defaultBGMSlider: 0.5
+  defaultSESlider: 0.5
 --- !u!114 &523647034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3091,7 +3093,7 @@ MonoBehaviour:
   - itemName: Rader
     buyButton: {fileID: 1888737710}
     priceText: {fileID: 1669713910}
-    basePrice: 700000
+    basePrice: 70000
     maxLevel: 3
     levelDescriptions:
     - "\u63A2\u77E5\u8DDD\u96E2\u3068\u7CBE\u5EA6\u304C\u30A2\u30C3\u30D7"
@@ -3109,7 +3111,7 @@ MonoBehaviour:
   - itemName: Jet
     buyButton: {fileID: 434711817}
     priceText: {fileID: 1519126039}
-    basePrice: 1000000
+    basePrice: 10000
     maxLevel: 5
     levelDescriptions:
     - "\u4E0A\u6607\u901F\u5EA6\u304C\u30A2\u30C3\u30D7"

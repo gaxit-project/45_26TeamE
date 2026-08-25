@@ -805,7 +805,7 @@ GameObject:
   - component: {fileID: 153870781}
   - component: {fileID: 153870780}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: UI_Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1587,7 +1587,7 @@ MonoBehaviour:
   GoldleatherBagPrefab: {fileID: 1077105864719006209, guid: 332bf8569b80f5b4a869f8baa1d2eab1, type: 3}
   relayPointPrefab: {fileID: 0}
   goalTreasurePrefab: {fileID: 1077105864719006209, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
-  goalChamberRadius: 6
+  goalChamberRadius: 15
   hardnessScale: 0.3
 --- !u!4 &221685966
 Transform:
@@ -10882,6 +10882,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17454fe759812d84bb40f606b1da7f1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TextManager
+  imageName: UI_Image
+  textName: UI_Text
   Image: {fileID: 1752478558}
   Text: {fileID: 153870780}
   targetAlphaImg: 1
@@ -24052,7 +24054,7 @@ GameObject:
   - component: {fileID: 1752478559}
   - component: {fileID: 1752478558}
   m_Layer: 5
-  m_Name: Image
+  m_Name: UI_Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
