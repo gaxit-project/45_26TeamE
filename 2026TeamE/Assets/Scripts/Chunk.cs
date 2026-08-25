@@ -99,17 +99,17 @@ public class Chunk : MonoBehaviour
         Vector3 forward = Vector3.forward * s;
         Vector3 right = Vector3.right * s;
 
-        System.Func<int, int, int, bool> isTransparent = (tx, ty, tz) => {
+        bool IsTransparent(int tx, int ty, int tz) {
             if (tx < 0 || tx >= thicknessX || ty < 0 || ty >= heightY || tz < 0 || tz >= widthZ) return true;
             return mapData[tx, ty, tz] == 0;
-        };
+        }
 
-        if (isTransparent(x, y + 1, z)) AddFace(pos + up, forward, right, tris, s, s);
-        if (isTransparent(x, y - 1, z)) AddFace(pos, right, forward, tris, s, s);
-        if (isTransparent(x, y, z + 1)) AddFace(pos + forward, right, up, tris, s, s);
-        if (isTransparent(x, y, z - 1)) AddFace(pos, up, right, tris, s, s);
-        if (isTransparent(x + 1, y, z)) AddFace(pos + right, up, forward, tris, s, s);
-        if (isTransparent(x - 1, y, z)) AddFace(pos, forward, up, tris, s, s);
+        if (IsTransparent(x, y + 1, z)) AddFace(pos + up, forward, right, tris, s, s);
+        if (IsTransparent(x, y - 1, z)) AddFace(pos, right, forward, tris, s, s);
+        if (IsTransparent(x, y, z + 1)) AddFace(pos + forward, right, up, tris, s, s);
+        if (IsTransparent(x, y, z - 1)) AddFace(pos, up, right, tris, s, s);
+        if (IsTransparent(x + 1, y, z)) AddFace(pos + right, up, forward, tris, s, s);
+        if (IsTransparent(x - 1, y, z)) AddFace(pos, forward, up, tris, s, s);
     }
 
     void AddFace(Vector3 corner, Vector3 w, Vector3 h, List<int> tris, float width, float height)
@@ -135,18 +135,18 @@ public class Chunk : MonoBehaviour
             return;
         }
 
-        mesh.vertices = vertices.ToArray();
-        mesh.uv = uvs.ToArray();
+        mesh.SetVertices(vertices);
+        mesh.SetUVs(0, uvs);
 
-        mesh.subMeshCount = SUBMESH_COUNT; // ƒ}ƒeƒŠƒAƒ‹‚Ì”‚ğ•Ï‚¦‚½‚ç‚±‚±‚à–Y‚ê‚¸‚É•Ï‚¦‚éI
+        mesh.subMeshCount = SUBMESH_COUNT; // ãƒãƒ†ãƒªã‚¢ãƒ«ã®æ•°ã‚’å¤‰ãˆãŸã‚‰ã“ã“ã‚‚å¿˜ã‚Œãšã«å¤‰ãˆã‚‹ï¼
 
-        mesh.SetTriangles(dirtTriangles.ToArray(), 0);
-        mesh.SetTriangles(oreTriangles.ToArray(), 1);
-        mesh.SetTriangles(bedrockTriangles.ToArray(), 2);
-        mesh.SetTriangles(stoneTriangles.ToArray(), 3);
-        mesh.SetTriangles(hardRockTriangles.ToArray(), 4);
-        mesh.SetTriangles(quartziteTriangles.ToArray(), 5);
-        mesh.SetTriangles(boundaryTriangles.ToArray(), 6);
+        mesh.SetTriangles(dirtTriangles, 0);
+        mesh.SetTriangles(oreTriangles, 1);
+        mesh.SetTriangles(bedrockTriangles, 2);
+        mesh.SetTriangles(stoneTriangles, 3);
+        mesh.SetTriangles(hardRockTriangles, 4);
+        mesh.SetTriangles(quartziteTriangles, 5);
+        mesh.SetTriangles(boundaryTriangles, 6);
 
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
