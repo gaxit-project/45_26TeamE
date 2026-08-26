@@ -115,7 +115,9 @@ public class TitleManager : MonoBehaviour
     public void StartGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        SceneLoader.Instance.LoadScene("02_Main");
+
+        // タイトルからの開始時だけ、ローディング画面で説明を読ませてからスタートさせる
+        SceneLoader.Instance.LoadScene("02_Main", true);
     }
 
     // ゲーム終了のメソッド

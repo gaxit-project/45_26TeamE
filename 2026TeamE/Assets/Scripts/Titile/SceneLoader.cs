@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using System.Collections;
 using TMPro;
 
@@ -18,16 +19,17 @@ public class SceneLoader : MonoBehaviour
     [Header("1文字ずつ弾むアニメーションの設定")]
     [Tooltip("跳ねる高さ")]
     [SerializeField] private float bounceHeight = 10f;
-    [Tooltip("1文字が跳ね切る（上がって戻ってくる）のにかかる時間（秒）")]
+    [Tooltip("1文字が上がって戻ってくるのにかかる時間")]
     [SerializeField] private float secondsPerCharacter = 0.15f;
+
+    [Header("ロード完了後の開始待ち")]
+    [Tooltip("ロード完了時に表示する「ボタンを押してスタート」のUI")]
+    [SerializeField] private GameObject readyPrompt;
+    [Tooltip("ロード完了時にNowLoadingテキストを差し替える文言")]
+    [SerializeField] private string readyMessage = "";
 
     private Coroutine textWaveRoutine;
 
-    /// <summary>
-    /// ローディング画面を表示中かどうか。
-    /// 表示中は Time.timeScale を 0 にしているため、他の処理が時間を操作しないよう
-    /// この間はポーズなどを受け付けないようにする。
-    /// </summary>
     public bool IsLoading { get; private set; }
 
     private void Awake()
@@ -44,16 +46,30 @@ public class SceneLoader : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// シーンを非同期で読み込む。ロードが終わり次第そのまま遷移する。
+    /// </summary>
     public void LoadScene(string sceneName)
     {
-        if(loadingCanvas.activeSelf) return;
-        StartCoroutine(LoadAsynchronously(sceneName));
+        LoadScene(sceneName, false);
     }
 
-    // 非同期でシーンをロードするコルーチン
-    // ローディング中はゲーム内の時間を止めるため、このコルーチン自身は
-    // timeScale の影響を受けない unscaled な時間で動かしている。
-    private IEnumerator LoadAsynchronously(string sceneName)
+    /// <summary>
+    /// シーンを非同期で読み込む。
+    /// </summary>
+    /// <param name="sceneName">読み込むシーン名</param>
+    /// <param name="waitForStartInput">
+    /// true にすると、ロード完了後に開始ボタンが押されるまでローディング画面を出したまま待つ。
+    /// 説明パネルを読ませたいタイトルからのゲーム開始時に使う。
+    /// </param>
+    public void LoadScene(string sceneName, bool waitForStartInput)
+    {
+        if(loadingCanvas.activeSelf) return;
+        StartCoroutine(LoadAsynchronously(sceneName, waitForStartInput));
+    }
+
+    // 非同期ロード
+    private IEnumerator LoadAsynchronously(string sceneName, bool waitForStartInput)
     {
         SoundManager.Instance?.StopBGM();
 
@@ -102,19 +118,24 @@ public class SceneLoader : MonoBehaviour
                 yield return null;
             }
 
-            // シーンを切り替えた直後に走る重い初期化（地形生成など）の完了を待つ。
-            // ここで待たないと、生成中の重いフレームがローディング画面の裏側で走り、
-            // 画面が固まったように見えてしまう。
+            // シーンを切り替えた直後に走る重い初期化（地形生成など）の完了を待つ
             while (SceneInitializationGate.IsBusy)
             {
                 yield return null;
             }
 
-            // 弾むアニメーションを停止
+            // 弾むアニメーションを停止し、文字の位置を元に戻す
             if (textWaveRoutine != null)
             {
                 StopCoroutine(textWaveRoutine);
                 textWaveRoutine = null;
+            }
+
+            // 指定された時だけ、プレイヤーが説明を読み終えるのを待つ。
+            // 毎回ボタンを要求するとテンポが悪くなるため、呼び出し側で使い分ける。
+            if (waitForStartInput)
+            {
+                yield return WaitForStartInputRoutine();
             }
 
             // フェードアウト
@@ -125,6 +146,7 @@ public class SceneLoader : MonoBehaviour
             }
 
             loadingCanvas.SetActive(false);
+            if (readyPrompt != null) readyPrompt.SetActive(false);
         }
         finally
         {
@@ -135,8 +157,55 @@ public class SceneLoader : MonoBehaviour
     }
 
     /// <summary>
-    /// 「NowLoading...」の文字を1文字ずつ順番に弾ませるアニメーション。
-    /// ある瞬間には1文字だけが上に跳ね、それが終わったら次の文字が跳ねる。
+    /// ロードが終わったことを表示し、開始ボタンが押されるまで待機する
+    /// </summary>
+    private IEnumerator WaitForStartInputRoutine()
+    {
+        if (progressText != null)
+        {
+            progressText.text = readyMessage;
+            progressText.ForceMeshUpdate();
+        }
+
+        if (readyPrompt != null) readyPrompt.SetActive(true);
+
+        yield return null;
+
+        while (!IsStartPressed())
+        {
+            yield return null;
+        }
+
+        SoundManager.Instance?.PlaySE("つるはしで掘る1");
+    }
+
+    /// <summary>
+    /// 開始ボタンが押されたかどうか
+    /// </summary>
+    private static bool IsStartPressed()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.spaceKey.wasPressedThisFrame) return true;
+            if (keyboard.enterKey.wasPressedThisFrame) return true;
+            if (keyboard.numpadEnterKey.wasPressedThisFrame) return true;
+        }
+
+        Gamepad pad = Gamepad.current;
+        if (pad != null)
+        {
+            if (pad.buttonSouth.wasPressedThisFrame) return true;
+            if (pad.startButton.wasPressedThisFrame) return true;
+        }
+
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// 「NowLoading...」の文字を1文字ずつ順番に弾ませるアニメーション
     /// </summary>
     private IEnumerator AnimateLoadingText()
     {
@@ -150,14 +219,13 @@ public class SceneLoader : MonoBehaviour
 
             if (characterCount > 0 && secondsPerCharacter > 0f)
             {
-                // 全文字を一巡するのにかかる時間の中で、今どの文字が担当かを求める。
-                // ローディング中はtimeScaleが0のため、影響を受けないunscaledTimeを使う。
+                // 全文字を一巡するのにかかる時間の中で、今どの文字かを求める
                 float cycleDuration = characterCount * secondsPerCharacter;
                 float cycleTime = Time.unscaledTime % cycleDuration;
                 int activeIndex = Mathf.Clamp(Mathf.FloorToInt(cycleTime / secondsPerCharacter), 0, characterCount - 1);
                 float t = (cycleTime - activeIndex * secondsPerCharacter) / secondsPerCharacter; // 0〜1
 
-                // 0→1→0と山型に上下する量（sinの半周期）
+                // 山型に上下する量（sinの半周期）
                 float bounce = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI) * bounceHeight;
 
                 for (int i = 0; i < characterCount; i++)

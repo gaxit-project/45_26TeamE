@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700" font-family="Meiryo, 'Hiragino Sans', sans-serif">
+  <rect x="0" y="0" width="1000" height="700" fill="#ffffff"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 z" fill="#5b6b7f"/>
+    </marker>
+  </defs>
+
+  <text x="500" y="34" text-anchor="middle" font-size="22" font-weight="bold" fill="#1f3a5f">システム構成</text>
+
+  <!-- ===== 入力層 ===== -->
+  <rect x="40" y="56" width="920" height="72" rx="8" fill="#f5f7fa" stroke="#c7d2e0" stroke-width="1.5"/>
+  <text x="60" y="80" font-size="14" font-weight="bold" fill="#1f3a5f">入力</text>
+  <rect x="250" y="86" width="230" height="32" rx="6" fill="#ede7f6" stroke="#5e35b1" stroke-width="1.2"/>
+  <text x="365" y="107" text-anchor="middle" font-size="13" fill="#212121">ゲームパッド</text>
+  <rect x="520" y="86" width="230" height="32" rx="6" fill="#ede7f6" stroke="#5e35b1" stroke-width="1.2"/>
+  <text x="635" y="107" text-anchor="middle" font-size="13" fill="#212121">キーボード / マウス</text>
+
+  <path d="M500,128 L500,156" stroke="#5b6b7f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== シーン層 ===== -->
+  <rect x="40" y="160" width="920" height="128" rx="8" fill="#f5f7fa" stroke="#c7d2e0" stroke-width="1.5"/>
+  <text x="60" y="184" font-size="14" font-weight="bold" fill="#1f3a5f">シーン</text>
+
+  <rect x="58" y="196" width="150" height="38" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
+  <text x="133" y="220" text-anchor="middle" font-size="13" fill="#212121">01_Title</text>
+
+  <rect x="238" y="196" width="150" height="38" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
+  <text x="313" y="220" text-anchor="middle" font-size="13" fill="#212121">02_Main</text>
+
+  <rect x="418" y="196" width="150" height="38" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
+  <text x="493" y="220" text-anchor="middle" font-size="13" fill="#212121">Result</text>
+
+  <rect x="598" y="196" width="164" height="38" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
+  <text x="680" y="220" text-anchor="middle" font-size="13" fill="#212121">Money Exchange</text>
+
+  <rect x="792" y="196" width="150" height="38" rx="6" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.2"/>
+  <text x="867" y="220" text-anchor="middle" font-size="13" fill="#212121">FinalResult</text>
+
+  <path d="M208,215 L234,215" stroke="#1976d2" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M388,215 L414,215" stroke="#1976d2" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M568,215 L594,215" stroke="#1976d2" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M762,215 L788,215" stroke="#1976d2" stroke-width="1.6" marker-end="url(#arrow)"/>
+
+  <path d="M680,234 L680,256 L313,256 L313,236" stroke="#1976d2" stroke-width="1.6" stroke-dasharray="5,4" fill="none" marker-end="url(#arrow)"/>
+  <text x="497" y="272" text-anchor="middle" font-size="12" fill="#1976d2">周回</text>
+
+  <path d="M500,288 L500,316" stroke="#5b6b7f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== 常駐マネージャー層 ===== -->
+  <rect x="40" y="320" width="920" height="106" rx="8" fill="#f5f7fa" stroke="#c7d2e0" stroke-width="1.5"/>
+  <text x="60" y="344" font-size="14" font-weight="bold" fill="#1f3a5f">常駐マネージャー</text>
+
+  <rect x="58" y="356" width="170" height="34" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.2"/>
+  <text x="143" y="378" text-anchor="middle" font-size="12" fill="#212121">MoneyManager</text>
+  <rect x="240" y="356" width="196" height="34" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.2"/>
+  <text x="338" y="378" text-anchor="middle" font-size="12" fill="#212121">CheckpointManager</text>
+  <rect x="448" y="356" width="182" height="34" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.2"/>
+  <text x="539" y="378" text-anchor="middle" font-size="12" fill="#212121">UpgradeManager</text>
+  <rect x="642" y="356" width="152" height="34" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.2"/>
+  <text x="718" y="378" text-anchor="middle" font-size="12" fill="#212121">TimerManager</text>
+  <rect x="806" y="356" width="136" height="34" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.2"/>
+  <text x="874" y="378" text-anchor="middle" font-size="12" fill="#212121">SoundManager</text>
+
+  <rect x="58" y="398" width="170" height="18" rx="4" fill="none" stroke="none"/>
+  <text x="500" y="412" text-anchor="middle" font-size="12" fill="#5b6b7f">SceneLoader ／ ResetManager ／ SettingManager ／ CursorManager</text>
+
+  <path d="M500,426 L500,454" stroke="#5b6b7f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== ゲームコア層 ===== -->
+  <rect x="40" y="458" width="920" height="130" rx="8" fill="#f5f7fa" stroke="#c7d2e0" stroke-width="1.5"/>
+  <text x="60" y="482" font-size="14" font-weight="bold" fill="#1f3a5f">ゲームコア</text>
+
+  <rect x="58" y="494" width="278" height="80" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.4"/>
+  <text x="197" y="522" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1b5e20">ボクセル地形</text>
+  <text x="197" y="546" text-anchor="middle" font-size="12" fill="#212121">VoxelTerrain</text>
+  <text x="197" y="564" text-anchor="middle" font-size="12" fill="#212121">Chunk</text>
+
+  <rect x="360" y="494" width="278" height="80" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.4"/>
+  <text x="499" y="522" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1b5e20">プレイヤー・探索</text>
+  <text x="499" y="546" text-anchor="middle" font-size="12" fill="#212121">PlayerController</text>
+  <text x="499" y="564" text-anchor="middle" font-size="12" fill="#212121">Sonar ／ GemRadar</text>
+
+  <rect x="662" y="494" width="278" height="80" rx="6" fill="#e8f5e9" stroke="#388e3c" stroke-width="1.4"/>
+  <text x="801" y="522" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#1b5e20">埋没オブジェクト</text>
+  <text x="801" y="546" text-anchor="middle" font-size="12" fill="#212121">BuriedItemBase</text>
+  <text x="801" y="564" text-anchor="middle" font-size="12" fill="#212121">宝箱／宝石／爆弾</text>
+
+  <path d="M500,588 L500,616" stroke="#5b6b7f" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== 出力層 ===== -->
+  <rect x="40" y="620" width="920" height="62" rx="8" fill="#f5f7fa" stroke="#c7d2e0" stroke-width="1.5"/>
+  <text x="60" y="644" font-size="14" font-weight="bold" fill="#1f3a5f">出力</text>
+
+  <rect x="196" y="636" width="220" height="34" rx="6" fill="#fce4ec" stroke="#c2185b" stroke-width="1.2"/>
+  <text x="306" y="658" text-anchor="middle" font-size="13" fill="#212121">URP（描画）</text>
+
+  <rect x="440" y="636" width="220" height="34" rx="6" fill="#fce4ec" stroke="#c2185b" stroke-width="1.2"/>
+  <text x="550" y="658" text-anchor="middle" font-size="13" fill="#212121">CRI ADX（音声）</text>
+
+  <rect x="684" y="636" width="220" height="34" rx="6" fill="#fce4ec" stroke="#c2185b" stroke-width="1.2"/>
+  <text x="794" y="658" text-anchor="middle" font-size="13" fill="#212121">振動</text>
+</svg>

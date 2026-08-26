@@ -24,9 +24,6 @@ public class PoseManager : MonoBehaviour
 
     public void TogglePause(InputAction.CallbackContext context)
     {
-        // イントロダクション画面が開いている時はポーズを受け付けない
-        if (introduction.IsActive) return;
-
         // ローディング中は時間を止めているため、ポーズによる時間操作と競合させない
         if (SceneLoader.Instance != null && SceneLoader.Instance.IsLoading) return;
 
