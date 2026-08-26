@@ -8182,6 +8182,7 @@ GameObject:
   - component: {fileID: 548082331}
   - component: {fileID: 548082336}
   - component: {fileID: 548082338}
+  - component: {fileID: 548082340}
   - component: {fileID: 548082337}
   m_Layer: 0
   m_Name: Player
@@ -8651,6 +8652,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2, y: 3.5, z: 2.1}
   m_Center: {x: 0, y: 1.7, z: 0}
+--- !u!114 &548082340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 548082329}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2a1a1f41e0762d4da3ef592ba765aab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoTitle
+  sceneName: 01_Title
 --- !u!1 &610964210
 GameObject:
   m_ObjectHideFlags: 0
