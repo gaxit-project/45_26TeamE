@@ -124,7 +124,6 @@ public class TitleManager : MonoBehaviour
     public void QuitGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        //UnityEditor.EditorApplication.isPlaying = false;
         Application.Quit();
     }
 }

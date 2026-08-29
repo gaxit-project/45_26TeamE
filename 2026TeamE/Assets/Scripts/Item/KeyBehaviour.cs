@@ -24,10 +24,6 @@ public class KeyBehaviour : MonoBehaviour, ICollectible
         {
             SoundManager.Instance.PlaySE(data.seName);
         }
-        // if(ItemInventoryManager.Instance != null)
-        // {
-        //     ItemInventoryManager.Instance.AddItem(ItemType.Key, data.uiIcon, transform.position);
-        // }
         if(data != null && data.effectPrefab != null)
         {
             Instantiate(data.effectPrefab, transform.position, Quaternion.identity);

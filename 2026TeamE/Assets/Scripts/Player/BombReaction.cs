@@ -259,138 +259,79 @@ public class BombReaction : BuriedItemBase
             VoxelTerrain.Instance.ExecuteDig(centerX, centerY, centerZ, radiusInBlocks, minLimit, maxLimit, false);
         }
 
-        // 1.4 爆発範囲内の他の爆弾を誘爆させる
-        BombReaction[] bombs = FindObjectsOfType<BombReaction>();
+        // 1.4 〜 2. 爆発範囲内のオブジェクト（爆弾、宝石、宝箱、プレイヤー）の判定
         Vector2 bombPos2DForChain = new Vector2(transform.position.y, transform.position.z);
+        Vector3 boxExtents = new Vector3(100f, explosionRadius + 2f, explosionRadius + 2f); // 2D平面判定のためXは広め、YZは爆風半径＋α
+        Collider[] hits = Physics.OverlapBox(transform.position, boxExtents);
 
-        foreach (BombReaction otherBomb in bombs)
+        foreach (Collider hitCol in hits)
         {
-            if (otherBomb == this) continue; // 自分自身は無視
+            GameObject obj = hitCol.gameObject;
+            if (obj == gameObject) continue;
 
-            Collider bombCol = otherBomb.GetComponent<Collider>();
-            Vector3 bombCenter = bombCol != null ? bombCol.bounds.center : otherBomb.transform.position;
-            Vector2 otherBombPos2D = new Vector2(bombCenter.y, bombCenter.z);
+            Vector3 center = hitCol.bounds.center;
+            Vector2 pos2D = new Vector2(center.y, center.z);
+            float distance = Vector2.Distance(bombPos2DForChain, pos2D);
+            float radius = Mathf.Max(hitCol.bounds.extents.y, hitCol.bounds.extents.z);
 
-            float distanceToBomb = Vector2.Distance(bombPos2DForChain, otherBombPos2D);
-            float otherBombRadius = 0f;
-            if (bombCol != null)
+            if (distance <= explosionRadius + radius)
             {
-                otherBombRadius = Mathf.Max(bombCol.bounds.extents.y, bombCol.bounds.extents.z);
-            }
-
-            // プレイヤーや宝石と同じく2D平面（YZ）で距離判定を行う
-            if (distanceToBomb <= explosionRadius + otherBombRadius)
-            {
-                otherBomb.TriggerChainReaction();
-            }
-        }
-
-        // 1.5 爆発範囲内の宝石を破壊する
-        JewelryReaction[] jewels = FindObjectsOfType<JewelryReaction>();
-        Vector2 bombPos2D = new Vector2(transform.position.y, transform.position.z);
-
-        foreach (JewelryReaction jewelScript in jewels)
-        {
-            if (jewelScript.IsGot) continue;
-
-            GameObject jewel = jewelScript.gameObject;
-            Collider jewelCol = jewel.GetComponent<Collider>();
-            Vector3 jewelCenter = jewelCol != null ? jewelCol.bounds.center : jewel.transform.position;
-            Vector2 jewelPos2D = new Vector2(jewelCenter.y, jewelCenter.z);
-
-            float distanceToJewel = Vector2.Distance(bombPos2D, jewelPos2D);
-            float jewelRadius = 0f;
-            if (jewelCol != null)
-            {
-                jewelRadius = Mathf.Max(jewelCol.bounds.extents.y, jewelCol.bounds.extents.z);
-            }
-
-            // プレイヤーと同じく2D平面（YZ）で距離判定を行う
-            if (distanceToJewel <= explosionRadius + jewelRadius)
-            {
-                Destroy(jewel);
-            }
-        }
-
-        // 1.6 爆発範囲内の宝箱を破壊する
-        TreasureBoxBehaviour[] treasureBoxes = FindObjectsOfType<TreasureBoxBehaviour>();
-
-        foreach (TreasureBoxBehaviour boxScript in treasureBoxes)
-        {
-            if (boxScript.IsGot) continue;
-
-            GameObject box = boxScript.gameObject;
-            Collider boxCol = box.GetComponent<Collider>();
-            Vector3 boxCenter = boxCol != null ? boxCol.bounds.center : box.transform.position;
-            Vector2 boxPos2D = new Vector2(boxCenter.y, boxCenter.z);
-
-            float distanceToBox = Vector2.Distance(bombPos2D, boxPos2D);
-            float boxRadius = 0f;
-            if (boxCol != null)
-            {
-                boxRadius = Mathf.Max(boxCol.bounds.extents.y, boxCol.bounds.extents.z);
-            }
-
-            if (distanceToBox <= explosionRadius + boxRadius)
-            {
-                Destroy(box);
-            }
-        }
-
-        // 2. プレイヤーへのダメージ処理（お金を減らす処理）
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player != null)
-        {
-            Collider col = player.GetComponent<Collider>();
-
-            // プレイヤーの中心座標を取得（足元が基準座標になっている場合を考慮し、コライダーの中心を使う）
-            Vector3 playerCenter = col != null ? col.bounds.center : player.transform.position;
-
-            // 地形の破壊判定（YZ平面）に合わせて、X座標を無視して中心間の距離を計算する
-            Vector2 bombPos2D2 = new Vector2(transform.position.y, transform.position.z);
-            Vector2 playerPos2D = new Vector2(playerCenter.y, playerCenter.z);
-            float distance = Vector2.Distance(bombPos2D2, playerPos2D);
-
-            // プレイヤーの体の大きさ（コライダーの広がり）を取得して、当たり判定に加算する
-            float playerRadius = 0.5f;
-            if (col != null)
-            {
-                // Y軸（高さ）とZ軸（幅/奥行き）のうち、大きい方を体の半径として扱う
-                playerRadius = Mathf.Max(col.bounds.extents.y, col.bounds.extents.z);
-            }
-
-            // 「爆発の半径」＋「プレイヤーの体の半径」の範囲内なら、体の一部が触れていると判定する
-            if (distance <= explosionRadius + playerRadius)
-            {
-                // プレイヤーのコントローラーを取得して被弾アニメーションを再生
-                PlayerController pc = player.GetComponent<PlayerController>();
-                if (pc != null)
+                // 1.4 爆発範囲内の他の爆弾を誘爆させる
+                BombReaction otherBomb = obj.GetComponent<BombReaction>();
+                if (otherBomb != null)
                 {
-                    pc.DamageAnim();
+                    otherBomb.TriggerChainReaction();
+                    continue;
                 }
 
-                if (MoneyManager.Instance != null)
+                // 1.5 爆発範囲内の宝石を破壊する
+                JewelryReaction jewelScript = obj.GetComponent<JewelryReaction>();
+                if (jewelScript != null && !jewelScript.IsGot)
                 {
-                    int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
-                    int actualPenalty = Mathf.Min(moneyPenalty, currentMoney);
+                    Destroy(obj);
+                    continue;
+                }
 
-                    if (actualPenalty > 0)
+                // 1.6 爆発範囲内の宝箱を破壊する
+                TreasureBoxBehaviour boxScript = obj.GetComponent<TreasureBoxBehaviour>();
+                if (boxScript != null && !boxScript.IsGot)
+                {
+                    Destroy(obj);
+                    continue;
+                }
+
+                // 2. プレイヤーへのダメージ処理
+                if (obj.CompareTag("Player"))
+                {
+                    PlayerController pc = obj.GetComponent<PlayerController>();
+                    if (pc != null)
                     {
-                        MoneyManager.Instance.MoneyOnHandDecrease(actualPenalty);
-                        Debug.Log($"[BombReaction] プレイヤーが爆発に巻き込まれました！ 換金予定のお金が {actualPenalty} 減りました。");
-                    }
-                    else
-                    {
-                        Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
+                        pc.DamageAnim();
                     }
 
-                    // 取得済みアイテムをランダムに1つ喪失させる
-                    if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
+                    if (MoneyManager.Instance != null)
                     {
-                        int removed = ItemInventoryManager.Instance.RemoveItemsRandom(1);
-                        if (removed > 0)
+                        int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
+                        int actualPenalty = Mathf.Min(moneyPenalty, currentMoney);
+
+                        if (actualPenalty > 0)
                         {
-                            Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
+                            MoneyManager.Instance.MoneyOnHandDecrease(actualPenalty);
+                            Debug.Log($"[BombReaction] プレイヤーが爆発に巻き込まれました！ 換金予定のお金が {actualPenalty} 減りました。");
+                        }
+                        else
+                        {
+                            Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
+                        }
+
+                        // 取得済みアイテムをランダムに1つ喪失させる
+                        if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
+                        {
+                            int removed = ItemInventoryManager.Instance.RemoveItemsRandom(1);
+                            if (removed > 0)
+                            {
+                                Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
+                            }
                         }
                     }
                 }

@@ -29,6 +29,7 @@ public class TextManager : MonoBehaviour
         { 
             Instance = this; 
             SceneManager.sceneLoaded += OnSceneLoaded;
+            FindUIComponents(); // 初回ロード時用に追加
         }
         else 
         { 
@@ -38,26 +39,29 @@ public class TextManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // 背景画像のUIを探す
-        GameObject imgObj = GameObject.Find(imageName);
-        if (imgObj != null)
+        FindUIComponents();
+    }
+
+    private void FindUIComponents()
+    {
+        // 背景画像のUIを探す (非アクティブでも検索可能にする)
+        if (Image == null)
         {
-            Image = imgObj.GetComponent<Image>();
-        }
-        else
-        {
-            Debug.LogWarning($"TextManager: '{imageName}' という名前の画像オブジェクトが見つかりません。");
+            Image = FindInactiveComponentByName<Image>(imageName);
+            if (Image == null)
+            {
+                Debug.LogWarning($"TextManager: '{imageName}' という名前の画像オブジェクトが見つかりません。");
+            }
         }
 
-        // テキストのUIを探す
-        GameObject textObj = GameObject.Find(textName);
-        if (textObj != null)
+        // テキストのUIを探す (非アクティブでも検索可能にする)
+        if (Text == null)
         {
-            Text = textObj.GetComponent<TextMeshProUGUI>();
-        }
-        else
-        {
-            Debug.LogWarning($"TextManager: '{textName}' という名前のテキストオブジェクトが見つかりません。");
+            Text = FindInactiveComponentByName<TextMeshProUGUI>(textName);
+            if (Text == null)
+            {
+                Debug.LogWarning($"TextManager: '{textName}' という名前のテキストオブジェクトが見つかりません。");
+            }
         }
         
         // 再割り当てできたら非表示にしておく
@@ -65,6 +69,21 @@ public class TextManager : MonoBehaviour
         {
             Image.gameObject.SetActive(false);
         }
+    }
+
+    // 非アクティブなオブジェクトも名前に基づいて検索するヘルパーメソッド
+    private T FindInactiveComponentByName<T>(string name) where T : Component
+    {
+        T[] allComponents = Resources.FindObjectsOfTypeAll<T>();
+        foreach (T comp in allComponents)
+        {
+            // シーン上に存在し、名前が一致するものを返す (プレハブは除外)
+            if (comp.gameObject.name == name && comp.gameObject.scene.isLoaded)
+            {
+                return comp;
+            }
+        }
+        return null;
     }
 
     private void OnDestroy()

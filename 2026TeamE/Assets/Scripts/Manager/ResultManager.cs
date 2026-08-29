@@ -25,16 +25,12 @@ public class ResultManager : MonoBehaviour
     [SerializeField] private GameObject itemIconPrefab;
     [SerializeField] private float iconInterval = 0.3f;
     [SerializeField] private float iconSize = 64f;
-    //[SerializeField, Tooltip("宝石の個数を表示するテキスト（外部配置）")]
-    //private TextMeshProUGUI gemCountText;
 
     [Header("宝箱・皮袋の設定")]
     [SerializeField] private Sprite openGoldLeatherBagSprite;
     [SerializeField] private Sprite openLeatherBagSprite;
 
     [Header("ドロップアイテム設定")]
-    //[SerializeField] private LootItem lootJewel;
-    //[SerializeField] private LootItem lootManyJewels;
     [SerializeField] private LootItem lootBill;
     [SerializeField] private LootItem lootManyBill;
     [SerializeField] private LootItem lootBillBundle;
@@ -120,26 +116,6 @@ public class ResultManager : MonoBehaviour
             {
                 gemTotalMoney += gem.moneyValue;
             }
-            /*
-            if (gemCountText != null)
-            {
-                // 0.3秒で一気にカウントアップ
-                float duration = 0.3f;
-                float elapsed = 0f;
-                int targetCount = gems.Count;
-
-                while (elapsed < duration)
-                {
-                    if (isSkipRequested) break;
-                    elapsed += Time.deltaTime;
-                    float t = Mathf.Clamp01(elapsed / duration);
-                    int currentCount = Mathf.RoundToInt(Mathf.Lerp(0, targetCount, t));
-                    gemCountText.text = "x" + currentCount;
-                    yield return null;
-                }
-                gemCountText.text = "x" + targetCount;
-            }
-            */
             // 袋の開封前に合計額へ加算
             if (mm != null && gemTotalMoney > 0)
             {

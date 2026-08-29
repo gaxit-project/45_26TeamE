@@ -61,7 +61,6 @@ public class Chunk : MonoBehaviour
 
     void AddCube(int x, int y, int z, byte blockType, byte[,,] mapData, int thicknessX, int heightY, int widthZ, float blockSize)
     {
-        //if (x != 0) return;
         float worldY = y * blockSize;
         Vector3 pos = new Vector3(x * blockSize, worldY, z * blockSize);
 

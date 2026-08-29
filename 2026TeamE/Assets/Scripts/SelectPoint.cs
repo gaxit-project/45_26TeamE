@@ -21,6 +21,7 @@ public class SelectPoint : MonoBehaviour
 
     // パネルを表示した瞬間に確定させるゾーンID。押下時などはこれを使い回し、毎フレーム再計算しない。
     private int activeZoneID = -1;
+    private GameObject playerCache;
 
     private void Start()
     {
@@ -42,7 +43,8 @@ public class SelectPoint : MonoBehaviour
     private void Update()
     {
         if (VoxelTerrain.Instance == null) return;
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (playerCache == null) playerCache = GameObject.FindGameObjectWithTag("Player");
+        GameObject player = playerCache;
         if (player != null)
         {
             // プレイヤーの足元のY座標を取得

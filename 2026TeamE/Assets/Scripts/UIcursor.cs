@@ -16,6 +16,7 @@ public class UICursor : MonoBehaviour
     [Header("SE")]
     [SerializeField] private string moveSE = "Select";
     private GameObject lastSelected;
+    private RectTransform lastSelectedRect;
 
     private RectTransform cursorRect;
 
@@ -69,9 +70,10 @@ public class UICursor : MonoBehaviour
         {
             SoundManager.Instance?.PlaySE("つるはしで掘る2");
             lastSelected = selected;
+            lastSelectedRect = selected.GetComponent<RectTransform>();
         }
 
-        Transform target = selected.GetComponent<Transform>();
+        Transform target = selected.transform;
 
         // X軸・Y軸の両方を追従させ、ポーズ中も動くように unscaledDeltaTime を使用する
         Vector3 newPos = cursor.transform.position;
@@ -82,7 +84,7 @@ public class UICursor : MonoBehaviour
         // ボタンのサイズ（Scale・Width・Height）を読み取って自動調整
         if (autoResize && cursorRect != null)
         {
-            RectTransform targetRect = selected.GetComponent<RectTransform>();
+            RectTransform targetRect = lastSelectedRect;
             if (targetRect != null)
             {
                 // 親のスケールも考慮して、見た目の絶対的な大きさを計算する

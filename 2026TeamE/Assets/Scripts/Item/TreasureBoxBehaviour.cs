@@ -87,6 +87,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         if (contentPrefab != null)
         {
             spawnedItem = Instantiate(contentPrefab, transform.position, transform.rotation);
+            spawnedItem.SetActive(true);
             spawnedItem.transform.position = new Vector3(5.0f, transform.position.y, transform.position.z);
 
             var keyObj = spawnedItem.GetComponent<KeyBehaviour>();
