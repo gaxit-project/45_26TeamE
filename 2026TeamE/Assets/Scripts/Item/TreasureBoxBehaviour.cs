@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
@@ -75,14 +75,14 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         }
         transform.position = initialPos;
 
-        // 1. スプライトを開いた状態に変更
+        
         if (spriteRenderer != null && openSprite != null)
         {
             spriteRenderer.sprite = openSprite;
             spriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 1f);
         }
 
-        // 2. 中身のアイテムを生成し、一時的にコライダーを無効化
+        
         GameObject spawnedItem = null;
         if (contentPrefab != null)
         {
@@ -103,7 +103,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             }
         }
 
-        // 3. アニメーション
+        
         float duration = 0.5f;
         float elapsed = 0f;
 
@@ -132,7 +132,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             yield return null;
         }
 
-        // 4. アニメーション完了後
+        
         if (spawnedItem != null)
         {
             spawnedItem.transform.position = itemStartPos;
@@ -163,7 +163,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
     {
         if (isGot || !gameObject.scene.isLoaded) return;
 
-        // 鍵が入っている宝箱が未獲得のまま破壊された場合、VoxelTerrainにリスポーン処理を依頼
+        
         if (contentPrefab != null && contentPrefab.GetComponent<KeyBehaviour>() != null)
         {
             if (VoxelTerrain.Instance != null)

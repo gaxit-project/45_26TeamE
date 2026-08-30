@@ -8,8 +8,8 @@ public class BatteryManager : MonoBehaviour
     [SerializeField] private List<GameObject> battery = new List<GameObject>();
 
     [Header("点滅設定")]
-    [SerializeField] private float blinkInterval = 0.15f; // 点滅スピード
-    [SerializeField] private float consumeTimeout = 0.1f; // 消費が止まってから点滅が終了するまでの時間
+    [SerializeField] private float blinkInterval = 0.15f; 
+    [SerializeField] private float consumeTimeout = 0.1f; 
 
     private float timer = 0f;
     private bool isBlinkVisible = true;
@@ -19,7 +19,7 @@ public class BatteryManager : MonoBehaviour
     private float stopConsumeTimer = 0f;
     private int previousTargetIndex = -1;
 
-    // Imageコンポーネントをキャッシュするためのリスト
+    
     private List<Image> batteryImages = new List<Image>();
 
     void Start()
@@ -29,7 +29,7 @@ public class BatteryManager : MonoBehaviour
             previousBattery = playerController.currentBattery;
         }
 
-        // 各バッテリーアイコンのImageコンポーネントを取得しておく
+        
         foreach (GameObject obj in battery)
         {
             if (obj != null)
@@ -60,7 +60,7 @@ public class BatteryManager : MonoBehaviour
 
             HandleBlinking(targetIndex);
             
-            // 点滅処理を邪魔しないように、見た目の更新（FillAmountの調整）も裏で行う
+            
             UpdateFillAmounts();
         }
         else
@@ -122,12 +122,12 @@ public class BatteryManager : MonoBehaviour
         battery[targetIndex].SetActive(isBlinkVisible);
     }
 
-    // ON/OFF状態とFillAmountの両方を更新する
+    
     private void UpdateAppearance()
     {
         UpdateFillAmounts();
 
-        // 完全に空になったバッテリーは非表示にする（これまでの動作を維持）
+        
         for (int i = 0; i < 5; i++)
         {
             if (batteryImages[i] != null && battery[i] != null)
@@ -144,7 +144,7 @@ public class BatteryManager : MonoBehaviour
         }
     }
 
-    // バッテリー残量に応じてFillAmountのみを計算して適用する
+    
     private void UpdateFillAmounts()
     {
         float currentBat = playerController.currentBattery;
@@ -153,8 +153,8 @@ public class BatteryManager : MonoBehaviour
         {
             if (batteryImages[i] == null) continue;
 
-            float segmentMin = 1000f - (i + 1) * 200f; // 例: i=0 なら 800
-            float segmentMax = 1000f - i * 200f;       // 例: i=0 なら 1000
+            float segmentMin = 1000f - (i + 1) * 200f; 
+            float segmentMax = 1000f - i * 200f;       
 
             float fill = 0f;
             if (currentBat >= segmentMax)
@@ -167,7 +167,7 @@ public class BatteryManager : MonoBehaviour
             }
             else
             {
-                // セグメント内の残量を割合(0.0〜1.0)で計算
+                
                 fill = (currentBat - segmentMin) / 200f;
             }
 

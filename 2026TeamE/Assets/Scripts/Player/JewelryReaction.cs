@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class JewelryReaction : BuriedItemBase, ICollectible
@@ -24,7 +24,7 @@ public class JewelryReaction : BuriedItemBase, ICollectible
         return (visualEchoPrefab, marker);
     }
 
-    // アイテム取得時の共通関数
+    
     public void Collect()
     {
         if (!isExposed || isGot) return;

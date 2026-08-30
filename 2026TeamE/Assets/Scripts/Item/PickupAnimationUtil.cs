@@ -1,18 +1,18 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// 「アイテム取得時にXを5へずらしてポップ＆点滅させる」演出の共通処理。
-/// </summary>
+
+
+
 public static class PickupAnimationUtil
 {
-    /// <summary>
-    /// target をポップさせながら点滅させる。
-    /// </summary>
+    
+    
+    
     public static IEnumerator PopAndFlash(Transform target, Action onComplete = null)
     {
-        // 最初の位置を記録
+        
         Vector3 startPos = new Vector3(5, target.position.y, target.position.z);
 
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();

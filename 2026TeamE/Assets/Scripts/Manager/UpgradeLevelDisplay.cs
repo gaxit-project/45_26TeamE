@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 
@@ -7,8 +7,8 @@ public class UpgradeLevelDisplay : MonoBehaviour
     [System.Serializable]
     public class LevelDisplay
     {
-        public string itemName;              // ShoppingManagerと同じ名前
-        public TextMeshProUGUI levelText;    // このアイコンのレベル表示
+        public string itemName;              
+        public TextMeshProUGUI levelText;    
     }
 
     [SerializeField]

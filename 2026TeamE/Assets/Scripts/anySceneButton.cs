@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
@@ -36,15 +36,15 @@ public class anySceneButton : MonoBehaviour
             SoundManager.Instance.PlaySE(seCueName);
         }
 
-        // 指定時間待機する
+        
         yield return new WaitForSeconds(delay);
 
-        // シーン遷移を行う
+        
         if (!string.IsNullOrEmpty(sceneName))
         {
             string targetScene = sceneName;
 
-            // もしゴールの宝石を取得して換金画面に来ている場合は、リザルトに遷移する
+            
             if (GoalJewelry.isGoalReached && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Result")
             {
                 targetScene = "FinalResult";

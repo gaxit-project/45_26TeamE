@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class MoneyExchange : MonoBehaviour
@@ -13,7 +13,7 @@ public class MoneyExchange : MonoBehaviour
 
         if (mm != null)
         {
-            // 換金処理を実行
+            
             mm.Cash();
             UpdateMoneyText(mm.GetMoney());
 

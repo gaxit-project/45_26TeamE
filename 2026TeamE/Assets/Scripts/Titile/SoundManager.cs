@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using CriWare;
 using UnityEngine.UI;
 
@@ -26,7 +26,7 @@ public class SoundManager : MonoBehaviour
     [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
     [Range(0f, 1f)][SerializeField] private float defaultSESlider = 0.5f;
 
-    // スライダーの位置(0〜1)。実際の音量は「この値 × maxVolume」で決まる
+    
     private float bgmSliderValue;
     private float seSliderValue;
 
@@ -37,7 +37,7 @@ public class SoundManager : MonoBehaviour
     private const string BGM_VOLUME_SAVE_KEY = "SavedBGMSliderValue";
     private const string SE_VOLUME_SAVE_KEY = "SavedSESliderValue";
 
-    // シングルトンの実装
+    
     void Awake()
     {
         if (Instance == null)
@@ -48,7 +48,7 @@ public class SoundManager : MonoBehaviour
             if (bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
             if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
 
-            // 保存されたスライダー位置があればそれを使い、なければInspectorの初期位置を使う
+            
             bgmSliderValue = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMSlider);
             seSliderValue = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSESlider);
 
@@ -66,17 +66,17 @@ public class SoundManager : MonoBehaviour
         InitSlider();
     }
 
-    /// <summary>
-    /// スライダー位置から実際のBGM音量を反映する
-    /// </summary>
+    
+    
+    
     private void ApplyBGMVolume()
     {
         if (bgmSource != null) bgmSource.volume = bgmSliderValue * maxBGMVolume;
     }
 
-    /// <summary>
-    /// スライダー位置から実際のSE音量を反映する
-    /// </summary>
+    
+    
+    
     private void ApplySEVolume()
     {
         float volume = seSliderValue * maxSEVolume;
@@ -108,7 +108,7 @@ public class SoundManager : MonoBehaviour
         isInitializing = false;
     }
 
-    //  BGMを再生するメソッド
+    
     public void PlayBGM(string cueName)
     {
         bgmSource.Stop();
@@ -116,13 +116,13 @@ public class SoundManager : MonoBehaviour
         bgmSource.Play();
     }
 
-    // BGMを停止するメソッド
+    
     public void StopBGM()
     {
         bgmSource.Stop();
     }
 
-    // SEを再生するメソッド
+    
     public void PlaySE(string cueName)
     {
         seSource.Play(cueName);
@@ -153,13 +153,13 @@ public class SoundManager : MonoBehaviour
         currentLoopCueName = "";
     }
 
-    // SEを停止するメソッド
+    
     public void StopSE()
     {
         seSource.Stop();
     }
 
-    // BGMスライダーが動かされた時に呼ばれる（引数はスライダーの位置 0〜1）
+    
     public void SetBGMVolume(float sliderValue)
     {
         if (isInitializing) return;
@@ -171,7 +171,7 @@ public class SoundManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // SEスライダーが動かされた時に呼ばれる（引数はスライダーの位置 0〜1）
+    
     public void SetSEVolume(float sliderValue)
     {
         if (isInitializing) return;
@@ -189,19 +189,19 @@ public class SoundManager : MonoBehaviour
         seSource.Play(cueName);
     }
 
-    // BGMの音量を取得するメソッド（実際に鳴っている音量）
+    
     public float GetBGMVolume()
     {
         return bgmSource != null ? bgmSource.volume : 0f;
     }
 
-    // SEの音量を取得するメソッド（実際に鳴っている音量）
+    
     public float GetSEVolume()
     {
         return seSource != null ? seSource.volume : 0f;
     }
 
-    // BGMが再生中かどうかを確認するメソッド
+    
     public bool IsSEPlaying()
     {
         return seSource.status == CriAtomSourceBase.Status.Playing;

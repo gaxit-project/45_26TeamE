@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class CylinderReaction : BuriedItemBase, ICollectible
@@ -20,7 +20,7 @@ public class CylinderReaction : BuriedItemBase, ICollectible
         return (visualEchoPrefab, marker);
     }
 
-    // アイテム取得時の共通関数
+    
     public void Collect()
     {
         if (isExposed)
@@ -31,16 +31,16 @@ public class CylinderReaction : BuriedItemBase, ICollectible
 
     void Get()
     {
-        if (isGot) return; // 既に取得済みなら何もしない
+        if (isGot) return; 
         isGot = true;
 
-        // 宝石を取得した瞬間にマーカーを消す
+        
         if (currentMarker != null)
         {
             Destroy(currentMarker);
         }
 
-        // 制限時間を延長する
+        
         if (TimerManager.Instance != null)
         {
             TimerManager.Instance.AddTime(timeBonus);

@@ -1,14 +1,14 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// アイテム、チャンク生成
+
 public partial class VoxelTerrain
 {
-    /// <summary>1ゾーンをクリアするために必要な鍵の数。</summary>
+    
     private const int RequiredKeyCount = 3;
 
-    /// <summary>鍵以外の、通常の宝箱から出るアイテムの抽選対象。</summary>
+    
     private static readonly SpawnItemType[] NormalItemPool =
     {
         SpawnItemType.Oxygen,
@@ -16,12 +16,12 @@ public partial class VoxelTerrain
         SpawnItemType.GoldLeatherBag,
     };
 
-    // --- チャンク構築 ---------------------------------------------------
+    
 
-    /// <summary>
-    /// 既存の子オブジェクトを破棄し、チャンクを生成してメッシュを構築する。
-    /// メッシュ構築は非常に重いため、時間予算に応じてフレームをまたぎながら進める。
-    /// </summary>
+    
+    
+    
+    
     private IEnumerator BuildChunksRoutine(FrameBudget budget)
     {
         foreach (Transform child in transform)
@@ -57,11 +57,11 @@ public partial class VoxelTerrain
         return chunk;
     }
 
-    // --- アイテム配置 ---------------------------------------------------
+    
 
-    /// <summary>
-    /// 全ゾーンを上から順に走査し、それぞれのゾーンにアイテムを配置する。
-    /// </summary>
+    
+    
+    
     private void SpawnZoneItems(System.Random rnd)
     {
         int zoneTopY = heightY;
@@ -77,7 +77,7 @@ public partial class VoxelTerrain
 
             if (zoneSettings[zoneIndex].isGoalZone)
             {
-                // ゴールゾーンは通常の鍵・爆弾・アイテム抽選を行わず、中央にゴールのお宝だけを配置する
+                
                 SpawnGoalTreasure(zoneIndex, zoneBottomY, zoneTopY);
             }
             else
@@ -89,9 +89,9 @@ public partial class VoxelTerrain
         }
     }
 
-    /// <summary>
-    /// 1つのゾーンに、宝箱（鍵を含む）と爆弾をランダムな位置へ配置する。
-    /// </summary>
+    
+    
+    
     private void SpawnItemsInZone(int zoneIndex, int bottomY, int topY, System.Random rnd)
     {
         List<Vector3Int> candidates = CollectDiggablePositions(bottomY, topY);
@@ -99,7 +99,7 @@ public partial class VoxelTerrain
 
         Shuffle(candidates, rnd);
 
-        // シャッフル済みの候補を使って宝箱を配置
+        
         List<SpawnItemType> treasureSequence = BuildTreasureSequence(zoneIndex, rnd);
         List<Vector3Int> treasureCoords = new List<Vector3Int>();
         List<Vector3Int> rejectedForTreasure = new List<Vector3Int>();
@@ -107,7 +107,7 @@ public partial class VoxelTerrain
         int sequenceIndex = 0;
         int candidateIndex = 0;
         
-        // 1パス目：距離制限を守って配置
+        
         while (sequenceIndex < treasureSequence.Count && candidateIndex < candidates.Count)
         {
             Vector3Int candidate = candidates[candidateIndex++];
@@ -134,7 +134,7 @@ public partial class VoxelTerrain
             }
         }
 
-        // 2パス目：フェイルセーフ（候補が足りなかった場合、距離無視で配置）
+        
         int rejectedIndex = 0;
         if (sequenceIndex < treasureSequence.Count)
         {
@@ -151,7 +151,7 @@ public partial class VoxelTerrain
 
         int bombCount = Mathf.Max(0, zoneSettings[zoneIndex].bombCount);
         
-        // 爆弾用の候補は、採用されなかったもの＋手付かずのもの
+        
         List<Vector3Int> remainingCandidates = new List<Vector3Int>();
         for (int i = rejectedIndex; i < rejectedForTreasure.Count; i++) remainingCandidates.Add(rejectedForTreasure[i]);
         for (int i = candidateIndex; i < candidates.Count; i++) remainingCandidates.Add(candidates[i]);
@@ -159,10 +159,10 @@ public partial class VoxelTerrain
         SpawnSmartBombs(zoneIndex, bombCount, remainingCandidates, treasureCoords, rnd);
     }
 
-    /// <summary>
-    /// このゾーンに配置する宝箱の中身を並べたリストを作る。
-    /// 先頭には必ずクリアに必要な数の鍵が入り、残りは通常アイテムから抽選される。
-    /// </summary>
+    
+    
+    
+    
     private List<SpawnItemType> BuildTreasureSequence(int zoneIndex, System.Random rnd)
     {
         var sequence = new List<SpawnItemType>();
@@ -181,9 +181,9 @@ public partial class VoxelTerrain
         return sequence;
     }
 
-    /// <summary>
-    /// 指定した深さの範囲から、アイテムを埋め込める（掘って出せる）ブロックの座標を集める。
-    /// </summary>
+    
+    
+    
     private List<Vector3Int> CollectDiggablePositions(int bottomY, int topY)
     {
         var positions = new List<Vector3Int>();
@@ -207,7 +207,7 @@ public partial class VoxelTerrain
         return positions;
     }
 
-    /// <summary>プレイヤーが掘って壊せるブロックかどうか（空洞・岩盤・境界壁は対象外）。</summary>
+    
     private static bool IsDiggable(byte block)
     {
         return block == (byte)BlockType.Dirt
@@ -216,7 +216,7 @@ public partial class VoxelTerrain
             || block == (byte)BlockType.HardRock;
     }
 
-    /// <summary>フィッシャー・イェーツ法でリストの並びをランダムに入れ替える。</summary>
+    
     private static void Shuffle(List<Vector3Int> items, System.Random rnd)
     {
         for (int i = items.Count - 1; i > 0; i--)
@@ -229,10 +229,10 @@ public partial class VoxelTerrain
         }
     }
 
-    /// <summary>
-    /// 各ゾーンの最下部に中継地点を自動生成する。
-    /// 最終ゾーン（最深部）の下にはさらに続くゾーンが無いため配置しない。
-    /// </summary>
+    
+    
+    
+    
     private void SpawnRelayPoints()
     {
         if (relayPointPrefab == null) return;
@@ -250,9 +250,9 @@ public partial class VoxelTerrain
         }
     }
 
-    /// <summary>
-    /// ゴールゾーンの中央に、最初から取得可能なゴールのお宝を配置する
-    /// </summary>
+    
+    
+    
     private void SpawnGoalTreasure(int zoneIndex, int bottomY, int topY)
     {
         if (goalTreasurePrefab == null) return;
@@ -320,9 +320,9 @@ public partial class VoxelTerrain
         }
     }
 
-    /// <summary>
-    /// 鍵の宝箱が未獲得で破壊された場合に、同じゾーンの別の土ブロックに再生成する
-    /// </summary>
+    
+    
+    
     public void RespawnKeyTreasureBox(Vector3 destroyedPos, int zoneIndex)
     {
         if (zoneIndex < 0 || zoneIndex >= zoneSettings.Count) return;
@@ -340,14 +340,14 @@ public partial class VoxelTerrain
         var rnd = new System.Random();
         Vector3Int targetCoord = validPositions[rnd.Next(validPositions.Count)];
 
-        // 鍵のタイプで宝箱を再生成
+        
         SpawnItemAt(SpawnItemType.Key, targetCoord, zoneIndex);
         Debug.Log($"<color=orange>[鍵リスポーン]</color> ゾーン {zoneIndex} の空きブロック ({targetCoord.x}, {targetCoord.y}, {targetCoord.z}) に再配置しました。");
     }
 
-    /// <summary>
-    /// 宝箱の近くに偏らせつつ、爆弾同士の最低距離を保って爆弾を配置する。
-    /// </summary>
+    
+    
+    
     private void SpawnSmartBombs(int zoneIndex, int bombCount, List<Vector3Int> candidates, List<Vector3Int> treasureCoords, System.Random rnd)
     {
         if (candidates.Count == 0 || bombCount <= 0) return;
@@ -358,7 +358,7 @@ public partial class VoxelTerrain
 
         float safeDistSq = bombSafeDistanceFromTreasure * bombSafeDistanceFromTreasure;
 
-        // 1. 各候補地の重みを計算（宝箱は移動しないので1回で良い）
+        
         foreach (var coord in candidates)
         {
             float minTreasureDistSq = float.MaxValue;
@@ -372,7 +372,7 @@ public partial class VoxelTerrain
             }
 
             if (treasureCoords.Count > 0 && minTreasureDistSq < safeDistSq)
-                continue; // 安全距離未満は除外
+                continue; 
 
             float minDist = treasureCoords.Count == 0 ? 0 : Mathf.Sqrt(minTreasureDistSq);
             float weight = Mathf.Max(1f, 100f - (minDist * bombWeightFalloff));
@@ -394,7 +394,7 @@ public partial class VoxelTerrain
         {
             if (validCandidates.Count == 0 || totalWeight <= 0) break;
 
-            // 2. 重み付け抽選
+            
             float roll = (float)(rnd.NextDouble() * totalWeight);
             int selectedIndex = -1;
             
@@ -413,7 +413,7 @@ public partial class VoxelTerrain
             SpawnItemAt(SpawnItemType.Bomb, selectedCoord, zoneIndex);
             spawnedBombCoords.Add(selectedCoord);
             
-            // O(1)でリストから削除（末尾とスワップして削除）
+            
             totalWeight -= weights[selectedIndex];
             
             int lastIndex = validCandidates.Count - 1;

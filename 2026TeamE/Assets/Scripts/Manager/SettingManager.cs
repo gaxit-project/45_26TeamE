@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -61,7 +61,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 設定パネルを開くメソッド
+    
     public void OpenSettingPanel()
     {
         settingCanvas.SetActive(true);
@@ -77,7 +77,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 設定パネルを閉じるメソッド
+    
     public void CloseSettingPanel(bool playSound = true)
     {
         settingCanvas.SetActive(false);
@@ -87,7 +87,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 解像度の選択肢を初期化するメソッド
+    
     public void InitResolutionSettings()
     {
         resolutionDropdown.ClearOptions();
@@ -107,7 +107,7 @@ public class SettingManager : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
     }
 
-    // フレームレートの選択肢を初期化するメソッド
+    
     public void InitFrameRateSettings()
     {
         framerateDropdown.ClearOptions();
@@ -122,7 +122,7 @@ public class SettingManager : MonoBehaviour
         framerateDropdown.RefreshShownValue();
     }
 
-    // 解像度を変更するメソッド
+    
     public void SetResolution(int index)
     {
         string selectedText = fixedResolutionOptions[index];
@@ -136,7 +136,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // フレームレートを変更するメソッド
+    
     public void SetFrameRate(int index)
     {
         if(index < 0 || index >= fpsOptions.Count)
@@ -150,7 +150,7 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // 画面モードを変更するメソッド
+    
     public void SetScreenMode(int index)
     {
         Screen.fullScreenMode = (index == 0) ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public abstract class BuriedItemBase : MonoBehaviour
 {
@@ -43,17 +43,17 @@ public abstract class BuriedItemBase : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// 露出しているかどうかの判定。既定は位置のみでの判定。
-    /// </summary>
+    
+    
+    
     protected virtual bool IsExposedCheck()
     {
         return VoxelTerrain.Instance.IsJewelExposed(transform.position);
     }
 
-    /// <summary>
-    /// 露出した瞬間に何かしたい派生クラス用のフック
-    /// </summary>
+    
+    
+    
     protected virtual void OnExposed()
     {
 
@@ -94,9 +94,9 @@ public abstract class BuriedItemBase : MonoBehaviour
         Invoke(nameof(ResetReaction), cooldownTime);
     }
 
-    /// <summary>
-    /// ソナー反応時に使うプレハブの組を返す。
-    /// </summary>
+    
+    
+    
     protected abstract (GameObject echoPrefab, GameObject markerPrefab) GetReactionPrefabs();
 
     protected virtual void ResetReaction()

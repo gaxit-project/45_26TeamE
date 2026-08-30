@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-// 補助機能、メッシュ更新
+
 public partial class VoxelTerrain
 {
     public void UpdateChunkMesh(int index)

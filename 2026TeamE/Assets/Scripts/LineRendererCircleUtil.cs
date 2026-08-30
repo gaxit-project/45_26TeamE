@@ -1,9 +1,9 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-/// <summary>
-/// LineRendererでYZ平面上に円を描く共通処理。
-/// X座標は xOffset で固定し、地形の手前に表示されるようにする。
-/// </summary>
+
+
+
+
 public static class LineRendererCircleUtil
 {
     public static void DrawCircle(LineRenderer lineRenderer, float radius, int segments, float xOffset = 5f)

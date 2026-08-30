@@ -1,19 +1,19 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-/// <summary>
-/// ローディング画面の中央に説明画像を表示し、左右の入力でページをめくれるようにする。
-/// </summary>
-/// <remarks>
-/// このコンポーネントはローディング画面の配下に置き、画面が表示されている間だけ動作する。
-/// SceneLoader 側から操作する必要はなく、ローディング画面が非表示になれば自動的に止まる。
-///
-/// ローディング中は Time.timeScale が 0 になっているため、
-/// 時間に依存しない入力判定と unscaled な時間のみで動作するようにしている。
-/// </remarks>
+
+
+
+
+
+
+
+
+
+
 public class LoadingTipPager : MonoBehaviour
 {
     [Header("説明画像を表示するImage（ローディング画面の中央に配置する）")]
@@ -52,10 +52,10 @@ public class LoadingTipPager : MonoBehaviour
 
     private int currentPageIndex;
 
-    // スティックを倒しっぱなしにした時に連続でめくられないようにするための状態
+    
     private bool isStickNeutral = true;
 
-    // 矢印の拡大演出用。元の大きさを覚えておき、そこからの倍率で動かす
+    
     private Vector3 previousArrowBaseScale = Vector3.one;
     private Vector3 nextArrowBaseScale = Vector3.one;
     private float previousArrowPunchTimer;
@@ -83,7 +83,7 @@ public class LoadingTipPager : MonoBehaviour
     {
         UpdateArrowPunch();
 
-        // ページが1枚以下ならめくる意味がない
+        
         if (pages.Count <= 1) return;
 
         int direction = ReadPageDirection();
@@ -93,23 +93,23 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    // --- 外部から呼べるページ送り（矢印のButtonから呼ばれる） ---------------
+    
 
-    /// <summary>前のページへ移動する。</summary>
+    
     public void ShowPreviousPage()
     {
         MovePage(-1);
     }
 
-    /// <summary>次のページへ移動する。</summary>
+    
     public void ShowNextPage()
     {
         MovePage(1);
     }
 
-    /// <summary>
-    /// 矢印にButtonが付いていれば、クリックでもページを送れるように繋いでおく。
-    /// </summary>
+    
+    
+    
     private void WireArrowButtons()
     {
         if (previousArrow != null && previousArrow.TryGetComponent(out Button previousButton))
@@ -125,11 +125,11 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    // --- 入力 -------------------------------------------------------------
+    
 
-    /// <summary>
-    /// このフレームのページ送り入力を返す。-1で前のページ、1で次のページ、0で入力なし。
-    /// </summary>
+    
+    
+    
     private int ReadPageDirection()
     {
         Keyboard keyboard = Keyboard.current;
@@ -145,7 +145,7 @@ public class LoadingTipPager : MonoBehaviour
         if (pad.dpad.left.wasPressedThisFrame || pad.leftShoulder.wasPressedThisFrame) return -1;
         if (pad.dpad.right.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame) return 1;
 
-        // スティックは、一度ニュートラルに戻ってから再度倒された時だけ反応させる
+        
         float horizontal = pad.leftStick.ReadValue().x;
 
         if (Mathf.Abs(horizontal) < stickThreshold)
@@ -160,7 +160,7 @@ public class LoadingTipPager : MonoBehaviour
         return horizontal < 0f ? -1 : 1;
     }
 
-    // --- ページ切り替え ---------------------------------------------------
+    
 
     private void MovePage(int direction)
     {
@@ -178,13 +178,13 @@ public class LoadingTipPager : MonoBehaviour
             nextIndex = Mathf.Clamp(nextIndex, 0, pages.Count - 1);
         }
 
-        // 端で止まっている場合は何もしない
+        
         if (nextIndex == currentPageIndex) return;
 
         currentPageIndex = nextIndex;
         ApplyCurrentPage();
 
-        // 押した側の矢印を一瞬拡大して、入力が通ったことを伝える
+        
         if (direction < 0) previousArrowPunchTimer = arrowPunchDuration;
         else nextArrowPunchTimer = arrowPunchDuration;
 
@@ -194,7 +194,7 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    /// <summary>現在のページの画像を表示し、ページ番号と矢印の表示を更新する。</summary>
+    
     private void ApplyCurrentPage()
     {
         if (tipImage != null)
@@ -203,7 +203,7 @@ public class LoadingTipPager : MonoBehaviour
                         && currentPageIndex < pages.Count
                         && pages[currentPageIndex] != null;
 
-            // 画像が無いページは、前のページが残らないようImageごと非表示にする
+            
             tipImage.enabled = hasPage;
 
             if (hasPage)
@@ -223,10 +223,10 @@ public class LoadingTipPager : MonoBehaviour
         UpdateArrowVisibility();
     }
 
-    /// <summary>
-    /// その方向にめくれる時だけ矢印を表示する。
-    /// ループ設定が有効なら常にめくれるため、矢印は出したままになる。
-    /// </summary>
+    
+    
+    
+    
     private void UpdateArrowVisibility()
     {
         bool hasMultiplePages = pages.Count > 1;
@@ -237,7 +237,7 @@ public class LoadingTipPager : MonoBehaviour
         if (nextArrow != null) nextArrow.SetActive(canGoNext);
     }
 
-    // --- 矢印の拡大演出 ---------------------------------------------------
+    
 
     private void UpdateArrowPunch()
     {
@@ -245,9 +245,9 @@ public class LoadingTipPager : MonoBehaviour
         nextArrowPunchTimer = AdvancePunch(nextArrow, nextArrowBaseScale, nextArrowPunchTimer);
     }
 
-    /// <summary>
-    /// 矢印の拡大演出を1フレーム分進め、残り時間を返す。
-    /// </summary>
+    
+    
+    
     private float AdvancePunch(GameObject arrow, Vector3 baseScale, float remainingTime)
     {
         if (arrow == null || arrowPunchDuration <= 0f) return 0f;
@@ -260,7 +260,7 @@ public class LoadingTipPager : MonoBehaviour
 
         remainingTime = Mathf.Max(0f, remainingTime - Time.unscaledDeltaTime);
 
-        // 残り時間が多いほど大きく、0に近づくほど元の大きさへ戻る
+        
         float progress = remainingTime / arrowPunchDuration;
         arrow.transform.localScale = baseScale * Mathf.Lerp(1f, arrowPunchScale, progress);
 

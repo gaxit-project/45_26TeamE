@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -132,7 +132,7 @@ public class KeyUIController : MonoBehaviour
                 {
                     keyImages[i].color = unlockedColor;
 
-                    // ▼ 変更：第2引数に collectedCount を渡すようにする
+                    
                     StartCoroutine(AnimateKeyGet(keyImages[i].rectTransform, collectedCount));
                 }
             }

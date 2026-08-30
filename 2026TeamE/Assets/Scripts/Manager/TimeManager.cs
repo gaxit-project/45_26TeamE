@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class TimerManager : MonoBehaviour
@@ -45,7 +45,7 @@ public class TimerManager : MonoBehaviour
         }
     }
 
-    // TimelineのSignalから呼ばれる
+    
     public void StartTimer()
     {
         totalTime = totalTime;
@@ -119,7 +119,7 @@ public class TimerManager : MonoBehaviour
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
 
-        // 酸素切れ：演出を見せた後、タイトルへ戻して状態を一括リセットする
+        
         StartCoroutine(ReturnToTitleAfterTimeUp());
     }
 
@@ -133,9 +133,9 @@ public class TimerManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("01_Title");
     }
 
-    /// <summary>
-    /// 制限時間を指定秒数だけ増やす
-    /// </summary>
+    
+    
+    
     public void AddTime(float seconds)
     {
         if (isTimerEnded) return;
@@ -144,9 +144,9 @@ public class TimerManager : MonoBehaviour
         isTimerRunning = true;
     }
 
-    /// <summary>
-    /// タイトルに戻った時に呼ばれる。次のプレイでイントロ演出の合図を待つ状態に戻す。
-    /// </summary>
+    
+    
+    
     public static void ResetFirstLoad()
     {
         firstLoad = true;

@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -24,7 +24,7 @@ public class TitleManager : MonoBehaviour
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
 
-        // 再読み込み時に生き残ったSettingManager内のCloseButtonの参照先を新しいTitleManagerに繋ぎ直す
+        
         if (SettingManager.Instance != null)
         {
             var buttons = SettingManager.Instance.GetComponentsInChildren<UnityEngine.UI.Button>(true);
@@ -41,7 +41,7 @@ public class TitleManager : MonoBehaviour
 
     private void ResetGameState()
     {
-        // ゲーム全体の進行状態の一括リセットはResetManagerに集約
+        
         ResetManager.ResetAll();
     }
 
@@ -73,7 +73,7 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    // 入力待ち状態で、現在選択されているUI要素がない場合に最初のボタンを選択する
+    
     private void LateUpdate()
     {
         if(EventSystem.current.currentSelectedGameObject == null && !isWaitingInput)
@@ -82,7 +82,7 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    // スタート画面のアニメーションを開始するメソッド
+    
     private void PushToStart()
     {
         isWaitingInput = false;
@@ -92,35 +92,35 @@ public class TitleManager : MonoBehaviour
         Invoke(nameof(SelectFirstButton), 0.5f);
     }
 
-    // 最初のボタンを選択するメソッド
+    
     private void SelectFirstButton()
     {
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // オプションパネルを開くメソッド
+    
     public void OpenOptionPanel()
     {
         SettingManager.Instance?.OpenSettingPanel();
     }
 
-    // オプションパネルを閉じるメソッド
+    
     public void CloseOptionPanel()
     {
         SettingManager.Instance?.CloseSettingPanel();
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // ゲーム開始のメソッド
+    
     public void StartGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
 
-        // タイトルからの開始時だけ、ローディング画面で説明を読ませてからスタートさせる
+        
         SceneLoader.Instance.LoadScene("02_Main", true);
     }
 
-    // ゲーム終了のメソッド
+    
     public void QuitGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");

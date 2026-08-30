@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// 層ごとの設定
+
 [System.Serializable]
 public class ZoneData
 {
@@ -22,7 +22,7 @@ public class ZoneData
     public bool isGoalZone = false;
 }
 
-// フィールド定義、ライフサイクル
+
 public partial class VoxelTerrain : MonoBehaviour
 {
     public static VoxelTerrain Instance { get; private set; }
@@ -129,12 +129,12 @@ public partial class VoxelTerrain : MonoBehaviour
     [Header("硬度設定")]
     [SerializeField] private float hardnessScale = 0.5f;
 
-    // 内部データ
+    
     private Chunk[] chunks;
     private HashSet<int> chunksToUpdate = new HashSet<int>();
     private List<GameObject> spawnedTreasures = new List<GameObject>();
     private byte[,,] mapData;
-    private int heightY; // 全ゾーンの高さの合計
+    private int heightY; 
 
     private Dictionary<int, int> zoneCollectedKeyCounts = new Dictionary<int, int>();
     private HashSet<int> zoneUnlockedFlags = new HashSet<int>();
@@ -145,13 +145,13 @@ public partial class VoxelTerrain : MonoBehaviour
     public int ChunkSizeY => chunkSizeY;
     public bool IsStageGenerated => mapData != null;
 
-    /// <summary>
-    /// ステージ生成中かどうか。生成は重いため複数フレームにまたがって実行される。
-    /// 生成完了に依存する処理は、このフラグが false になるのを待つこと。
-    /// </summary>
+    
+    
+    
+    
     public bool IsGenerating { get; private set; }
 
-    // イベント
+    
     public event Action<int, int, byte> OnBlockChanged;
     public event Action<int, int> OnBlocksDestroyedByPlayer;
 
@@ -212,8 +212,8 @@ public partial class VoxelTerrain : MonoBehaviour
 
     private System.Collections.IEnumerator RestartRoutine()
     {
-        // ステージ生成は複数フレームに分割して行われるため、
-        // 地形が出来上がる前にプレイヤーを移動させてしまわないよう完了を待つ
+        
+        
         while (IsGenerating)
         {
             yield return null;

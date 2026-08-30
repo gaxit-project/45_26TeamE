@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class MoneyUIInitializer : MonoBehaviour
@@ -20,7 +20,7 @@ public class MoneyUIInitializer : MonoBehaviour
         mm.OnMoneyOnHandChanged += UpdateOnHandText;
         mm.OnTargetAmountOnPartChanged += UpdateTargetPartText;
 
-        // 現在の値で初期表示
+        
         UpdateOnHandText(mm.GetMoneyOnHand());
         UpdateTargetPartText(mm.GetTargetAmountOnPart());
     }

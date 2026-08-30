@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public class MoneyManager : MonoBehaviour
@@ -16,17 +16,17 @@ public class MoneyManager : MonoBehaviour
     [SerializeField, Header("今パート目標返済額")]
     private int TargetAmountOnPart = 0;
 
-    /// <summary>
-    /// Moneyが変化した時に発火
-    /// </summary>
+    
+    
+    
     public event Action<int> OnMoneyChanged;
-    /// <summary>
-    /// MoneyOnHandが変化した時に発火
-    /// </summary>
+    
+    
+    
     public event Action<int> OnMoneyOnHandChanged;
-    /// <summary>
-    /// TargetAmountOnPartが変化した時に発火
-    /// </summary>
+    
+    
+    
     public event Action<int> OnTargetAmountOnPartChanged;
 
     private void Awake()
@@ -42,10 +42,10 @@ public class MoneyManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 手持ちの資金を増加
-    /// </summary>
-    /// <param name="value">増加する値</param>
+    
+    
+    
+    
     public void MoneyOnHandIncrease(int value)
     {
         MoneyOnHand = MoneyOnHand + value;
@@ -53,19 +53,19 @@ public class MoneyManager : MonoBehaviour
         OnMoneyOnHandChanged?.Invoke(MoneyOnHand);
     }
 
-    /// <summary>
-    /// 手持ちの資金を減少
-    /// </summary>
-    /// <param name="value">減少する値</param>
+    
+    
+    
+    
     public void MoneyOnHandDecrease(int value)
     {
         MoneyOnHand = Mathf.Max(0, MoneyOnHand - value);
         OnMoneyOnHandChanged?.Invoke(MoneyOnHand);
     }
 
-    /// <summary>
-    /// 手持ちの換金予定の資金を換金
-    /// </summary>
+    
+    
+    
     public void Cash()
     {
         Money += MoneyOnHand;
@@ -74,9 +74,9 @@ public class MoneyManager : MonoBehaviour
         OnMoneyOnHandChanged?.Invoke(MoneyOnHand);
     }
 
-    /// <summary>
-    /// 資金を返済に当てる
-    /// </summary>
+    
+    
+    
     public void Refund()
     {
         TargetAmountOnPart -= Money;
@@ -86,42 +86,42 @@ public class MoneyManager : MonoBehaviour
         OnTargetAmountOnPartChanged?.Invoke(TargetAmountOnPart);
     }
 
-    /// <summary>
-    /// 所持金を消費する
-    /// </summary>
+    
+    
+    
     public void SpendMoney(int amount)
     {
         Money -= amount;
         OnMoneyChanged?.Invoke(Money);
     }
 
-    /// <summary>
-    /// Result画面などで、現在のMoneyOnHandを読み取るための関数
-    /// </summary>
+    
+    
+    
     public int GetMoneyOnHand()
     {
         return MoneyOnHand;
     }
 
-    /// <summary>
-    /// Result画面などで、現在のTargetAmountOnPartを読み取るための関数
-    /// </summary>
+    
+    
+    
     public int GetTargetAmountOnPart()
     {
         return TargetAmountOnPart;
     }
 
-    /// <summary>
-    /// 通算取得額を返す
-    /// </summary>
+    
+    
+    
     public int GetTotalEarnedMoney()
     {
         return TotalEarnedMoney;
     }
 
-    /// <summary>
-    /// 外部から現在の「所持金(Money)」を取得するための関数
-    /// </summary>
+    
+    
+    
     public int GetMoney()
     {
         return Money;

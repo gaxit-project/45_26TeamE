@@ -1,13 +1,13 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [Header("’ÇÕ‘ÎÛ")]
+    [Header("ï¿½ÇÕ‘Îï¿½")]
     public Transform player;
 
-    [Header("İ’è")]
-    public float smoothTime = 1.0f; // “’…‚Ü‚Å‚Ì–ÚˆÀŠÔi‘å‚«‚¢‚Ù‚Çu‚Ì‚ñ‚Ñ‚èvj
-    public Vector3 offset = new Vector3(0, 0, -2f); // ƒvƒŒƒCƒ„[‚Ì­‚µè‘O(Zƒ}ƒCƒiƒX)‚É”z’u‚·‚éê‡
+    [Header("ï¿½İ’ï¿½")]
+    public float smoothTime = 1.0f; 
+    public Vector3 offset = new Vector3(0, 0, -2f); 
 
     private Vector3 currentVelocity = Vector3.zero;
 
@@ -17,7 +17,7 @@ public class CameraController : MonoBehaviour
 
         Vector3 targetPosition = player.position + offset;
 
-        // 1. ‘S‘Ì“I‚Éu‚Ì‚ñ‚Ñ‚èv’Ç]‚³‚¹‚é
+        
         Vector3 nextPosition = Vector3.SmoothDamp(
             transform.position,
             targetPosition,
@@ -25,7 +25,7 @@ public class CameraController : MonoBehaviour
             smoothTime
         );
 
-        // 2. Y²‚¾‚¯‚Íu‚Ì‚ñ‚Ñ‚èv‚ğ–³‹‚µ‚ÄA–Ú•W’n“_‚É‘¦À‚É‡‚í‚¹‚é
+        
         nextPosition.y = targetPosition.y;
 
         transform.position = nextPosition;

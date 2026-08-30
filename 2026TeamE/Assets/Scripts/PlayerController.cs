@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -118,8 +118,8 @@ public class PlayerController : MonoBehaviour
     {
         onDamaged = false;
 
-        // ポーズ中にシーン遷移した場合などに時間が止まったままにならないよう復帰させる。
-        // ただしローディング中はSceneLoaderが意図的に時間を止めているため上書きしない。
+        
+        
         bool isLoading = SceneLoader.Instance != null && SceneLoader.Instance.IsLoading;
         if (!isLoading)
         {

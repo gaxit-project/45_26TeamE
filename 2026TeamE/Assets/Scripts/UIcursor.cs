@@ -1,4 +1,4 @@
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -11,7 +11,7 @@ public class UICursor : MonoBehaviour
 
     [Header("サイズ自動調整")]
     [SerializeField] private bool autoResize = true;
-    [SerializeField] private Vector2 sizePadding = new Vector2(20f, 20f); // ボタンよりも少し大きめに囲うための余白
+    [SerializeField] private Vector2 sizePadding = new Vector2(20f, 20f); 
 
     [Header("SE")]
     [SerializeField] private string moveSE = "Select";
@@ -38,16 +38,16 @@ public class UICursor : MonoBehaviour
 
     void Update()
     {
-        // ====== キャンセル入力の直接検出 ======
+        
         if (!cancelPending && cancel != null)
         {
             bool cancelPressed = false;
 
-            // キーボード: Escape
+            
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 cancelPressed = true;
 
-            // ゲームパッド: Bボタン（East）
+            
             if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
                 cancelPressed = true;
 
@@ -58,7 +58,7 @@ public class UICursor : MonoBehaviour
             }
         }
 
-        // ====== カーソル追従処理 ======
+        
         GameObject selected = EventSystem.current.currentSelectedGameObject;
 
         if (selected == null || cursor == null)
@@ -75,38 +75,38 @@ public class UICursor : MonoBehaviour
 
         Transform target = selected.transform;
 
-        // X軸・Y軸の両方を追従させ、ポーズ中も動くように unscaledDeltaTime を使用する
+        
         Vector3 newPos = cursor.transform.position;
         newPos.x = Mathf.Lerp(newPos.x, target.position.x, Time.unscaledDeltaTime * scrollSpeed);
         newPos.y = Mathf.Lerp(newPos.y, target.position.y, Time.unscaledDeltaTime * scrollSpeed);
         cursor.transform.position = newPos;
 
-        // ボタンのサイズ（Scale・Width・Height）を読み取って自動調整
+        
         if (autoResize && cursorRect != null)
         {
             RectTransform targetRect = lastSelectedRect;
             if (targetRect != null)
             {
-                // 親のスケールも考慮して、見た目の絶対的な大きさを計算する
+                
                 Vector2 targetSize = targetRect.rect.size;
                 
                 if (cursorRect.parent != null)
                 {
-                    // カーソルの親から見た相対的なスケール倍率を算出
+                    
                     float relativeScaleX = targetRect.lossyScale.x / cursorRect.parent.lossyScale.x;
                     float relativeScaleY = targetRect.lossyScale.y / cursorRect.parent.lossyScale.y;
                     targetSize = new Vector2(targetRect.rect.width * relativeScaleX, targetRect.rect.height * relativeScaleY);
                 }
                 else
                 {
-                    // 親がない場合はローカルスケールをそのまま掛ける
+                    
                     targetSize = new Vector2(targetRect.rect.width * targetRect.localScale.x, targetRect.rect.height * targetRect.localScale.y);
                 }
 
-                // 目標のサイズ（実際の見た目のサイズ + 余白）
+                
                 targetSize += sizePadding;
                 
-                // サイズを滑らかに変更（Lerp）
+                
                 cursorRect.sizeDelta = Vector2.Lerp(cursorRect.sizeDelta, targetSize, Time.unscaledDeltaTime * scrollSpeed);
             }
         }
@@ -114,7 +114,7 @@ public class UICursor : MonoBehaviour
 
     void LateUpdate()
     {
-        // キャンセル入力のフォーカス移動を、全てのUI処理が終わった後に実行する
+        
         if (cancelPending)
         {
             cancelDelayFrames--;
@@ -131,9 +131,9 @@ public class UICursor : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// PlayerInput経由で呼ばれた場合の互換用（直接検出がメインのため、通常は使われない）
-    /// </summary>
+    
+    
+    
     public void OnCancel(InputAction.CallbackContext context)
     {
         if (context.performed && cancel != null && !cancelPending)

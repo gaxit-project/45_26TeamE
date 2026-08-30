@@ -1,6 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-// チェックポイント、ゲーム進行
+
 public partial class VoxelTerrain
 {
     public void OnPlayerReachRelayPoint(int y)

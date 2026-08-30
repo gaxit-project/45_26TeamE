@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public enum EffectType
 {
@@ -19,13 +19,13 @@ public class BlockEffectManager : MonoBehaviour
     [SerializeField] private ParticleSystem hardRockParticle;
 
     [Header("1ブロックあたりのエフェクト発生数")]
-    [SerializeField] private int particlesPerBlock = 3; // ここをInspectorで自由に変えられます！
+    [SerializeField] private int particlesPerBlock = 3; 
 
     private void Awake()
     {
         Instance = this;
 
-        // 自動発生（Rate over TimeやBurst）をオフにする
+        
         DisableAutoEmission(dirtParticle);
         DisableAutoEmission(oreParticle);
         DisableAutoEmission(stoneParticle);
@@ -64,11 +64,11 @@ public class BlockEffectManager : MonoBehaviour
 
         if (targetParticle == null) return;
 
-        // X座標を手前に固定して、壊れた場所を分かりやすくする
+        
         worldPosition.x = 5f;
         targetParticle.transform.position = worldPosition;
         
-        // Inspectorで設定した数だけ一気に放出（Emit）
+        
         targetParticle.Emit(particlesPerBlock);
     }
 }

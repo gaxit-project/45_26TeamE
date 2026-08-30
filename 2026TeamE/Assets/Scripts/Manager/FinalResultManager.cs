@@ -1,13 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // 追加
+using UnityEngine.InputSystem; 
 
 public class FinalResultManager : MonoBehaviour
 {
     [Header("UI参照")]
-    [SerializeField] private TextMeshProUGUI totalEarnedText; // 通算取得額用のテキスト
+    [SerializeField] private TextMeshProUGUI totalEarnedText; 
 
     [Header("演出設定")]
     [SerializeField] private float countDuration = 2.0f;
@@ -15,7 +15,7 @@ public class FinalResultManager : MonoBehaviour
 
     private bool isAnimationFinished = false;
     private bool skipRequested = false;
-    private int totalEarnedAmount; // 通算取得額の保存用
+    private int totalEarnedAmount; 
 
     void Start()
     {
@@ -23,8 +23,8 @@ public class FinalResultManager : MonoBehaviour
         MoneyManager mm = MoneyManager.Instance;
         if (mm != null)
         {
-            totalEarnedAmount = mm.GetTotalEarnedMoney(); // 通算取得額を取得
-            if (totalEarnedText != null) totalEarnedText.text = "0"; // 初期値0
+            totalEarnedAmount = mm.GetTotalEarnedMoney(); 
+            if (totalEarnedText != null) totalEarnedText.text = "0"; 
 
             StartCoroutine(CountUpRoutine());
         }
@@ -32,13 +32,13 @@ public class FinalResultManager : MonoBehaviour
 
     void Update()
     {
-        // 新しい Input System での「どれか押した」判定
+        
         bool wasPressed = false;
 
-        // キーボードかマウスのクリックがあったか
+        
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) wasPressed = true;
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) wasPressed = true;
-        if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; // Aボタン/×ボタン等
+        if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; 
 
         if (wasPressed)
         {
@@ -48,7 +48,7 @@ public class FinalResultManager : MonoBehaviour
             }
             else
             {
-                // タイトルへ戻る前の処理
+                
                 if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
 
                 SceneManager.LoadScene(nextSceneName);

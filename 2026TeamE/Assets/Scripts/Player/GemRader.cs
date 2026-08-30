@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(LineRenderer))]
@@ -48,7 +48,7 @@ public class GemRadar : MonoBehaviour
         lineRenderer.startWidth = 0.05f;
         lineRenderer.endWidth = 0.05f;
 
-        // 爆弾レイヤー（Bomb）もレーダーの対象に含める
+        
         int bombLayer = LayerMask.NameToLayer("Bomb");
         if (bombLayer != -1)
         {
@@ -90,7 +90,7 @@ public class GemRadar : MonoBehaviour
 
             if (mode == RadarMode.Directional)
             {
-                // 単純に足すのではなく、一番影響が強い（波が大きい）宝石を一つだけ選ぶ
+                
                 float maxInfluence = 0f;
                 float finalWave = 0f;
 
@@ -114,11 +114,11 @@ public class GemRadar : MonoBehaviour
                     
                     if (angleDiff < currentMaxAngle)
                     {
-                        // 影響力（本来の波の高さ × 中央からの近さによるフェード）
+                        
                         float falloff = 1f - (angleDiff / currentMaxAngle);
                         float influence = currentWaveAmplitude * falloff;
 
-                        // もしこの宝石の影響力が、他の宝石よりも強ければ、その波の形を採用する
+                        
                         if (influence > maxInfluence)
                         {
                             maxInfluence = influence;

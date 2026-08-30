@@ -80,7 +80,7 @@ public class ShoppingManager : MonoBehaviour
             int index = i;
             target.buyButton.onClick.AddListener(() => TryPurchase(target));
 
-            // ホバー/選択時に「全体説明（descriptionText）」や「動画」を切り替えたい場合のみイベントを登録
+            
             EventTrigger trigger = target.buyButton.gameObject.GetComponent<EventTrigger>();
             if (trigger == null) trigger = target.buyButton.gameObject.AddComponent<EventTrigger>();
 
@@ -94,7 +94,7 @@ public class ShoppingManager : MonoBehaviour
             selectEntry.callback.AddListener((data) => { ShowVideoAndCommonDesc(index); });
             trigger.triggers.Add(selectEntry);
 
-            // 【変更】カーソルが外れたり、選択解除されたときの非表示処理（HideDescription）は登録しない
+            
 
             if (item.descriptionImage != null)
             {
@@ -113,10 +113,10 @@ public class ShoppingManager : MonoBehaviour
             RefreshUI(target);
         }
 
-        // 初期状態で個別説明テキストはすべて最新レベルのものに更新しておく
+        
         UpdateAllItemDescriptions();
 
-        // 全体共有の説明や動画プレイヤーは初期状態でクリアしておく
+        
         if (descriptionText != null) descriptionText.text = "";
         if (videoPlayer != null) videoPlayer.Stop();
 
@@ -156,10 +156,10 @@ public class ShoppingManager : MonoBehaviour
 
             UpdateAllButtons();
 
-            // 購入後にこのアイテムの常時表示説明を新しいレベルのものに更新
+            
             UpdateItemDescription(item);
 
-            // ホバー時用の全体説明や動画も更新
+            
             ShowVideoAndCommonDesc(shopItems.IndexOf(item));
         }
         else SoundManager.Instance.PlaySE("つるはしで掘る3");
@@ -225,9 +225,9 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 対象アイテムの「個別説明テキスト」を現在のレベルに合わせて更新する（常時表示用）
-    /// </summary>
+    
+    
+    
     private void UpdateItemDescription(ShopItem item)
     {
         if (item.itemDescriptionText != null &&
@@ -243,9 +243,9 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// すべてのアイテムの「個別説明テキスト」を最新レベルのものに更新する
-    /// </summary>
+    
+    
+    
     private void UpdateAllItemDescriptions()
     {
         foreach (var item in shopItems)
@@ -254,23 +254,23 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// カーソルが合わさった時に、全体共通のテキストや説明動画を再生・更新する
-    /// </summary>
+    
+    
+    
     public void ShowVideoAndCommonDesc(int itemIndex)
     {
         if (itemIndex < 0 || itemIndex >= shopItems.Count) return;
 
         ShopItem item = shopItems[itemIndex];
 
-        // 共有用の説明UIがある場合のみ更新
+        
         if (descriptionText != null && item.levelDescriptions != null && item.levelDescriptions.Count > 0)
         {
             int descIndex = Mathf.Clamp(item.currentLevel - 1, 0, item.levelDescriptions.Count - 1);
             descriptionText.text = item.levelDescriptions[descIndex];
         }
 
-        // 動画の再生
+        
         if (videoPlayer != null && item.descriptionVideo != null)
         {
             videoPlayer.Stop();

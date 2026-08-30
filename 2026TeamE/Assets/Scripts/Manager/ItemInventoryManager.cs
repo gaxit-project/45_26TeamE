@@ -1,12 +1,12 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// アイテム取得時のUIフライアニメーション＆右上アイコン表示を管理するマネージャー
-/// </summary>
+
+
+
 public class ItemInventoryManager : MonoBehaviour
 {
     public static ItemInventoryManager Instance { get; private set; }
@@ -53,7 +53,7 @@ public class ItemInventoryManager : MonoBehaviour
     [SerializeField, Tooltip("未取得状態(x0)でもアイコンを表示したいものを登録")]
     private List<ItemDisplaySetting> displaySettings = new List<ItemDisplaySetting>();
 
-    // ========== アイテムデータ（シーン間引き継ぎ用にstaticリスト） ==========
+    
 
     [System.Serializable]
     public class ItemData
@@ -65,7 +65,7 @@ public class ItemInventoryManager : MonoBehaviour
 
     private static List<ItemData> s_collectedItems = new List<ItemData>();
 
-    // UIスロットの管理
+    
     private Dictionary<ItemType, GameObject> uiSlots = new Dictionary<ItemType, GameObject>();
     private Dictionary<ItemType, TextMeshProUGUI> countTexts = new Dictionary<ItemType, TextMeshProUGUI>();
 
@@ -101,13 +101,13 @@ public class ItemInventoryManager : MonoBehaviour
         }
     }
 
-    // =====================================================================
-    //  アイテム追加
-    // =====================================================================
+    
+    
+    
 
     public void AddItem(ItemType type, Sprite icon, Vector3 worldPosition, int moneyValue = 0)
     {
-        if (type == ItemType.Key) return; // 鍵はインベントリで管理しない
+        if (type == ItemType.Key) return; 
 
         ItemData data = new ItemData
         {
@@ -128,7 +128,7 @@ public class ItemInventoryManager : MonoBehaviour
             yield break;
         }
 
-        // 1. フライ用の一時アイコンを Canvas 直下に生成
+        
         GameObject flyIcon = Instantiate(iconPrefab, canvasRect);
         Image flyImage = flyIcon.GetComponent<Image>();
         if (flyImage != null)
@@ -142,7 +142,7 @@ public class ItemInventoryManager : MonoBehaviour
 
         RectTransform flyRect = flyIcon.GetComponent<RectTransform>();
 
-        // 2. 開始位置
+        
         Vector3 screenStart = mainCamera.WorldToScreenPoint(worldPosition);
         if (screenStart.z < 0)
         {
@@ -155,10 +155,10 @@ public class ItemInventoryManager : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvasRect, screenStart, canvasCamera, out startLocalPos);
 
-        // 3. 終了位置
+        
         Vector3 containerScreenPos = RectTransformUtility.WorldToScreenPoint(canvasCamera, iconContainer.position);
         
-        // もし既にそのタイプのスロットがあれば、そこに向かって飛ぶ
+        
         if (uiSlots.TryGetValue(data.type, out GameObject slotObj))
         {
             containerScreenPos = RectTransformUtility.WorldToScreenPoint(canvasCamera, slotObj.transform.position);
@@ -168,7 +168,7 @@ public class ItemInventoryManager : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvasRect, containerScreenPos, canvasCamera, out endLocalPos);
 
-        // 4. フライアニメーション
+        
         float elapsed = 0f;
         flyRect.anchoredPosition = startLocalPos;
         flyRect.localScale = Vector3.one * startScale;
@@ -202,10 +202,10 @@ public class ItemInventoryManager : MonoBehaviour
             yield return null;
         }
 
-        // 5. フライアイコン削除
+        
         Destroy(flyIcon);
 
-        // 6. スロット更新
+        
         CreateOrUpdateSlot(data.type, data.icon);
     }
 
@@ -237,12 +237,12 @@ public class ItemInventoryManager : MonoBehaviour
             layout.preferredWidth = iconWidth;
             layout.preferredHeight = iconWidth;
 
-            // 個数テキストを動的に追加
+            
             GameObject textObj = new GameObject("CountText");
             textObj.transform.SetParent(slotObj.transform, false);
             TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
             tmp.text = "x" + count;
-            tmp.fontSize = countTextSize; // インスペクターから設定可能に
+            tmp.fontSize = countTextSize; 
             tmp.alignment = TextAlignmentOptions.BottomRight;
             tmp.color = Color.white;
             tmp.fontStyle = FontStyles.Bold;
@@ -250,7 +250,7 @@ public class ItemInventoryManager : MonoBehaviour
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
-            // インスペクターのオフセット値を適用
+            
             textRect.offsetMin = new Vector2(0, countTextOffset.y);
             textRect.offsetMax = new Vector2(countTextOffset.x, 0);
 
@@ -283,9 +283,9 @@ public class ItemInventoryManager : MonoBehaviour
         target.localScale = Vector3.one;
     }
 
-    // =====================================================================
-    //  アイテム削除（ダメージによる喪失）
-    // =====================================================================
+    
+    
+    
 
     public int RemoveItemsFromEnd(int count)
     {
@@ -384,12 +384,12 @@ public class ItemInventoryManager : MonoBehaviour
 
             if (image != null)
             {
-                // 赤フラッシュ
+                
                 float flashT = Mathf.PingPong(t * 3f, 1f);
                 image.color = Color.Lerp(startColor, new Color(1f, 0.3f, 0.3f, 1f), flashT);
             }
 
-            // 振動
+            
             float shake = Mathf.Sin(t * Mathf.PI * 8f) * 10f * (1f - t);
             if (rect != null)
             {
@@ -406,9 +406,9 @@ public class ItemInventoryManager : MonoBehaviour
         removingCount--;
     }
 
-    // =====================================================================
-    //  全クリア
-    // =====================================================================
+    
+    
+    
 
     public void ClearItems()
     {
@@ -424,21 +424,21 @@ public class ItemInventoryManager : MonoBehaviour
             }
         }
 
-        // インスペクターで設定されたアイテムを x0 として最初から表示
+        
         foreach (var setting in displaySettings)
         {
-            if (setting.type == ItemType.Key) continue; // 鍵はインベントリUIに表示しない
+            if (setting.type == ItemType.Key) continue; 
             CreateOrUpdateSlot(setting.type, setting.icon, true);
         }
     }
 
-    // =====================================================================
-    //  リザルト画面用 API
-    // =====================================================================
+    
+    
+    
 
     public static List<ItemData> GetCollectedItemsForResult()
     {
-        // 鍵は次のエリアに行くためのもので換金用ではないため、リザルト画面には出さない
+        
         List<ItemData> resultList = new List<ItemData>();
         foreach (var item in s_collectedItems)
         {
@@ -455,7 +455,7 @@ public class ItemInventoryManager : MonoBehaviour
         int total = 0;
         foreach (var item in s_collectedItems)
         {
-            // 念のため鍵の金額は足さない
+            
             if (item.type != ItemType.Key)
             {
                 total += item.moneyValue;
@@ -469,9 +469,9 @@ public class ItemInventoryManager : MonoBehaviour
         s_collectedItems.Clear();
     }
 
-    // =====================================================================
-    //  ユーティリティ
-    // =====================================================================
+    
+    
+    
 
     public int GetTotalItemCount()
     {

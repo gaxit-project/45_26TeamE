@@ -1,18 +1,18 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class Block_dirt : MonoBehaviour
 {
-    [SerializeField, Header("ƒuƒƒbƒN‚Ì‘Ì—Í")] int maxHP = 10;
+    [SerializeField, Header("ï¿½uï¿½ï¿½ï¿½bï¿½Nï¿½Ì‘Ì—ï¿½")] int maxHP = 10;
     public int currentHP;
 
-    [Header("’iŠK‚²‚Æ‚Ìƒ}ƒeƒŠƒAƒ‹")]
-    public Material matNormal;  // ‚È‚µ
-    public Material matCracked; // ‚¿‚å‚Á‚Æƒqƒr
-    public Material matBroken;  // •ö‰ó¡‘O
+    [Header("ï¿½iï¿½Kï¿½ï¿½ï¿½Æ‚Ìƒ}ï¿½eï¿½ï¿½ï¿½Aï¿½ï¿½")]
+    public Material matNormal;  
+    public Material matCracked; 
+    public Material matBroken;  
 
     private MeshRenderer meshRenderer;
 
-    // y’Ç‰Áz–³ŒÀƒ‹[ƒv–h~—p‚Ìƒtƒ‰ƒO
+    
     private bool isDead = false;
 
     void Start()
@@ -24,14 +24,14 @@ public class Block_dirt : MonoBehaviour
 
     public void TakeDamage(int damageAmount)
     {
-        // yd—vz‚·‚Å‚É€‚ñ‚Å‚¢‚éi”j‰óˆ—’†j‚È‚çA‚±‚±‚Åˆ—‚ğ‹­§I—¹I
+        
         if (isDead) return;
 
         currentHP -= damageAmount;
 
         if (currentHP <= 0)
         {
-            isDead = true; // u‚à‚¤€‚ñ‚Å‚é‚æv‚Æƒ}[ƒN‚ğ‚Â‚¯‚é
+            isDead = true; 
 
             DestroyChain();
             Destroy(gameObject);
@@ -44,14 +44,14 @@ public class Block_dirt : MonoBehaviour
 
     private void UpdateAppearance()
     {
-        // Š„‚èZ‚Ì”»’è‚ğ­‚µƒVƒ“ƒvƒ‹‚ÉC³‚µ‚Ü‚µ‚½
+        
         float healthRatio = (float)currentHP / maxHP;
 
         if (healthRatio == 1.0f)
         {
             meshRenderer.material = matNormal;
         }
-        else if (healthRatio > 0.33f) // 1/3‚æ‚è‘½‚¯‚ê‚Î
+        else if (healthRatio > 0.33f) 
         {
             meshRenderer.material = matCracked;
         }
@@ -63,7 +63,7 @@ public class Block_dirt : MonoBehaviour
 
     private void DestroyChain()
     {
-        // c(Y²)‚Æ‰¡(Z²)‚Ì4•ûŒü
+        
         Vector3[] directions = { Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
         float maxDistance = 0.55f;
 
@@ -78,16 +78,16 @@ public class Block_dirt : MonoBehaviour
 
                     if (targetBlock != null)
                     {
-                        // ‘Šè‚Ì‘Ì—Í‚É‚æ‚Á‚Äu˜A½v‚©uŠª‚«“Y‚¦v‚©‚ğ•Ï‚¦‚éI
+                        
                         if (targetBlock.currentHP == 1)
                         {
-                            // ‘Šè‚ª‘Ì—Í1‚È‚çAŠmÀ‚É‚Æ‚Ç‚ß‚ğh‚µ‚Ä˜A½‚ğŒq‚®I
+                            
                             targetBlock.TakeDamage(1);
                         }
                         else
                         {
-                            // ‘Šè‚ª•’Ê‚Ì‘Ì—Íi2ˆÈãj‚È‚çAŠª‚«“Y‚¦ƒ_ƒ[ƒW‚ğ—^‚¦‚Ä˜A½ƒXƒgƒbƒvI
-                            // i—á‚Æ‚µ‚ÄÅ‘åHP‚Ì1/3‚Ìƒ_ƒ[ƒW‚ğ—^‚¦‚Ü‚·j
+                            
+                            
                             targetBlock.TakeDamage(targetBlock.maxHP / 3);
                         }
                     }

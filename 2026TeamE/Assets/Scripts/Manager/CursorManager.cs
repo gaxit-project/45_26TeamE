@@ -1,11 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
-/// <summary>
-/// 最後に使われた入力デバイスに応じて、マウスカーソルの表示/非表示を自動で切り替える。
-/// コントローラーの入力があれば非表示、キーボード/マウスの入力があれば表示にする。
-/// </summary>
+
+
+
+
 public class CursorManager : MonoBehaviour
 {
     public static CursorManager Instance { get; private set; }
@@ -41,9 +41,9 @@ public class CursorManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// このフレームにコントローラーの入力があったかどうか
-    /// </summary>
+    
+    
+    
     private bool IsGamepadInput()
     {
         Gamepad pad = Gamepad.current;
@@ -65,9 +65,9 @@ public class CursorManager : MonoBehaviour
         return false;
     }
 
-    /// <summary>
-    /// このフレームにキーボードまたはマウスの入力があったかどうか
-    /// </summary>
+    
+    
+    
     private bool IsKeyboardOrMouseInput()
     {
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
@@ -137,7 +137,7 @@ public class Chunk : MonoBehaviour
         mesh.SetVertices(vertices);
         mesh.SetUVs(0, uvs);
 
-        mesh.subMeshCount = SUBMESH_COUNT; // マテリアルの数を変えたらここも忘れずに変える！
+        mesh.subMeshCount = SUBMESH_COUNT; 
 
         mesh.SetTriangles(dirtTriangles, 0);
         mesh.SetTriangles(oreTriangles, 1);

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
@@ -45,7 +45,7 @@ public class ResultManager : MonoBehaviour
 
     void Start()
     {
-        // 自動演出コルーチン開始
+        
         StartCoroutine(AutoResultSequence());
     }
 
@@ -58,8 +58,8 @@ public class ResultManager : MonoBehaviour
         if (Gamepad.current != null)
         {
             if (Gamepad.current.startButton.wasPressedThisFrame) wasPressed = true;
-            if (Gamepad.current.buttonEast.wasPressedThisFrame) wasPressed = true; // B/○
-            if (Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; // A/×
+            if (Gamepad.current.buttonEast.wasPressedThisFrame) wasPressed = true; 
+            if (Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; 
         }
         
         if (wasPressed)
@@ -85,7 +85,7 @@ public class ResultManager : MonoBehaviour
         List<ItemInventoryManager.ItemData> items = ItemInventoryManager.GetCollectedItemsForResult();
         MoneyManager mm = MoneyManager.Instance;
 
-        // 初期所持金表示
+        
         if (mm != null)
         {
             onHandResultText.text = mm.GetMoneyOnHand().ToString("N0");
@@ -106,9 +106,9 @@ public class ResultManager : MonoBehaviour
             }
         }
 
-        // ==========================================
-        // 1. 宝石の演出
-        // ==========================================
+        
+        
+        
         if (gems.Count > 0)
         {
             int gemTotalMoney = 0;
@@ -116,7 +116,7 @@ public class ResultManager : MonoBehaviour
             {
                 gemTotalMoney += gem.moneyValue;
             }
-            // 袋の開封前に合計額へ加算
+            
             if (mm != null && gemTotalMoney > 0)
             {
                 mm.MoneyOnHandIncrease(gemTotalMoney);
@@ -126,14 +126,14 @@ public class ResultManager : MonoBehaviour
             yield return StartCoroutine(WaitOrSkip(0.5f));
         }
 
-        // ==========================================
-        // 2. 袋の演出
-        // ==========================================
+        
+        
+        
         if (bags.Count > 0)
         {
             List<GameObject> bagIconObjs = new List<GameObject>();
 
-            // まずすべての袋アイコンを未開封の状態で並べる
+            
             foreach (var bag in bags)
             {
                 GameObject bagIconObj = CreateIconObject(bag.icon);
@@ -143,16 +143,16 @@ public class ResultManager : MonoBehaviour
 
             yield return StartCoroutine(WaitOrSkip(iconInterval));
 
-            // 左端から順番に開封
+            
             for (int i = 0; i < bags.Count; i++)
             {
                 var bag = bags[i];
                 var bagObj = bagIconObjs[i];
 
-                // 中身抽選
+                
                 LootItem loot = RollLoot(bag.type);
 
-                // 画像差し替え (開封)
+                
                 Image img = bagObj.GetComponent<Image>();
                 if (img != null)
                 {
@@ -161,13 +161,13 @@ public class ResultManager : MonoBehaviour
                     else if (bag.type == ItemType.GoldLeatherBag && openGoldLeatherBagSprite != null)
                         img.sprite = openGoldLeatherBagSprite;
                     
-                    // ここではまだ元の明るさのまま
+                    
                     img.color = Color.white;
                 }
 
                 Image lootImg = null;
 
-                // 中身アイコンの表示
+                
                 if (loot != null && loot.sprite != null)
                 {
                     GameObject lootIcon = new GameObject("LootIcon");
@@ -185,32 +185,32 @@ public class ResultManager : MonoBehaviour
 
                     yield return StartCoroutine(PopInAnimation(lootIcon.transform));
 
-                    // 合計額へ加算（換金）
+                    
                     if (mm != null && loot.moneyValue > 0)
                     {
                         mm.MoneyOnHandIncrease(loot.moneyValue);
                         onHandResultText.text = mm.GetMoneyOnHand().ToString("N0");
 
-                        // 換金された金額をポップアップ表示（待機せずに並行してアニメーション）
+                        
                         StartCoroutine(PopupMoneyText(bagObj.transform, loot.moneyValue));
                     }
                 }
 
-                // 換金し終えたことを示すため、袋と中身を暗くする
+                
                 if (img != null) img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
                 if (lootImg != null) lootImg.color = new Color(0.6f, 0.6f, 0.6f, 1f);
 
-                // 次の袋を開封するまでの猶予
+                
                 yield return StartCoroutine(WaitOrSkip(iconInterval));
             }
         }
 
-        // 全て終わった後の待機
+        
         yield return StartCoroutine(WaitOrSkip(iconInterval * 2));
 
         isAnimationFinished = true;
 
-        // 指定したボタンにフォーカスを当てる
+        
         if (nextFocusButton != null && UnityEngine.EventSystems.EventSystem.current != null)
         {
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(nextFocusButton);
@@ -237,7 +237,7 @@ public class ResultManager : MonoBehaviour
         layout.preferredWidth = iconSize;
         layout.preferredHeight = iconSize;
 
-        // ボタン機能がアタッチされている場合は無効化する
+        
         Button btn = iconObj.GetComponent<Button>();
         if (btn != null)
         {
@@ -275,18 +275,18 @@ public class ResultManager : MonoBehaviour
     {
         if (parent == null || amount <= 0) yield break;
 
-        // テキストオブジェクトを生成
+        
         GameObject textObj = new GameObject("PopupMoneyText");
         textObj.transform.SetParent(parent, false);
 
         TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
         tmp.text = "+" + amount.ToString("N0");
-        tmp.fontSize = 48f; // サイズを元の1.5倍に
-        tmp.fontStyle = FontStyles.Bold; // 太字に
-        tmp.color = new Color(1f, 0.9f, 0.4f, 1f); // 黄色っぽく
+        tmp.fontSize = 48f; 
+        tmp.fontStyle = FontStyles.Bold; 
+        tmp.color = new Color(1f, 0.9f, 0.4f, 1f); 
         tmp.alignment = TextAlignmentOptions.Center;
 
-        // デフォルトフォントが外れるのを防ぐため、既存のテキストからフォントをコピー
+        
         if (onHandResultText != null)
         {
             tmp.font = onHandResultText.font;
@@ -295,30 +295,30 @@ public class ResultManager : MonoBehaviour
 
         RectTransform rect = textObj.GetComponent<RectTransform>();
         rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(400f, 100f); // 横幅・縦幅に余裕を持たせる
+        rect.sizeDelta = new Vector2(400f, 100f); 
 
-        // 改行を防ぎ、レイキャストを受けないようにする
+        
         tmp.enableWordWrapping = false;
         tmp.raycastTarget = false;
 
         float duration = 0.8f;
         float elapsed = 0f;
-        float moveDistance = 80f; // 浮かび上がる距離
+        float moveDistance = 80f; 
 
         Vector2 startPos = rect.anchoredPosition;
 
         while (elapsed < duration)
         {
-            if (isSkipRequested) break; // スキップされたら即消す
+            if (isSkipRequested) break; 
 
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
-            // EaseOutっぽく上へ移動
+            
             float easedT = 1f - Mathf.Pow(1f - t, 3f);
             rect.anchoredPosition = startPos + new Vector2(0f, moveDistance * easedT);
 
-            // 後半でフェードアウト
+            
             if (t > 0.5f)
             {
                 Color c = tmp.color;
@@ -346,11 +346,11 @@ public class ResultManager : MonoBehaviour
             int chance = 0;
             if (containerType == ItemType.GoldLeatherBag)
             {
-                chance = loot.GoldLeatherBagChance; // 金の皮袋（元宝箱設定）用
+                chance = loot.GoldLeatherBagChance; 
             }
             else
             {
-                chance = loot.leatherBagChance; // 普通の皮袋用
+                chance = loot.leatherBagChance; 
             }
             
             if (chance <= 0) continue;
@@ -374,6 +374,6 @@ public class ResultManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // 次のシーンでもアイテムデータを参照する可能性があるためクリアしない
+        
     }
 }

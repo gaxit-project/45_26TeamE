@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DrillTip : MonoBehaviour
 {
@@ -65,7 +65,7 @@ public class DrillTip : MonoBehaviour
 
     private void LateUpdate()
     {
-        // アニメーション等でズレた分を逆算し、SphereColliderのワールドX座標が常に0になるようcenterを補正
+        
         if (myCollider != null)
         {
             Vector3 worldCenter = transform.TransformPoint(initialLocalCenter);
@@ -121,7 +121,7 @@ public class DrillTip : MonoBehaviour
                 foreach (Vector3 offset in checkOffsets)
                 {
                     Vector3 checkPos = transform.position + offset;
-                    checkPos.x = 0f; // 2D平面対応: 判定位置のXを0に固定
+                    checkPos.x = 0f; 
                     Vector3 lp = terrain.transform.InverseTransformPoint(checkPos);
                     int tx = Mathf.FloorToInt(lp.x / s);
                     int ty = Mathf.FloorToInt(lp.y / s);
@@ -150,7 +150,7 @@ public class DrillTip : MonoBehaviour
                 if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
 
                 Vector3 digPos = transform.position;
-                digPos.x = 0f; // 2D平面対応: 掘削中心位置のXを0に固定
+                digPos.x = 0f; 
                 Vector3 digLocal = terrain.transform.InverseTransformPoint(digPos);
                 int dx = Mathf.FloorToInt(digLocal.x / s);
                 int dy = Mathf.FloorToInt(digLocal.y / s);
