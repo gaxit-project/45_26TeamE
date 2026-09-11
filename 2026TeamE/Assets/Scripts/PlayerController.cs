@@ -1,4 +1,9 @@
-﻿using System.Linq;
+using System.Linq;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,7 +16,20 @@ public class PlayerController : MonoBehaviour
 
     private bool CanMove = false;
 
-    public bool onDamaged = false;
+    public enum PlayerState
+    {
+        Normal,
+        TakingDamage,
+        GameOver,
+        GameClear
+    }
+    public PlayerState currentState = PlayerState.Normal;
+
+    [Header("ダメージ演出")]
+    [SerializeField] private Renderer[] characterRenderers;
+    [SerializeField] private float blinkInterval = 0.1f;
+    [SerializeField] private Transform dropPoint;
+    [SerializeField] private float dropForce = 5f;
 
     public GameObject sonar;
     [Header("カメラ連携")]
@@ -116,7 +134,14 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        onDamaged = false;
+        currentState = PlayerState.Normal;
+
+        if (characterRenderers == null || characterRenderers.Length == 0)
+        {
+            characterRenderers = GetComponentsInChildren<Renderer>()
+                .Where(r => !(r is ParticleSystemRenderer) && r.enabled)
+                .ToArray();
+        }
 
         
         
@@ -151,6 +176,7 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         if (!CanMove) return;
+        if (currentState != PlayerState.Normal) return; // 状態がNormal以外の時は移動させない
         if (poseManager != null && poseManager.IsPaused) return;
 
         if (Time.time < dashEndTime)
@@ -235,6 +261,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         if (!CanMove) return;
+        if (currentState != PlayerState.Normal) return; // 状態がNormal以外の時は入力を受け付けない
         if (poseManager != null && poseManager.IsPaused) return;
         CheckGround();
 
@@ -408,14 +435,14 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
-        if (onDamaged) return;
+        if (currentState != PlayerState.Normal) return;
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnDrill(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
-        if (onDamaged) return;
+        if (currentState != PlayerState.Normal) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -437,7 +464,7 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
-        if (onDamaged) return;
+        if (currentState != PlayerState.Normal) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -463,7 +490,7 @@ public class PlayerController : MonoBehaviour
     public void OnSonar(InputAction.CallbackContext context)
     {
         if (!CanMove) return;
-        if (onDamaged) return;
+        if (currentState != PlayerState.Normal) return;
         if (poseManager != null && poseManager.IsInputBlocked) return;
 
         if (context.performed)
@@ -521,17 +548,99 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // アニメーションイベント用
     public void DamageAnim()
     {
-        if (onDamaged == false)
+    }
+
+    public void TakeDamageWithItems(System.Collections.Generic.List<ItemInventoryManager.ItemData> lostItems = null)
+    {
+        if (currentState == PlayerState.Normal)
         {
-            onDamaged = true;
-            animator.SetTrigger("Damage");
+            StartCoroutine(DamageRoutine(lostItems));
         }
-        if (onDamaged == true)
+    }
+
+    private System.Collections.IEnumerator DamageRoutine(System.Collections.Generic.List<ItemInventoryManager.ItemData> lostItems)
+    {
+        currentState = PlayerState.TakingDamage;
+        animator.SetTrigger("Damage");
+        
+        // 速度をゼロにして慣性で滑るのを防ぐ
+        rb.linearVelocity = Vector3.zero;
+
+        // 失ったアイテムのアイコンを使って、ぽろっと落とす演出
+        if (lostItems != null)
         {
-            animator.SetTrigger("Damage");
-            onDamaged = false;
+            foreach (var item in lostItems)
+            {
+                DropVisualItem(item.icon);
+            }
         }
+
+        // 点滅処理をしながら待機 (1秒間)
+        float duration = 1.0f;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            SetRenderersEnabled(false);
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+            
+            SetRenderersEnabled(true);
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
+        SetRenderersEnabled(true); // 確実に表示状態に戻す
+        animator.Play("Walk Tree"); // ポーズが固まるのを防ぐため、強制的に通常のアニメーションステートへ戻す
+        currentState = PlayerState.Normal;
+    }
+
+    private void SetRenderersEnabled(bool enabled)
+    {
+        if (characterRenderers == null) return;
+        foreach (var r in characterRenderers)
+        {
+            if (r != null) r.enabled = enabled;
+        }
+    }
+
+    private void DropVisualItem(Sprite icon)
+    {
+        if (icon == null) return;
+
+        // 物理計算用の親オブジェクト（コライダーなしで床をすり抜けさせる＝引っかからない）
+        GameObject physicsObj = new GameObject("DroppedItemPhysics");
+        Vector3 spawnPos = dropPoint != null ? dropPoint.position : transform.position + Vector3.up;
+        physicsObj.transform.position = spawnPos;
+
+        Rigidbody rb = physicsObj.AddComponent<Rigidbody>();
+        // X座標の固定と、Y,Z回転の固定（X軸周りのみ回転＝画面上でクルクル回る）
+        rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+
+        Vector3 randomDirection = new Vector3(0f, 1.0f, Random.Range(-1.0f, 1.0f)).normalized;
+        rb.AddForce(randomDirection * dropForce, ForceMode.Impulse);
+        rb.AddTorque(new Vector3(Random.Range(-15f, 15f), 0f, 0f), ForceMode.Impulse);
+
+        // 画像表示用の子オブジェクト
+        GameObject visualObj = new GameObject("Visual");
+        visualObj.transform.SetParent(physicsObj.transform);
+        visualObj.transform.localPosition = Vector3.zero;
+
+        SpriteRenderer sr = visualObj.AddComponent<SpriteRenderer>();
+        sr.sprite = icon;
+
+        // カメラの方を向かせる（1回だけ設定し、あとは親の回転に任せる）
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            // カメラのforwardと同じ方向を向かせる（SpriteRendererは-Zが表面なので、これでカメラと正対する）
+            visualObj.transform.rotation = Quaternion.LookRotation(mainCam.transform.forward, mainCam.transform.up);
+        }
+
+        // 2秒後に自動的に消滅（フェイク演出なので拾えない）
+        Destroy(physicsObj, 2.0f);
     }
 }

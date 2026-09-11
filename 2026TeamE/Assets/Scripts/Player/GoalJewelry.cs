@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,7 +18,15 @@ public class GoalJewelry : MonoBehaviour
         {
             isProcessed = true;
 
-            
+            // プレイヤーの操作を無効化
+            PlayerController player = other.GetComponent<PlayerController>();
+            if (player != null)
+            {
+                player.currentState = PlayerController.PlayerState.GameClear;
+                Rigidbody rb = player.GetComponent<Rigidbody>();
+                if (rb != null) rb.linearVelocity = Vector3.zero;
+            }
+
             Animator playerAnim = other.GetComponent<Animator>();
             if (playerAnim != null)
             {

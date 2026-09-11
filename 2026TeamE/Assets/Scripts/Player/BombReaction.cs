@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class BombReaction : BuriedItemBase
@@ -242,6 +242,7 @@ public class BombReaction : BuriedItemBase
 
             
             
+            
 
             
             Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(centerPos);
@@ -304,11 +305,7 @@ public class BombReaction : BuriedItemBase
                 if (obj.CompareTag("Player"))
                 {
                     PlayerController pc = obj.GetComponent<PlayerController>();
-                    if (pc != null)
-                    {
-                        pc.DamageAnim();
-                    }
-
+                    
                     if (MoneyManager.Instance != null)
                     {
                         int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
@@ -323,16 +320,21 @@ public class BombReaction : BuriedItemBase
                         {
                             Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
                         }
+                    }
 
-                        
-                        if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
+                    System.Collections.Generic.List<ItemInventoryManager.ItemData> removedItems = null;
+                    if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
+                    {
+                        removedItems = ItemInventoryManager.Instance.RemoveItemsRandomWithData(1);
+                        if (removedItems.Count > 0)
                         {
-                            int removed = ItemInventoryManager.Instance.RemoveItemsRandom(1);
-                            if (removed > 0)
-                            {
-                                Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
-                            }
+                            Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
                         }
+                    }
+
+                    if (pc != null)
+                    {
+                        pc.TakeDamageWithItems(removedItems);
                     }
                 }
             }

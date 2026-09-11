@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -325,6 +325,26 @@ public class ItemInventoryManager : MonoBehaviour
 
         AnimateRemovals(typesToAnimate);
         return actualRemoved;
+    }
+
+    public List<ItemData> RemoveItemsRandomWithData(int count)
+    {
+        List<ItemData> removedItems = new List<ItemData>();
+        HashSet<ItemType> typesToAnimate = new HashSet<ItemType>();
+
+        for (int i = 0; i < count; i++)
+        {
+            if (s_collectedItems.Count == 0) break;
+            int randomIndex = Random.Range(0, s_collectedItems.Count);
+            ItemData data = s_collectedItems[randomIndex];
+            
+            s_collectedItems.RemoveAt(randomIndex);
+            removedItems.Add(data);
+            typesToAnimate.Add(data.type);
+        }
+
+        AnimateRemovals(typesToAnimate);
+        return removedItems;
     }
 
     public bool RemoveItemByType(ItemType type)

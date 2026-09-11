@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 
 public class TimerManager : MonoBehaviour
@@ -118,6 +118,15 @@ public class TimerManager : MonoBehaviour
 
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
+
+        // プレイヤーの操作を無効化
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (player != null)
+        {
+            player.currentState = PlayerController.PlayerState.GameOver;
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null) rb.linearVelocity = Vector3.zero;
+        }
 
         
         StartCoroutine(ReturnToTitleAfterTimeUp());
