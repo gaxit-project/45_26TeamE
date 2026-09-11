@@ -29,6 +29,18 @@ public class DrillTip : MonoBehaviour
     [Tooltip("その振動が続く時間（秒）")]
     [SerializeField] private float digRumbleDuration = 0.08f;
 
+    [Header("ブロック破壊音（空なら鳴らさない）")]
+    [Tooltip("土など柔らかいブロックを砕いた時のSE")]
+    [SerializeField] private string softBreakSeName = "SoftBreak";
+    [Tooltip("石や硬岩など硬いブロックを砕いた時のSE。専用の音が無ければ柔らかい方と同じで構わない")]
+    [SerializeField] private string hardBreakSeName = "SoftBreak";
+    [Tooltip("この硬さ以上で硬いブロック用のSEに切り替える")]
+    [SerializeField] private float hardBreakHardnessThreshold = 4f;
+    [Tooltip("破壊音を鳴らす最小間隔（秒）。連続で掘った時に音が重なりすぎるのを防ぐ")]
+    [SerializeField] private float breakSeMinInterval = 0.08f;
+
+    private float lastBreakSeTime = -999f;
+
     private float lastDrillTime;
     private PlayerController player;
 
@@ -203,6 +215,8 @@ public class DrillTip : MonoBehaviour
                         float rumble = CalculateDigRumbleStrength(hardness);
                         HapticsManager.Instance.PlayPulse(rumble, rumble * 0.6f, digRumbleDuration);
                     }
+
+                    PlayBreakSound(hardness);
                 }
 
                 lastDirtTouchTime = Time.time;
@@ -239,6 +253,22 @@ public class DrillTip : MonoBehaviour
     private float CalculateDigRumbleStrength(float hardness)
     {
         return Mathf.Clamp01(digRumbleStrength * Mathf.Lerp(0.7f, 1f, NormalizeHardness(hardness)));
+    }
+
+    /// <summary>
+    /// ブロックを砕いた時の破壊音を鳴らす。
+    /// 掘削は短い間隔で連続するため、音が重なりすぎないよう最小間隔を設けている。
+    /// </summary>
+    private void PlayBreakSound(float hardness)
+    {
+        if (SoundManager.Instance == null) return;
+        if (Time.time < lastBreakSeTime + breakSeMinInterval) return;
+
+        string seName = hardness >= hardBreakHardnessThreshold ? hardBreakSeName : softBreakSeName;
+        if (string.IsNullOrEmpty(seName)) return;
+
+        lastBreakSeTime = Time.time;
+        SoundManager.Instance.PlaySE(seName);
     }
 
     private void OnDrawGizmos()

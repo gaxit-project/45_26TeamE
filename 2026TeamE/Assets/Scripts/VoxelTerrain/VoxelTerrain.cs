@@ -229,10 +229,14 @@ public partial class VoxelTerrain : MonoBehaviour
 
     void Update()
     {
+        // 開発用：1キーで周囲の岩盤を消して中継地点を通り抜けられるようにする。
+        // 製品ビルドでは中継地点の鍵の条件を無視できてしまうため、除外する。
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             RemoveBedrockAroundPlayer();
         }
+#endif
     }
 
 }

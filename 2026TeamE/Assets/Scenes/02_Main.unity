@@ -7414,6 +7414,12 @@ MonoBehaviour:
   PlayerAnimator: {fileID: 548082335}
   animationSpeed: 5
   maxScale: 1.3
+  warningThreshold: 30
+  heartbeatRumble: 0.35
+  heartbeatDuration: 0.1
+  heartbeatIntervalStart: 1
+  heartbeatIntervalEnd: 0.35
+  heartbeatSeName: HeartBeat
   timeUpToTitleDelay: 2
 --- !u!4 &370939137
 Transform:
@@ -7643,6 +7649,10 @@ MonoBehaviour:
   digShakeDuration: 0.12
   digRumbleStrength: 0.6
   digRumbleDuration: 0.08
+  softBreakSeName: SoftBreak
+  hardBreakSeName: SoftBreak
+  hardBreakHardnessThreshold: 4
+  breakSeMinInterval: 0.08
   contactTimeout: 0.25
 --- !u!1 &430756347
 GameObject:
@@ -8196,6 +8206,7 @@ GameObject:
   - component: {fileID: 548082338}
   - component: {fileID: 548082340}
   - component: {fileID: 548082337}
+  - component: {fileID: 548082341}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -8681,6 +8692,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoTitle
   sceneName: 01_Title
+--- !u!114 &548082341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 548082329}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fad3376e05eedd14c91cf865d0d565d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LandingImpact
+  minFallSpeed: 4
+  maxFallSpeed: 14
+  shakeStrength: 0.5
+  shakeDuration: 0.2
+  rumbleStrength: 0.7
+  rumbleDuration: 0.12
+  landingSeName: 
+  cooldown: 0.2
 --- !u!1 &610964210
 GameObject:
   m_ObjectHideFlags: 0
