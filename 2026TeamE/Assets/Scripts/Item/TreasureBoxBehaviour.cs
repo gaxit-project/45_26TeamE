@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
@@ -52,6 +52,8 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         isGot = true;
 
         if (currentMarker != null) Destroy(currentMarker);
+
+        FinalResultManager.AddCollectedTreasureBox();
 
         StartCoroutine(OpenRoutine());
     }

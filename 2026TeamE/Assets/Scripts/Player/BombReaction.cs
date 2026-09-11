@@ -234,6 +234,9 @@ public class BombReaction : BuriedItemBase
 
     private void Explode()
     {
+        // スコア用：爆弾が起爆した時点で加算
+        FinalResultManager.AddTriggeredBomb();
+
         
         if (VoxelTerrain.Instance != null)
         {
@@ -320,6 +323,12 @@ public class BombReaction : BuriedItemBase
                         {
                             Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
                         }
+                    }
+
+                    if (TimerManager.Instance != null)
+                    {
+                        TimerManager.Instance.AddTime(-10f);
+                        Debug.Log("[BombReaction] 爆発により制限時間が10秒減少しました！");
                     }
 
                     System.Collections.Generic.List<ItemInventoryManager.ItemData> removedItems = null;

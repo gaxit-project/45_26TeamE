@@ -59,7 +59,8 @@ public class GoalJewelry : MonoBehaviour
         isGoalReached = true;
 
         
-        string targetScene = string.IsNullOrEmpty(SceneName) ? "Result" : SceneName;
+        // 以前はタイトルに戻っていた処理を Result (FinalResult) へ変更
+        string targetScene = "Result";
         SceneManager.LoadScene(targetScene);
 
         

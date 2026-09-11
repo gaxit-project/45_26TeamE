@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 
 public partial class VoxelTerrain
@@ -31,6 +31,13 @@ public partial class VoxelTerrain
         checkpointPos.y -= (blockSize * 5f);
 
         CheckpointManager.Instance.SaveCheckpoint(checkpointPos, currentID);
+
+        // スコア用：各層突破時の残り酸素（時間）を記録
+        if (TimerManager.Instance != null)
+        {
+            FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+            Debug.Log($"[スコア] ゾーン {currentID} 突破時の残り酸素（時間） {TimerManager.Instance.TotalTime} を記録しました。");
+        }
 
         if (TryGetComponent<SelectPoint>(out var selectPoint))
         {

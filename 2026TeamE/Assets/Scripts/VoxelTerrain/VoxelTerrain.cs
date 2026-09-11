@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -92,6 +92,8 @@ public partial class VoxelTerrain : MonoBehaviour
     [SerializeField] private Material boundaryMaterial;
 
     [Header("同期オプション")]
+    public static int LastUsedSeed { get; private set; }
+    public static bool ForceUseSeed = false;
     [SerializeField] private bool useDeterministicSeed = true;
     [SerializeField] private int seed = 12345;
 

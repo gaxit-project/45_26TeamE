@@ -8,6 +8,7 @@ public class TimerManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
 
     [SerializeField]private float totalTime = 120f;
+    public float TotalTime => totalTime;
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
 
@@ -182,7 +183,7 @@ public class TimerManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(timeUpToTitleDelay);
 
         Time.timeScale = 1f;
-        UnityEngine.SceneManagement.SceneManager.LoadScene("01_Title");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Result");
     }
 
     

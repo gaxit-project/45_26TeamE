@@ -1,56 +1,26 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
-
 
 public partial class VoxelTerrain
 {
-    
-
-    
     private const float LayerNoiseScale = 0.2f;
-    
     private const float LayerBumpyIntensity = 12f;
-    
     private const int GoalThresholdY = 80;
-    
     private const int BedrockCeilingY = 5;
-    
     private const int StoneMarkerY = 6;
-    
     private const int SurfaceAirMargin = 3;
-    
     private const float PlayerSpawnClearRadius = 4.0f;
 
-    
     private static readonly int[] NeighborOffsetX = { 1, -1, 0, 0, 0, 0 };
     private static readonly int[] NeighborOffsetY = { 0, 0, 1, -1, 0, 0 };
     private static readonly int[] NeighborOffsetZ = { 0, 0, 0, 0, 1, -1 };
 
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     public void CreateStage(int width, int height, float size)
     {
         if (IsGenerating) return;
-
         StartCoroutine(CreateStageRoutine(width, size));
     }
 
-    
-    
-    
     private IEnumerator CreateStageRoutine(int requestedWidth, float size)
     {
         IsGenerating = true;
@@ -78,17 +48,11 @@ public partial class VoxelTerrain
         }
         finally
         {
-            
             SceneInitializationGate.End();
             IsGenerating = false;
         }
     }
 
-    
-
-    
-    
-    
     private void ApplyStageDimensions(int requestedWidth, float size)
     {
         maxStageWidthZ = Mathf.Max(requestedWidth, GetWidestZoneWidth());
@@ -99,7 +63,6 @@ public partial class VoxelTerrain
         zoneInitialGemValues.Clear();
     }
 
-    
     private int GetWidestZoneWidth()
     {
         int widest = 0;
@@ -112,16 +75,29 @@ public partial class VoxelTerrain
 
     private System.Random CreateRandomGenerator()
     {
-        return useDeterministicSeed ? new System.Random(seed) : new System.Random();
-    }
+        if (ForceUseSeed)
+        {
+            ForceUseSeed = false; 
+            return new System.Random(LastUsedSeed);
+        }
 
+        if (useDeterministicSeed)
+        {
+            LastUsedSeed = seed;
+            return new System.Random(LastUsedSeed);
+        }
+        else
+        {
+            LastUsedSeed = System.Environment.TickCount;
+            return new System.Random(LastUsedSeed);
+        }
+    }
     
     private Vector3Int CalculateStartPoint()
     {
         return new Vector3Int(0, heightY - startDepthFromSurface, maxStageWidthZ / 2);
     }
 
-    
     private void ApplyTerrainOrigin()
     {
         float offsetX = -(thicknessX * blockSize) / 2f;
@@ -129,7 +105,6 @@ public partial class VoxelTerrain
         transform.position = new Vector3(offsetX, -(heightY * blockSize), offsetZ);
     }
 
-    
     private void ClearBlocksAroundPlayer()
     {
         GameObject player = GameObject.FindWithTag("Player");
@@ -138,11 +113,6 @@ public partial class VoxelTerrain
         ClearBlocksAroundPoint(player.transform.position, PlayerSpawnClearRadius);
     }
 
-    
-
-    
-    
-    
     private IEnumerator FillTerrainRoutine(System.Random rnd, Vector3Int startPoint, FrameBudget budget)
     {
         GoalChamber goalChamber = CreateGoalChamber();
@@ -165,10 +135,6 @@ public partial class VoxelTerrain
         }
     }
 
-    
-    
-    
-    
     private byte DetermineBlockType(int x, int y, int z, Vector3Int startPoint, GoalChamber goalChamber, System.Random rnd)
     {
         if (!IsInside(x, y, z)) return (byte)BlockType.Boundary;
@@ -187,7 +153,6 @@ public partial class VoxelTerrain
         return DetermineStrataBlockType(x, y, z);
     }
 
-    
     private bool IsInStartCavity(int y, int z, Vector3Int startPoint)
     {
         float dz = z - startPoint.z;
@@ -200,7 +165,6 @@ public partial class VoxelTerrain
         return insideStartHole || insideVerticalShaft;
     }
 
-    
     private byte DetermineShallowBlockType(int y, int z, int startZ)
     {
         if (y <= BedrockCeilingY) return (byte)BlockType.Bedrock;
@@ -208,10 +172,6 @@ public partial class VoxelTerrain
         return (byte)BlockType.Air;
     }
 
-    
-    
-    
-    
     private byte DetermineStrataBlockType(int x, int y, int z)
     {
         float bumpyNoise = Mathf.PerlinNoise(x * LayerNoiseScale, z * LayerNoiseScale + (seed * 0.1f));
@@ -247,11 +207,6 @@ public partial class VoxelTerrain
         return noiseVal < 0.4f ? (byte)BlockType.HardRock : (byte)BlockType.Quartzite;
     }
 
-    
-
-    
-    
-    
     private readonly struct GoalChamber
     {
         public readonly bool Exists;
@@ -267,7 +222,6 @@ public partial class VoxelTerrain
             this.halfSize = halfSize;
         }
 
-        
         public bool Contains(int y, int z)
         {
             if (!Exists || y <= BedrockCeilingY) return false;
@@ -301,11 +255,6 @@ public partial class VoxelTerrain
             halfSize: Mathf.RoundToInt(goalChamberRadius));
     }
 
-    
-
-    
-    
-    
     public bool IsRelayZoneBottom(int y)
     {
         int currentY = heightY;
@@ -320,9 +269,6 @@ public partial class VoxelTerrain
         return false;
     }
 
-    
-    
-    
     private IEnumerator RemoveIsolatedBlocksRoutine(FrameBudget budget)
     {
         if (mapData == null) yield break;
@@ -354,7 +300,6 @@ public partial class VoxelTerrain
         }
     }
 
-    
     private bool HasSolidNeighbor(int x, int y, int z, int sizeX, int sizeY, int sizeZ)
     {
         for (int i = 0; i < NeighborOffsetX.Length; i++)

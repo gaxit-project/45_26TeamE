@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-
-
-
+using UnityEngine;
 
 public static class ResetManager
 {
@@ -9,6 +6,9 @@ public static class ResetManager
     {
         
         ItemInventoryManager.ClearCollectedData();
+
+        // スコア記録の初期化
+        FinalResultManager.ResetStats();
 
         
         if (MainManager.Instance != null)
