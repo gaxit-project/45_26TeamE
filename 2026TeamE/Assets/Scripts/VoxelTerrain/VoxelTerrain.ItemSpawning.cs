@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -301,6 +301,21 @@ public partial class VoxelTerrain
             {
                 case SpawnItemType.Key:
                     tb.contentPrefab = keyPrefab;
+                    
+                    // 鍵の場所を分かりやすくするための光源を追加
+                    GameObject lightObj = new GameObject("KeyHintLight");
+                    lightObj.transform.SetParent(box.transform);
+                    
+                    // Y座標とZ座標は宝箱に合わせ、X座標はワールド座標の固定値（3f）にする
+                    Vector3 fixedPos = box.transform.position;
+                    fixedPos.x = 3f; 
+                    lightObj.transform.position = fixedPos;
+                    
+                    Light lightComp = lightObj.AddComponent<Light>();
+                    lightComp.type = LightType.Point;
+                    lightComp.range = 30f;      // より広く
+                    lightComp.intensity = 15f;  // より強く
+                    lightComp.color = new Color(1f, 0.9f, 0.3f);
                     break;
                 case SpawnItemType.Jewel:
                     tb.contentPrefab = treasurePrefab;
