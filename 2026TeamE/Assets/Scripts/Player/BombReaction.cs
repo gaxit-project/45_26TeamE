@@ -27,6 +27,14 @@ public class BombReaction : BuriedItemBase
     [Header("レベル2以上でのソナー検知時のマーカー")]
     public GameObject markerV2;
 
+    [Header("コントローラー振動が始まる接近距離")]
+    [SerializeField] private float vibrationWarningDistance = 20f;
+
+    [Header("接近時の振動の強さ")]
+    [SerializeField] private float warningVibrationStrength = 0.15f;
+
+    private PlayerController player;
+
     [Header("爆発範囲表示用のLineRenderer")]
     public LineRenderer rangeCircle;
     [Header("時間経過で広がる爆発目安のLineRenderer")]
@@ -43,6 +51,8 @@ public class BombReaction : BuriedItemBase
     {
         base.Start();
 
+        player = FindObjectOfType<PlayerController>();
+
         
         if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
         {
@@ -52,8 +62,29 @@ public class BombReaction : BuriedItemBase
 
     protected override void Update()
     {
+        CheckProximityVibration();
+
         if (isExploding) return;
         base.Update();
+    }
+
+    private void CheckProximityVibration()
+    {
+        if (player == null) return;
+        if (Time.timeScale == 0f) return; // ポーズ中は強制的に振動をストップ
+        
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        if (distance <= vibrationWarningDistance)
+        {
+            float cycle = Time.time % 1.0f;
+            if (cycle < 0.5f)
+            {
+                if (HapticsManager.Instance != null)
+                {
+                    HapticsManager.Instance.PlayPulse(warningVibrationStrength, warningVibrationStrength, 0.05f);
+                }
+            }
+        }
     }
 
     public void TriggerChainReaction()

@@ -156,6 +156,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0de834e2f8cf84249b9fb00bba00d2c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombReaction
+  cooldownTime: 1
+  isExposed: 0
   explosionRadius: 8
   expandSpeed: 4
   emissionIntensity: 5
@@ -165,11 +167,12 @@ MonoBehaviour:
   visualEchoPrefabV2: {fileID: 8559125908501948008, guid: d449ce611dea53d4ca013d420413ddcb, type: 3}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}
   markerV2: {fileID: 4524295200723672389, guid: c6acd15463c9d174a93d19af0a4b3526, type: 3}
+  vibrationWarningDistance: 10
+  warningVibrationStrength: 0.15
   rangeCircle: {fileID: 8770754737348251266}
   expandingCircle: {fileID: 6139497328927311295}
   circleSegments: 36
   circleXOffset: 5
-  cooldownTime: 1
 --- !u!1 &1286232339964196172
 GameObject:
   m_ObjectHideFlags: 0
