@@ -22,6 +22,13 @@ public class DrillTip : MonoBehaviour
     [Tooltip("揺れが収まるまでの時間（秒）")]
     [SerializeField] private float digShakeDuration = 0.12f;
 
+    [Header("掘削時の振動")]
+    [Tooltip("ブロックを砕いた瞬間に重ねる振動の強さ。0にすると振動なし")]
+    [Range(0f, 1f)]
+    [SerializeField] private float digRumbleStrength = 0.6f;
+    [Tooltip("その振動が続く時間（秒）")]
+    [SerializeField] private float digRumbleDuration = 0.08f;
+
     private float lastDrillTime;
     private PlayerController player;
 
@@ -177,9 +184,25 @@ public class DrillTip : MonoBehaviour
 
                 // 実際にブロックを壊した時だけ画面を揺らす。
                 // 掘る対象が無い場所でドリルを回し続けても揺れないようにするため。
-                if (destroyedAnyBlock && CameraController.Instance != null)
+                if (destroyedAnyBlock)
                 {
-                    CameraController.Instance.AddShake(CalculateDigShakeStrength(hardness), digShakeDuration);
+                    if (CameraController.Instance != null)
+                    {
+                        CameraController.Instance.AddShake(CalculateDigShakeStrength(hardness), digShakeDuration);
+                    }
+
+                    // 火花が散っているように、掘った瞬間だけライトを強める
+                    if (LightController.Instance != null)
+                    {
+                        LightController.Instance.Flash();
+                    }
+
+                    // 砕いた手応えとして、常時振動の上から短く強いパルスを重ねる
+                    if (HapticsManager.Instance != null && digRumbleStrength > 0f)
+                    {
+                        float rumble = CalculateDigRumbleStrength(hardness);
+                        HapticsManager.Instance.PlayPulse(rumble, rumble * 0.6f, digRumbleDuration);
+                    }
                 }
 
                 lastDirtTouchTime = Time.time;
@@ -193,15 +216,29 @@ public class DrillTip : MonoBehaviour
     /// 硬さの生の値（土1〜珪岩20以上）をそのまま掛けると一瞬で上限に張り付いてしまうため、
     /// 0〜1に正規化してから控えめに上乗せする。
     /// </summary>
-    private float CalculateDigShakeStrength(float hardness)
+    /// <summary>
+    /// ブロックの硬さを0〜1に正規化する。
+    /// 硬さの生の値（土1〜珪岩20以上）をそのまま演出の強さに掛けると
+    /// 一瞬で上限に張り付いてしまうため、扱いやすい範囲に直してから使う。
+    /// </summary>
+    private static float NormalizeHardness(float hardness)
     {
         const float softHardness = 1f;   // 土
         const float hardHardness = 10f;  // 硬岩
 
-        float normalized = Mathf.InverseLerp(softHardness, hardHardness, hardness);
+        return Mathf.InverseLerp(softHardness, hardHardness, hardness);
+    }
 
-        // 土でも必ず基準の強さで揺れ、硬いブロックでは最大2倍まで強くなる
-        return digShakeStrength * Mathf.Lerp(1f, 2f, normalized);
+    /// <summary>掘削時の画面揺れの強さ。土でも必ず揺れ、硬いブロックでは最大2倍になる。</summary>
+    private float CalculateDigShakeStrength(float hardness)
+    {
+        return digShakeStrength * Mathf.Lerp(1f, 2f, NormalizeHardness(hardness));
+    }
+
+    /// <summary>掘削時の振動の強さ。硬いブロックほど強く響かせる。</summary>
+    private float CalculateDigRumbleStrength(float hardness)
+    {
+        return Mathf.Clamp01(digRumbleStrength * Mathf.Lerp(0.7f, 1f, NormalizeHardness(hardness)));
     }
 
     private void OnDrawGizmos()

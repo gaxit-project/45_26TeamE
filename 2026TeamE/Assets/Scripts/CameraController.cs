@@ -15,7 +15,20 @@ public class CameraController : MonoBehaviour
     [Tooltip("揺れの最大幅（ワールド単位）。0にすると揺れなし")]
     [SerializeField] private float maxShakeAmount = 0.25f;
 
+    [Header("先読み（進行方向を少し多く映す）")]
+    [Tooltip("進行方向にカメラを寄せる最大距離。0にすると先読みなし")]
+    [SerializeField] private float lookAheadDistance = 2.0f;
+    [Tooltip("この速度で移動している時に先読みが最大になる")]
+    [SerializeField] private float lookAheadMaxSpeed = 8f;
+    [Tooltip("先読みの寄り・戻りにかける時間。大きいほどゆっくり追従する")]
+    [SerializeField] private float lookAheadSmoothTime = 0.4f;
+
     private Vector3 currentVelocity = Vector3.zero;
+
+    // 先読みで今どれだけ寄っているか。急に飛ばないよう滑らかに補間する
+    private Vector3 currentLookAhead = Vector3.zero;
+    private Vector3 lookAheadVelocity = Vector3.zero;
+    private Vector3 previousPlayerPosition;
 
     // 揺れの残り時間と、その揺れ全体の長さ・強さ
     private float shakeRemainingTime;
@@ -51,11 +64,16 @@ public class CameraController : MonoBehaviour
         shakeRemainingTime = duration;
     }
 
+    private void Start()
+    {
+        if (player != null) previousPlayerPosition = player.position;
+    }
+
     void LateUpdate()
     {
         if (player == null) return;
 
-        Vector3 targetPosition = player.position + offset;
+        Vector3 targetPosition = player.position + offset + UpdateLookAhead();
 
         Vector3 nextPosition = Vector3.SmoothDamp(
             transform.position,
@@ -67,6 +85,46 @@ public class CameraController : MonoBehaviour
         nextPosition.y = targetPosition.y;
 
         transform.position = nextPosition + CalculateShakeOffset();
+    }
+
+    /// <summary>
+    /// プレイヤーの移動方向にカメラを少し寄せ、進行方向を広く映すためのオフセットを求める。
+    /// 速く動いているほど大きく寄り、止まると中央に戻る。
+    /// </summary>
+    private Vector3 UpdateLookAhead()
+    {
+        if (lookAheadDistance <= 0f)
+        {
+            previousPlayerPosition = player.position;
+            return Vector3.zero;
+        }
+
+        // Rigidbodyの速度ではなく実際の移動量から求めることで、
+        // 壁に押し付けて動けていない時に先読みが働くのを防ぐ
+        Vector3 movement = player.position - previousPlayerPosition;
+        previousPlayerPosition = player.position;
+
+        Vector3 targetLookAhead = Vector3.zero;
+
+        if (Time.deltaTime > 0f)
+        {
+            Vector3 velocity = movement / Time.deltaTime;
+
+            // 画面はYZ平面なので、奥行きにあたるXは先読みしない
+            velocity.x = 0f;
+
+            float speedRatio = Mathf.Clamp01(velocity.magnitude / Mathf.Max(0.01f, lookAheadMaxSpeed));
+            targetLookAhead = velocity.normalized * (lookAheadDistance * speedRatio);
+        }
+
+        currentLookAhead = Vector3.SmoothDamp(
+            currentLookAhead,
+            targetLookAhead,
+            ref lookAheadVelocity,
+            lookAheadSmoothTime
+        );
+
+        return currentLookAhead;
     }
 
     /// <summary>

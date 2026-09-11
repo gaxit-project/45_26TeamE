@@ -1421,6 +1421,10 @@ MonoBehaviour:
   baseLightIntensity: 40
   rangeBonusPerLevel: 3
   intensityBonusPerLevel: 3
+  digFlashIntensityScale: 1.25
+  digFlashRangeScale: 1.1
+  digFlashDuration: 0.12
+  digFlickerSpeed: 30
 --- !u!1 &215202802
 GameObject:
   m_ObjectHideFlags: 0
@@ -6849,7 +6853,7 @@ MonoBehaviour:
   oreParticle: {fileID: 0}
   stoneParticle: {fileID: 364404870}
   hardRockParticle: {fileID: 62827917}
-  particlesPerBlock: 1
+  particlesPerBlock: 3
 --- !u!4 &303897470
 Transform:
   m_ObjectHideFlags: 0
@@ -7186,6 +7190,10 @@ MonoBehaviour:
   player: {fileID: 548082330}
   smoothTime: 1
   offset: {x: 35, y: 1, z: 0}
+  maxShakeAmount: 1
+  lookAheadDistance: 2
+  lookAheadMaxSpeed: 8
+  lookAheadSmoothTime: 0.4
 --- !u!114 &334186083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7631,6 +7639,10 @@ MonoBehaviour:
   forwardOffset: 1
   drillSECueName: "\u30C9\u30EA\u30EB"
   requireTerrainContact: 1
+  digShakeStrength: 0.35
+  digShakeDuration: 0.12
+  digRumbleStrength: 0.6
+  digRumbleDuration: 0.08
   contactTimeout: 0.25
 --- !u!1 &430756347
 GameObject:
