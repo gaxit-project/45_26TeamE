@@ -358,7 +358,13 @@ public class BombReaction : BuriedItemBase
             SoundManager.Instance.PlaySE("Bomb_01");
         }
 
-        
+        // 画面を大きく揺らして爆発の衝撃を伝える
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.AddShake(1f, 0.45f);
+        }
+
+
         Destroy(gameObject);
     }
 }

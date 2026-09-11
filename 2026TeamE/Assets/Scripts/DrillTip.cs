@@ -16,6 +16,12 @@ public class DrillTip : MonoBehaviour
     [SerializeField] private string drillSECueName = "ドリル";
     [SerializeField] private bool requireTerrainContact = true;
 
+    [Header("掘削時の画面揺れ")]
+    [Tooltip("揺れの強さ。0にすると揺れなし。硬いブロックほど自動的に強くなる")]
+    [SerializeField] private float digShakeStrength = 0.35f;
+    [Tooltip("揺れが収まるまでの時間（秒）")]
+    [SerializeField] private float digShakeDuration = 0.12f;
+
     private float lastDrillTime;
     private PlayerController player;
 
@@ -167,11 +173,35 @@ public class DrillTip : MonoBehaviour
 
                 float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
 
-                terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+                bool destroyedAnyBlock = terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+
+                // 実際にブロックを壊した時だけ画面を揺らす。
+                // 掘る対象が無い場所でドリルを回し続けても揺れないようにするため。
+                if (destroyedAnyBlock && CameraController.Instance != null)
+                {
+                    CameraController.Instance.AddShake(CalculateDigShakeStrength(hardness), digShakeDuration);
+                }
+
                 lastDirtTouchTime = Time.time;
                 lastDrillTime = Time.time;
             }
         }
+    }
+
+    /// <summary>
+    /// 掘削時の画面揺れの強さを求める。
+    /// 硬さの生の値（土1〜珪岩20以上）をそのまま掛けると一瞬で上限に張り付いてしまうため、
+    /// 0〜1に正規化してから控えめに上乗せする。
+    /// </summary>
+    private float CalculateDigShakeStrength(float hardness)
+    {
+        const float softHardness = 1f;   // 土
+        const float hardHardness = 10f;  // 硬岩
+
+        float normalized = Mathf.InverseLerp(softHardness, hardHardness, hardness);
+
+        // 土でも必ず基準の強さで揺れ、硬いブロックでは最大2倍まで強くなる
+        return digShakeStrength * Mathf.Lerp(1f, 2f, normalized);
     }
 
     private void OnDrawGizmos()

@@ -4,7 +4,11 @@ using UnityEngine;
 
 public partial class VoxelTerrain
 {
-    public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
+    /// <summary>
+    /// 指定位置を中心にブロックを削る。
+    /// </summary>
+    /// <returns>実際に1つ以上のブロックを壊した場合はtrue。空振りならfalse。</returns>
+    public bool ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
     {
         int r = Mathf.CeilToInt(radius);
         bool changed = false;
@@ -87,6 +91,8 @@ public partial class VoxelTerrain
                     chunksToUpdate.Add(cIndex + 1);
             }
         }
+
+        return changed;
     }
 
     public void RemoveBedrockAroundPlayer()
