@@ -331,7 +331,7 @@ public class BombReaction : BuriedItemBase
                 TreasureBoxBehaviour boxScript = obj.GetComponent<TreasureBoxBehaviour>();
                 if (boxScript != null && !boxScript.IsGot)
                 {
-                    Destroy(obj);
+                    boxScript.DestroyByBomb();
                     continue;
                 }
 

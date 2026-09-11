@@ -27,6 +27,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
 
     private bool isGot = false;
     public bool IsGot => isGot;
+    private bool isDestroyingByBomb = false;
     private SpriteRenderer spriteRenderer;
 
     protected override void Awake()
@@ -48,7 +49,7 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
 
     public void Collect()
     {
-        if (!isExposed || isGot) return;
+        if (!isExposed || isGot || isDestroyingByBomb) return;
         isGot = true;
 
         if (currentMarker != null) Destroy(currentMarker);
@@ -156,6 +157,34 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             {
                 collectible.Collect();
             }
+        }
+
+        Destroy(gameObject);
+    }
+
+    public void DestroyByBomb()
+    {
+        if (isGot || isDestroyingByBomb) return;
+        isDestroyingByBomb = true;
+        StartCoroutine(DestroyByBombRoutine());
+    }
+
+    private IEnumerator DestroyByBombRoutine()
+    {
+        float duration = 1.0f;
+        float elapsed = 0f;
+        
+        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+        
+        while (elapsed < duration)
+        {
+            if (spriteRenderer != null)
+            {
+                float pingPong = Mathf.PingPong(elapsed * 15f, 1f); 
+                spriteRenderer.color = Color.Lerp(originalColor, Color.red, pingPong);
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
         }
 
         Destroy(gameObject);
