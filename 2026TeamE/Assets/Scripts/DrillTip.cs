@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class DrillTip : MonoBehaviour
 {
     [SerializeField] float baseDrillInterval = 0.2f;
     [SerializeField] float baseDrillRadius = 1.5f;
+    [SerializeField] float miningPowerCoefficient = 1.5f; // 採掘力係数
     [SerializeField] Transform miningZone;
 
     [Header("エフェクト")]
@@ -58,7 +59,7 @@ public class DrillTip : MonoBehaviour
         {
             int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
             float bonusRadius = (drillLevel - 1) * 0.2f;
-            return baseDrillRadius + bonusRadius;
+            return (baseDrillRadius + bonusRadius) * miningPowerCoefficient;
         }
     }
 

@@ -370,7 +370,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: -300
+  m_text: -100
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2898,7 +2898,7 @@ MonoBehaviour:
   oxygenCountText: {fileID: 1703413803}
   oxygenSubtotalText: {fileID: 627830190}
   pointsPerTreasureBox: 2000
-  pointsPerBomb: -300
+  pointsPerBomb: -100
   pointsPerOxygenSecond: 50
   includeMoneyInScore: 0
   countDuration: 1

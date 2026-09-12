@@ -18,6 +18,12 @@ public class GoalJewelry : MonoBehaviour
         {
             isProcessed = true;
 
+            // ゴール時に振動を停止
+            if (HapticsManager.Instance != null)
+            {
+                HapticsManager.Instance.Stop();
+            }
+
             // プレイヤーの操作を無効化
             PlayerController player = other.GetComponent<PlayerController>();
             if (player != null)
