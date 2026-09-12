@@ -146,6 +146,9 @@ public class FinalResultManager : MonoBehaviour
         // 次の生成で同じシードを使うように指示
         VoxelTerrain.ForceUseSeed = true;
 
+        // 全てリセットして再スタート
+        ResetManager.ResetAll();
+
         // メインゲームシーンをロード (MainManagerのコードに合わせて "02_Main" を指定)
         SceneManager.LoadScene("02_Main");
     }
