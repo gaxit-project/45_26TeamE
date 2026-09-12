@@ -60,7 +60,7 @@ public class GoalJewelry : MonoBehaviour
 
         
         // 以前はタイトルに戻っていた処理を Result (FinalResult) へ変更
-        string targetScene = "Result";
+        string targetScene = "FinalResult";
         SceneManager.LoadScene(targetScene);
 
         

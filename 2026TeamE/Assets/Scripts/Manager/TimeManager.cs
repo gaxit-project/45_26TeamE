@@ -183,7 +183,7 @@ public class TimerManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(timeUpToTitleDelay);
 
         Time.timeScale = 1f;
-        UnityEngine.SceneManagement.SceneManager.LoadScene("Result");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("FinalResult");
     }
 
     
