@@ -238,7 +238,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyCustomGravity()
     {
-        if (rb.linearVelocity.y < 0)
+        if (rb.linearVelocity.y < 0 && !isJumpPressed)
         {
             rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
         }
@@ -475,6 +475,14 @@ public class PlayerController : MonoBehaviour
                 rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 isGround = false;
             }
+            else
+            {
+                // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
+                if (rb.linearVelocity.y < 0)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                }
+            }
         }
         else if (context.canceled)
         {
@@ -601,6 +609,7 @@ public class PlayerController : MonoBehaviour
         }
 
         SetRenderersEnabled(true); // 確実に表示状態に戻す
+        animator.Play("Walk Tree"); // 入力はリセットされているので、Walk Tree内の「待機アニメーション」が再生されます
         currentState = PlayerState.Normal;
     }
 
