@@ -43,6 +43,7 @@ public class DrillTip : MonoBehaviour
     private float lastBreakSeTime = -999f;
 
     private float lastDrillTime;
+    private float lastGrindParticleTime;
     private PlayerController player;
 
     private float lastDirtTouchTime = -100f;
@@ -173,8 +174,6 @@ public class DrillTip : MonoBehaviour
 
                 float currentInterval = CurrentDrillInterval * hardness;
 
-                if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
-
                 Vector3 digPos = transform.position;
                 digPos.x = 0f; 
                 Vector3 digLocal = terrain.transform.InverseTransformPoint(digPos);
@@ -192,6 +191,17 @@ public class DrillTip : MonoBehaviour
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
                 float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
+
+                if (!player.IsDashing && Time.time < lastDrillTime + currentInterval)
+                {
+                    // クールダウン中（削っている最中）でも、一定間隔でパーティクルを出す
+                    if (Time.time > lastGrindParticleTime + 0.1f)
+                    {
+                        lastGrindParticleTime = Time.time;
+                        terrain.EmitParticlesInArea(dx, dy, dz, currentRadius / s, minL, maxL);
+                    }
+                    return;
+                }
 
                 bool destroyedAnyBlock = terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
 

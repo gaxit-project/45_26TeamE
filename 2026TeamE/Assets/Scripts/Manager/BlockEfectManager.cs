@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public enum EffectType
 {
@@ -64,11 +64,9 @@ public class BlockEffectManager : MonoBehaviour
 
         if (targetParticle == null) return;
 
-        
-        worldPosition.x = 5f;
+        // X座標を固定せず、ブロックの実際の座標からパーティクルを出す
         targetParticle.transform.position = worldPosition;
         
-        
-        targetParticle.Emit(particlesPerBlock);
+        targetParticle.Emit(1); // パーティクルの数を減らす（元は particlesPerBlock (3) など）
     }
 }

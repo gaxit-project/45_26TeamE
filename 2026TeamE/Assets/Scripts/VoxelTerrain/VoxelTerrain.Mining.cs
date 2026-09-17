@@ -1,11 +1,47 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 
 public partial class VoxelTerrain
 {
+    public void EmitParticlesInArea(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
+    {
+        int r = Mathf.CeilToInt(radius);
+
+        for (int y = centerY - r; y <= centerY + r; y++)
+        {
+            for (int z = centerZ - r; z <= centerZ + r; z++)
+            {
+                float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
+                if (distSq > radius * radius) continue;
+                if (y < minLimit.y || y > maxLimit.y || z < minLimit.z || z > maxLimit.z) continue;
+
+                bool emittedForThisCell = false;
+
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+                    byte currentBlock = mapData[x, y, z];
+                    if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock || currentBlock == (byte)BlockType.Boundary) continue;
+
+                    if (!emittedForThisCell && BlockEffectManager.Instance != null)
+                    {
+                        Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
+                        
+                        if (currentBlock == (byte)BlockType.Dirt) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
+                        else if (currentBlock == (byte)BlockType.Ore) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Ore);
+                        else if (currentBlock == (byte)BlockType.Stone) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
+                        else if (currentBlock == (byte)BlockType.HardRock) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
+                        
+                        emittedForThisCell = true;
+                    }
+                }
+            }
+        }
+    }
+
     /// <summary>
-    /// 指定位置を中心にブロックを削る。
+    /// 指定位置を中心として掘る。
     /// </summary>
     /// <returns>実際に1つ以上のブロックを壊した場合はtrue。空振りならfalse。</returns>
     public bool ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
