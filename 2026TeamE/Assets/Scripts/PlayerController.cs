@@ -564,6 +564,13 @@ public class PlayerController : MonoBehaviour
     private System.Collections.IEnumerator DamageRoutine(System.Collections.Generic.List<ItemInventoryManager.ItemData> lostItems)
     {
         currentState = PlayerState.TakingDamage;
+
+        // 被弾時にすべての入力状態をリセットし、直立（待機）状態に戻す
+        drillFlag = false;
+        isJumpPressed = false;
+        moveInput = Vector2.zero;
+        UpdateAnimation();
+
         animator.SetTrigger("Damage");
         
         // 速度をゼロにして慣性で滑るのを防ぐ
@@ -594,7 +601,6 @@ public class PlayerController : MonoBehaviour
         }
 
         SetRenderersEnabled(true); // 確実に表示状態に戻す
-        animator.Play("Walk Tree"); // ポーズが固まるのを防ぐため、強制的に通常のアニメーションステートへ戻す
         currentState = PlayerState.Normal;
     }
 

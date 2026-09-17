@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -102,7 +102,7 @@ public class DebugItemManager : MonoBehaviour
 
     private void TriggerGoal()
     {
-        Debug.Log("[Debug] 7キー: BigJewelryを取得しました！ ゴール演出をスキップしてResultシーンへ移行します。");
+        Debug.Log("[Debug] 7キー: BigJewelry取得として、ゴール・リザルトシーンへ移行します。");
         GoalJewelry.isGoalReached = true;
         SceneManager.LoadScene("Result");
     }

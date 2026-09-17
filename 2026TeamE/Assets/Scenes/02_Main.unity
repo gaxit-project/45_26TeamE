@@ -1575,8 +1575,8 @@ MonoBehaviour:
   hardRockMaterial: {fileID: 2100000, guid: 0da0cccadecc8664e9e0f15f08c865ad, type: 2}
   quartziteMaterial: {fileID: 2100000, guid: ec369b4f4ee394849b4908482b1af5e0, type: 2}
   boundaryMaterial: {fileID: 2100000, guid: 5ef98792087ef3a42b0cfec965c6d420, type: 2}
-  useDeterministicSeed: 0
-  seed: 12345
+  useDeterministicSeed: 1
+  seed: 2026
   chunkSizeY: 20
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
   treasureMinDistance: 20
@@ -7639,6 +7639,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DrillTip
   baseDrillInterval: 0.2
   baseDrillRadius: 4.5
+  miningPowerCoefficient: 1.5
   miningZone: {fileID: 820273196}
   dirtEffect: {fileID: 1260612913}
   effectKeepTime: 0.2

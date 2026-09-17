@@ -24,6 +24,12 @@ public class GoalJewelry : MonoBehaviour
                 HapticsManager.Instance.Stop();
             }
 
+            // タイマーを停止（クリア演出中に時間切れになるのを防ぐ）
+            if (TimerManager.Instance != null)
+            {
+                TimerManager.Instance.StopTimer();
+            }
+
             // プレイヤーの操作を無効化
             PlayerController player = other.GetComponent<PlayerController>();
             if (player != null)
@@ -49,8 +55,10 @@ public class GoalJewelry : MonoBehaviour
         
         yield return PickupAnimationUtil.PopAndFlash(transform);
 
-        
-        Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        if (EfectPrefab != null)
+        {
+            Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        }
 
         if (SoundManager.Instance != null)
         {

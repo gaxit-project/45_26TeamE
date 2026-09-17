@@ -21,6 +21,7 @@ public class FinalResultManager : MonoBehaviour
         CollectedTreasureBoxes = 0;
         TriggeredBombs = 0;
         OxygenRemainingPerFloor.Clear();
+        GoalJewelry.isGoalReached = false;
     }
     // ------------------------------------------------
 
@@ -35,6 +36,8 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bombSubtotalText;
     [SerializeField] private TextMeshProUGUI oxygenCountText;
     [SerializeField] private TextMeshProUGUI oxygenSubtotalText;
+    [SerializeField] private TextMeshProUGUI clearCountText;
+    [SerializeField] private TextMeshProUGUI clearSubtotalText;
 
     [Header("スコア計算設定")]
     [Tooltip("宝箱1個あたりのスコア")]
@@ -43,7 +46,9 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private int pointsPerBomb = -5000;
     [Tooltip("残り酸素1秒あたりのスコア")]
     [SerializeField] private int pointsPerOxygenSecond = 100;
-    [Tooltip("ゲーム中に稼いだ資金をスコアに合算するかどうか")]
+    [Tooltip("クリアした際のボーナススコア")]
+    [SerializeField] private int pointsForClear = 50000;
+    [Tooltip("ゲーム中に稼いだお金をスコアに合算するかどうか")]
     [SerializeField] private bool includeMoneyInScore = false;
 
     [Header("演出設定")]
@@ -73,6 +78,8 @@ public class FinalResultManager : MonoBehaviour
         int boxScore = CollectedTreasureBoxes * pointsPerTreasureBox;
         int bombScore = TriggeredBombs * pointsPerBomb;
         int oxygenScore = Mathf.FloorToInt(totalOxygen * pointsPerOxygenSecond);
+        int isCleared = GoalJewelry.isGoalReached ? 1 : 0;
+        int clearScore = isCleared * pointsForClear;
 
         // UIにそれぞれの回数と小計を表示
         if (boxCountText != null) boxCountText.text = CollectedTreasureBoxes.ToString("N0");
@@ -81,8 +88,10 @@ public class FinalResultManager : MonoBehaviour
         if (bombSubtotalText != null) bombSubtotalText.text = bombScore.ToString("N0");
         if (oxygenCountText != null) oxygenCountText.text = Mathf.FloorToInt(totalOxygen).ToString("N0");
         if (oxygenSubtotalText != null) oxygenSubtotalText.text = oxygenScore.ToString("N0");
+        if (clearCountText != null) clearCountText.text = isCleared.ToString();
+        if (clearSubtotalText != null) clearSubtotalText.text = clearScore.ToString("N0");
 
-        finalScoreAmount = boxScore + bombScore + oxygenScore;
+        finalScoreAmount = boxScore + bombScore + oxygenScore + clearScore;
 
         // 稼いだお金を合算するかどうか
         if (includeMoneyInScore && MoneyManager.Instance != null)
@@ -127,6 +136,9 @@ public class FinalResultManager : MonoBehaviour
 
         if (totalEarnedText != null) totalEarnedText.text = finalScoreAmount.ToString("N0");
         
+        // 今回の最終スコアをランキングに登録
+        RankingManager.SaveScore(finalScoreAmount);
+
         yield return new WaitForSeconds(0.2f);
         isAnimationFinished = true;
     }
@@ -151,5 +163,17 @@ public class FinalResultManager : MonoBehaviour
 
         // メインゲームシーンをロード (MainManagerのコードに合わせて "02_Main" を指定)
         SceneManager.LoadScene("02_Main");
+    }
+
+    [Header("ランキング機能")]
+    [SerializeField] private GameObject rankingPanel;
+
+    // ランキングの表示・非表示を切り替えるメソッド
+    public void ToggleRankingPanel()
+    {
+        if (rankingPanel != null)
+        {
+            rankingPanel.SetActive(!rankingPanel.activeSelf);
+        }
     }
 }

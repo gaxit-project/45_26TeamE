@@ -132,6 +132,7 @@ public class CameraController : MonoBehaviour
     /// </summary>
     private Vector3 CalculateShakeOffset()
     {
+        if (Time.timeScale == 0f) return Vector3.zero;
         if (shakeRemainingTime <= 0f || shakeTotalDuration <= 0f) return Vector3.zero;
 
         shakeRemainingTime = Mathf.Max(0f, shakeRemainingTime - Time.deltaTime);

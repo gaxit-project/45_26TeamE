@@ -35,11 +35,30 @@ public class HapticsManager : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        Stop();
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        Stop();
+    }
+
     void Update()
     {
+        // 常にモーター出力を更新（ポーズ/解除の切り替えに即座に対応するため）
+        ApplyMotorSpeeds();
+
         if (pulseRemainingTime <= 0f) return;
 
-        // ポーズやローディングで時間が止まっていても振動が固まらないよう、実時間で減らす
+        // ポーズやミーティングで時間が止まっていても振動が固まらないよう、実時間で減らす
         pulseRemainingTime -= Time.unscaledDeltaTime;
 
         if (pulseRemainingTime <= 0f)
@@ -47,9 +66,8 @@ public class HapticsManager : MonoBehaviour
             pulseRemainingTime = 0f;
             pulseLow = 0f;
             pulseHigh = 0f;
+            ApplyMotorSpeeds();
         }
-
-        ApplyMotorSpeeds();
     }
 
     /// <summary>
@@ -99,11 +117,28 @@ public class HapticsManager : MonoBehaviour
         ApplyMotorSpeeds();
     }
 
-    /// <summary>下地とパルスのうち強い方を実際のモーター出力として反映する。</summary>
+    private float lastSentLow = -1f;
+    private float lastSentHigh = -1f;
+
+    /// <summary>下地とパルスの強いほうを実際のモーター出力として反映する。</summary>
     private void ApplyMotorSpeeds()
     {
         float low = Mathf.Clamp01(Mathf.Max(baseLow, pulseLow));
         float high = Mathf.Clamp01(Mathf.Max(baseHigh, pulseHigh));
+
+        if (Time.timeScale == 0f)
+        {
+            low = 0f;
+            high = 0f;
+        }
+
+        if (Mathf.Approximately(low, lastSentLow) && Mathf.Approximately(high, lastSentHigh))
+        {
+            return;
+        }
+
+        lastSentLow = low;
+        lastSentHigh = high;
 
         foreach (var pad in Gamepad.all)
         {
@@ -111,6 +146,5 @@ public class HapticsManager : MonoBehaviour
         }
     }
 
-    void OnDisable() => Stop();
     void OnApplicationQuit() => Stop();
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -227,6 +227,12 @@ public class SelectPoint : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(0.1f);
         Time.timeScale = 1f; 
+
+        if (TimerManager.Instance != null)
+        {
+            FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+            Debug.Log($"[スコア] リザルトへ帰還。残り酸素（時間）: {TimerManager.Instance.TotalTime} を記録しました。");
+        }
 
         SceneManager.LoadScene("Result"); 
 

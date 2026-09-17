@@ -11,7 +11,7 @@ public partial class VoxelTerrain
         int currentID = GetBoundaryZoneIndex(y);
         if (currentID < 0) return;
 
-        if (currentID == CheckpointManager.Instance.GetUsedCheckpointID())
+        if (currentID == CheckpointManager.Instance.GetLastCheckpointID())
         {
             Debug.Log("同じチェックポイントのためスキップ");
             return;
@@ -32,12 +32,7 @@ public partial class VoxelTerrain
 
         CheckpointManager.Instance.SaveCheckpoint(checkpointPos, currentID);
 
-        // スコア用：各層突破時の残り酸素（時間）を記録
-        if (TimerManager.Instance != null)
-        {
-            FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
-            Debug.Log($"[スコア] ゾーン {currentID} 突破時の残り酸素（時間） {TimerManager.Instance.TotalTime} を記録しました。");
-        }
+        // スコア用の酸素記録はここではなく、Yボタンでリザルトに戻る際（SelectPoint.cs）に行います。
 
         if (TryGetComponent<SelectPoint>(out var selectPoint))
         {

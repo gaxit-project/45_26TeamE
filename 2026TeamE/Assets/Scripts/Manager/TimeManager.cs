@@ -74,6 +74,11 @@ public class TimerManager : MonoBehaviour
         timerText.color = Color.white;
     }
 
+    public void StopTimer()
+    {
+        isTimerRunning = false;
+    }
+
     private void Update()
     {
         if (isTimerRunning && totalTime > 0)
