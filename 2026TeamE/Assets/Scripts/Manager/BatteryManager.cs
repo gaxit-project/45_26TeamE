@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +7,7 @@ public class BatteryManager : MonoBehaviour
     [SerializeField] private PlayerController playerController;
     [SerializeField] private List<GameObject> battery = new List<GameObject>();
 
-    [Header("点滅設定")]
+    [Header("UI設定")]
     [SerializeField] private float blinkInterval = 0.15f; 
     [SerializeField] private float consumeTimeout = 0.1f; 
 
@@ -69,7 +69,7 @@ public class BatteryManager : MonoBehaviour
 
             if (targetIndex != -1 && battery[targetIndex] != null)
             {
-                battery[targetIndex].SetActive(true);
+                if (!battery[targetIndex].activeSelf) battery[targetIndex].SetActive(true);
             }
         }
 
@@ -132,13 +132,10 @@ public class BatteryManager : MonoBehaviour
         {
             if (batteryImages[i] != null && battery[i] != null)
             {
-                if (batteryImages[i].fillAmount <= 0f)
+                bool shouldBeActive = batteryImages[i].fillAmount > 0f;
+                if (battery[i].activeSelf != shouldBeActive)
                 {
-                    battery[i].SetActive(false);
-                }
-                else
-                {
-                    battery[i].SetActive(true);
+                    battery[i].SetActive(shouldBeActive);
                 }
             }
         }
@@ -171,7 +168,10 @@ public class BatteryManager : MonoBehaviour
                 fill = (currentBat - segmentMin) / 200f;
             }
 
-            batteryImages[i].fillAmount = fill;
+            if (!Mathf.Approximately(batteryImages[i].fillAmount, fill))
+            {
+                batteryImages[i].fillAmount = fill;
+            }
         }
     }
 }

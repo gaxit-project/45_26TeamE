@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 
 public class ZoneGemUI : MonoBehaviour
@@ -6,7 +6,6 @@ public class ZoneGemUI : MonoBehaviour
     private TextMeshProUGUI zoneText;
     private Transform player;
 
-    
     public static long LastMaxZoneValue { get; private set; }
 
     void Start()
@@ -20,6 +19,8 @@ public class ZoneGemUI : MonoBehaviour
         }
     }
 
+    private long lastDisplayedZoneValue = -1;
+
     void Update()
     {
         if (player == null || VoxelTerrain.Instance == null || zoneText == null) return;
@@ -29,10 +30,12 @@ public class ZoneGemUI : MonoBehaviour
 
         long maxZoneValue = VoxelTerrain.Instance.GetZoneInitialGemValue(py);
         
-        
         LastMaxZoneValue = maxZoneValue;
 
-        
-        zoneText.text = $"{maxZoneValue:N0}";
+        if (maxZoneValue != lastDisplayedZoneValue)
+        {
+            lastDisplayedZoneValue = maxZoneValue;
+            zoneText.text = $"{maxZoneValue:N0}";
+        }
     }
 }

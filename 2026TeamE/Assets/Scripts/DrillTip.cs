@@ -50,6 +50,7 @@ public class DrillTip : MonoBehaviour
     [SerializeField] private float contactTimeout = 0.5f;
 
     private SphereCollider myCollider;
+    private BoxCollider miningZoneBoxCollider;
     private Vector3 initialLocalCenter;
 
     public bool IsContactingDiggableSurface => (Time.time - lastDirtTouchTime) <= contactTimeout;
@@ -77,6 +78,7 @@ public class DrillTip : MonoBehaviour
     void Start()
     {
         player = GetComponentInParent<PlayerController>();
+        if (miningZone != null) miningZoneBoxCollider = miningZone.GetComponent<BoxCollider>();
 
         myCollider = GetComponent<SphereCollider>();
         if (myCollider != null)
@@ -132,7 +134,7 @@ public class DrillTip : MonoBehaviour
         }
         if (other.CompareTag("VoxelTerrain"))
         {
-            VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
+            VoxelTerrain terrain = VoxelTerrain.Instance;
             if (terrain != null)
             {
                 float s = terrain.BlockSize;
@@ -186,7 +188,7 @@ public class DrillTip : MonoBehaviour
                     return;
                 }
 
-                BoxCollider box = miningZone.GetComponent<BoxCollider>();
+                BoxCollider box = miningZoneBoxCollider;
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 

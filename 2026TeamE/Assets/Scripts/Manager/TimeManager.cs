@@ -137,12 +137,18 @@ public class TimerManager : MonoBehaviour
         }
     }
 
+    private int lastDisplayedSeconds = -1;
+
     private void DisplayTime(float timeToDisplay)
     {
-        int minutes = Mathf.FloorToInt(timeToDisplay / 60);
-        int seconds = Mathf.FloorToInt(timeToDisplay % 60);
+        int totalSecs = Mathf.FloorToInt(timeToDisplay);
+        if (totalSecs == lastDisplayedSeconds) return; // 値が変わっていない場合はテキストの再生成・UI更新をスキップ
 
-        timerText.text = string.Format("{0} : {1:00}", minutes, seconds);
+        lastDisplayedSeconds = totalSecs;
+        int minutes = totalSecs / 60;
+        int seconds = totalSecs % 60;
+
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
     private void AnimateTimerText()
