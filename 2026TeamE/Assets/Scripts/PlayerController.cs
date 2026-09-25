@@ -434,22 +434,17 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return;
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnDrill(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
-
         if (context.performed)
         {
             drillFlag = true;
 
-            if (Time.time >= lastDashTime + dashCooldown)
+            bool canAction = CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked);
+            if (canAction && Time.time >= lastDashTime + dashCooldown)
             {
                 lastDashTime = Time.time;
                 PerformDash();
@@ -463,24 +458,25 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
-
         if (context.performed)
         {
             isJumpPressed = true;
-            if (isGround)
+            
+            bool canAction = CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked);
+            if (canAction)
             {
-                rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
-                isGround = false;
-            }
-            else
-            {
-                // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
-                if (rb.linearVelocity.y < 0)
+                if (isGround)
                 {
-                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                    rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
+                    isGround = false;
+                }
+                else
+                {
+                    // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
+                    if (rb.linearVelocity.y < 0)
+                    {
+                        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                    }
                 }
             }
         }
