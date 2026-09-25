@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -31,7 +31,7 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI totalEarnedText; 
     [SerializeField] private GameObject firstSelectedButton;
 
-    [Header("隧ｳ邏ｰ繧ｹ繧ｳ繧｢UI・亥・險ｳ・・)]
+    [Header("")]
     [SerializeField] private TextMeshProUGUI boxCountText;
     [SerializeField] private TextMeshProUGUI boxSubtotalText;
     [SerializeField] private TextMeshProUGUI bombCountText;
@@ -41,10 +41,10 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI clearCountText;
     [SerializeField] private TextMeshProUGUI clearSubtotalText;
 
-    [Header("繧ｹ繧ｳ繧｢險育ｮ苓ｨｭ螳・)]
+    [Header("")]
     [Tooltip("螳晉ｮｱ1蛟九≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
     [SerializeField] private int pointsPerTreasureBox = 10000;
-    [Tooltip("辷・ｼｾ襍ｷ辷・蝗槭≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢・医・繧､繝翫せ縺ｫ縺吶ｋ蝣ｴ蜷医・雋縺ｮ蛟､・・)]
+    [Tooltip("")]
     [SerializeField] private int pointsPerBomb = -5000;
     [Tooltip("谿九ｊ驟ｸ邏1遘偵≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
     [SerializeField] private int pointsPerOxygenSecond = 100;
@@ -53,7 +53,7 @@ public class FinalResultManager : MonoBehaviour
     [Tooltip("繧ｲ繝ｼ繝荳ｭ縺ｫ遞ｼ縺・□縺企≡繧偵せ繧ｳ繧｢縺ｫ蜷育ｮ励☆繧九°縺ｩ縺・°")]
     [SerializeField] private bool includeMoneyInScore = false;
 
-    [Header("貍泌・險ｭ螳・)]
+    [Header("")]
     [SerializeField] private float countDuration = 2.0f;
     [SerializeField] private string nextSceneName = "Title";
 
@@ -70,7 +70,7 @@ public class FinalResultManager : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }
 
-        // 3縺､縺ｮ隕∫ｴ縺ｮ繧ｹ繧ｳ繧｢險育ｮ・        float totalOxygen = 0f;
+        float totalOxygen = 0f;
         foreach (var ox in OxygenRemainingPerFloor)
         {
             totalOxygen += ox;
@@ -175,3 +175,4 @@ public class FinalResultManager : MonoBehaviour
         }
     }
 }
+

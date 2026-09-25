@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -29,7 +29,7 @@ public class GoalJewelry : MonoBehaviour
                 TimerManager.Instance.StopTimer();
             }
 
-            // 繝励Ξ繧､繝､繝ｼ縺ｮ謫堺ｽ懊ｒ辟｡蜉ｹ蛹・            PlayerController player = other.GetComponent<PlayerController>();
+            PlayerController player = other.GetComponent<PlayerController>();
             if (player != null)
             {
                 player.currentState = PlayerController.PlayerState.GameClear;
@@ -60,7 +60,7 @@ public class GoalJewelry : MonoBehaviour
 
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("逹豌ｴ・・);
+            SoundManager.Instance.PlaySE("着水音");
         }
 
         
@@ -82,3 +82,4 @@ public class GoalJewelry : MonoBehaviour
         Destroy(gameObject);
     }
 }
+
