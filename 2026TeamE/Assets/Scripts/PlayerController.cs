@@ -90,7 +90,7 @@ public class PlayerController : MonoBehaviour
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
-    public bool IsDrilling => drillFlag;
+    public bool IsDrilling => drillFlag && currentState == PlayerState.Normal;
     public bool HasBattery => currentBattery > 0f;
     public bool IsDashing => Time.time < dashEndTime;
 

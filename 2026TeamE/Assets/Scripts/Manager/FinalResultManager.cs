@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 public class FinalResultManager : MonoBehaviour
 {
-    // --- グローバルスコア記録用（シーン間持ち越し） ---
+    // --- 繧ｰ繝ｭ繝ｼ繝舌Ν繧ｹ繧ｳ繧｢險倬鹸逕ｨ・医す繝ｼ繝ｳ髢捺戟縺｡雜翫＠・・---
     public static int CollectedTreasureBoxes { get; private set; } = 0;
     public static int TriggeredBombs { get; private set; } = 0;
     public static List<float> OxygenRemainingPerFloor { get; private set; } = new List<float>();
@@ -22,14 +22,16 @@ public class FinalResultManager : MonoBehaviour
         TriggeredBombs = 0;
         OxygenRemainingPerFloor.Clear();
         GoalJewelry.isGoalReached = false;
+        PlayerPrefs.SetInt("GoalReached", 0);
+        PlayerPrefs.Save();
     }
     // ------------------------------------------------
 
-    [Header("UI参照")]
+    [Header("UI蜿ら・")]
     [SerializeField] private TextMeshProUGUI totalEarnedText; 
     [SerializeField] private GameObject firstSelectedButton;
 
-    [Header("詳細スコアUI（内訳）")]
+    [Header("隧ｳ邏ｰ繧ｹ繧ｳ繧｢UI・亥・險ｳ・・)]
     [SerializeField] private TextMeshProUGUI boxCountText;
     [SerializeField] private TextMeshProUGUI boxSubtotalText;
     [SerializeField] private TextMeshProUGUI bombCountText;
@@ -39,19 +41,19 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI clearCountText;
     [SerializeField] private TextMeshProUGUI clearSubtotalText;
 
-    [Header("スコア計算設定")]
-    [Tooltip("宝箱1個あたりのスコア")]
+    [Header("繧ｹ繧ｳ繧｢險育ｮ苓ｨｭ螳・)]
+    [Tooltip("螳晉ｮｱ1蛟九≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
     [SerializeField] private int pointsPerTreasureBox = 10000;
-    [Tooltip("爆弾起爆1回あたりのスコア（マイナスにする場合は負の値）")]
+    [Tooltip("辷・ｼｾ襍ｷ辷・蝗槭≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢・医・繧､繝翫せ縺ｫ縺吶ｋ蝣ｴ蜷医・雋縺ｮ蛟､・・)]
     [SerializeField] private int pointsPerBomb = -5000;
-    [Tooltip("残り酸素1秒あたりのスコア")]
+    [Tooltip("谿九ｊ驟ｸ邏1遘偵≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
     [SerializeField] private int pointsPerOxygenSecond = 100;
-    [Tooltip("クリアした際のボーナススコア")]
+    [Tooltip("繧ｯ繝ｪ繧｢縺励◆髫帙・繝懊・繝翫せ繧ｹ繧ｳ繧｢")]
     [SerializeField] private int pointsForClear = 50000;
-    [Tooltip("ゲーム中に稼いだお金をスコアに合算するかどうか")]
+    [Tooltip("繧ｲ繝ｼ繝荳ｭ縺ｫ遞ｼ縺・□縺企≡繧偵せ繧ｳ繧｢縺ｫ蜷育ｮ励☆繧九°縺ｩ縺・°")]
     [SerializeField] private bool includeMoneyInScore = false;
 
-    [Header("演出設定")]
+    [Header("貍泌・險ｭ螳・)]
     [SerializeField] private float countDuration = 2.0f;
     [SerializeField] private string nextSceneName = "Title";
 
@@ -68,8 +70,7 @@ public class FinalResultManager : MonoBehaviour
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }
 
-        // 3つの要素のスコア計算
-        float totalOxygen = 0f;
+        // 3縺､縺ｮ隕∫ｴ縺ｮ繧ｹ繧ｳ繧｢險育ｮ・        float totalOxygen = 0f;
         foreach (var ox in OxygenRemainingPerFloor)
         {
             totalOxygen += ox;
@@ -78,10 +79,10 @@ public class FinalResultManager : MonoBehaviour
         int boxScore = CollectedTreasureBoxes * pointsPerTreasureBox;
         int bombScore = TriggeredBombs * pointsPerBomb;
         int oxygenScore = Mathf.FloorToInt(totalOxygen * pointsPerOxygenSecond);
-        int isCleared = GoalJewelry.isGoalReached ? 1 : 0;
+        int isCleared = (GoalJewelry.isGoalReached || PlayerPrefs.GetInt("GoalReached", 0) == 1) ? 1 : 0;
         int clearScore = isCleared * pointsForClear;
 
-        // UIにそれぞれの回数と小計を表示
+        // UI縺ｫ縺昴ｌ縺槭ｌ縺ｮ蝗樊焚縺ｨ蟆剰ｨ医ｒ陦ｨ遉ｺ
         if (boxCountText != null) boxCountText.text = CollectedTreasureBoxes.ToString("N0");
         if (boxSubtotalText != null) boxSubtotalText.text = boxScore.ToString("N0");
         if (bombCountText != null) bombCountText.text = TriggeredBombs.ToString("N0");
@@ -93,7 +94,7 @@ public class FinalResultManager : MonoBehaviour
 
         finalScoreAmount = boxScore + bombScore + oxygenScore + clearScore;
 
-        // 稼いだお金を合算するかどうか
+        // 遞ｼ縺・□縺企≡繧貞粋邂励☆繧九°縺ｩ縺・°
         if (includeMoneyInScore && MoneyManager.Instance != null)
         {
             finalScoreAmount += MoneyManager.Instance.GetTotalEarnedMoney(); 
@@ -112,9 +113,7 @@ public class FinalResultManager : MonoBehaviour
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) wasPressed = true;
         if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; 
 
-        // アニメーション中のスキップのみ受け付ける。
-        // （シーン遷移は専用のボタンから行うため、ここでの自動遷移は削除）
-        if (wasPressed && !isAnimationFinished)
+        // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ荳ｭ縺ｮ繧ｹ繧ｭ繝・・縺ｮ縺ｿ蜿励￠莉倥￠繧九・        // ・医す繝ｼ繝ｳ驕ｷ遘ｻ縺ｯ蟆ら畑縺ｮ繝懊ち繝ｳ縺九ｉ陦後≧縺溘ａ縲√％縺薙〒縺ｮ閾ｪ蜍暮・遘ｻ縺ｯ蜑企勁・・        if (wasPressed && !isAnimationFinished)
         {
             skipRequested = true;
         }
@@ -136,14 +135,14 @@ public class FinalResultManager : MonoBehaviour
 
         if (totalEarnedText != null) totalEarnedText.text = finalScoreAmount.ToString("N0");
         
-        // 今回の最終スコアをランキングに登録
+        // 莉雁屓縺ｮ譛邨ゅせ繧ｳ繧｢繧偵Λ繝ｳ繧ｭ繝ｳ繧ｰ縺ｫ逋ｻ骭ｲ
         RankingManager.SaveScore(finalScoreAmount);
 
         yield return new WaitForSeconds(0.2f);
         isAnimationFinished = true;
     }
 
-    // --- ボタンから呼び出される処理 ---
+    // --- 繝懊ち繝ｳ縺九ｉ蜻ｼ縺ｳ蜃ｺ縺輔ｌ繧句・逅・---
 
     public void ReturnToTitle()
     {
@@ -155,20 +154,19 @@ public class FinalResultManager : MonoBehaviour
     {
         if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
         
-        // 次の生成で同じシードを使うように指示
+        // 谺｡縺ｮ逕滓・縺ｧ蜷後§繧ｷ繝ｼ繝峨ｒ菴ｿ縺・ｈ縺・↓謖・､ｺ
         VoxelTerrain.ForceUseSeed = true;
 
-        // 全てリセットして再スタート
-        ResetManager.ResetAll();
+        // 蜈ｨ縺ｦ繝ｪ繧ｻ繝・ヨ縺励※蜀阪せ繧ｿ繝ｼ繝・        ResetManager.ResetAll();
 
-        // メインゲームシーンをロード (MainManagerのコードに合わせて "02_Main" を指定)
+        // 繝｡繧､繝ｳ繧ｲ繝ｼ繝繧ｷ繝ｼ繝ｳ繧偵Ο繝ｼ繝・(MainManager縺ｮ繧ｳ繝ｼ繝峨↓蜷医ｏ縺帙※ "02_Main" 繧呈欠螳・
         SceneManager.LoadScene("02_Main");
     }
 
-    [Header("ランキング機能")]
+    [Header("繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ讖溯・")]
     [SerializeField] private GameObject rankingPanel;
 
-    // ランキングの表示・非表示を切り替えるメソッド
+    // 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ縺ｮ陦ｨ遉ｺ繝ｻ髱櫁｡ｨ遉ｺ繧貞・繧頑崛縺医ｋ繝｡繧ｽ繝・ラ
     public void ToggleRankingPanel()
     {
         if (rankingPanel != null)

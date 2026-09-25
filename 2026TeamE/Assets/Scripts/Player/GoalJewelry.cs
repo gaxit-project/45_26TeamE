@@ -1,11 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class GoalJewelry : MonoBehaviour
 {
     [SerializeField] private string SceneName;
-    [Header("エフェクトプレハブ")]
+    [Header("繧ｨ繝輔ぉ繧ｯ繝医・繝ｬ繝上ヶ")]
     public GameObject EfectPrefab;
 
     public static bool isGoalReached = false;
@@ -18,20 +18,18 @@ public class GoalJewelry : MonoBehaviour
         {
             isProcessed = true;
 
-            // ゴール時に振動を停止
+            // 繧ｴ繝ｼ繝ｫ譎ゅ↓謖ｯ蜍輔ｒ蛛懈ｭ｢
             if (HapticsManager.Instance != null)
             {
                 HapticsManager.Instance.Stop();
             }
 
-            // タイマーを停止（クリア演出中に時間切れになるのを防ぐ）
-            if (TimerManager.Instance != null)
+            // 繧ｿ繧､繝槭・繧貞●豁｢・医け繝ｪ繧｢貍泌・荳ｭ縺ｫ譎る俣蛻・ｌ縺ｫ縺ｪ繧九・繧帝亟縺撰ｼ・            if (TimerManager.Instance != null)
             {
                 TimerManager.Instance.StopTimer();
             }
 
-            // プレイヤーの操作を無効化
-            PlayerController player = other.GetComponent<PlayerController>();
+            // 繝励Ξ繧､繝､繝ｼ縺ｮ謫堺ｽ懊ｒ辟｡蜉ｹ蛹・            PlayerController player = other.GetComponent<PlayerController>();
             if (player != null)
             {
                 player.currentState = PlayerController.PlayerState.GameClear;
@@ -57,12 +55,12 @@ public class GoalJewelry : MonoBehaviour
 
         if (EfectPrefab != null)
         {
-            Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+            Instantiate(EfectPrefab, transform.position, Quaternion.Euler(-90, -90, 0));
         }
 
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("着水１");
+            SoundManager.Instance.PlaySE("逹豌ｴ・・);
         }
 
         
@@ -71,9 +69,12 @@ public class GoalJewelry : MonoBehaviour
 
         
         isGoalReached = true;
+        PlayerPrefs.SetInt("GoalReached", 1);
+        PlayerPrefs.Save();
+        if (TimerManager.Instance != null) { FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime); }
 
         
-        // 以前はタイトルに戻っていた処理を Result (FinalResult) へ変更
+        // 莉･蜑阪・繧ｿ繧､繝医Ν縺ｫ謌ｻ縺｣縺ｦ縺・◆蜃ｦ逅・ｒ Result (FinalResult) 縺ｸ螟画峩
         string targetScene = "FinalResult";
         SceneManager.LoadScene(targetScene);
 

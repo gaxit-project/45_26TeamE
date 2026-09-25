@@ -13,7 +13,7 @@ public static class PickupAnimationUtil
     public static IEnumerator PopAndFlash(Transform target, Action onComplete = null)
     {
         
-        Vector3 startPos = new Vector3(5, target.position.y, target.position.z);
+        Vector3 startPos = new Vector3(target.position.x, target.position.y, target.position.z);
 
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
 
