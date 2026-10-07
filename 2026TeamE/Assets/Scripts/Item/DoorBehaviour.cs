@@ -27,6 +27,17 @@ public class DoorBehaviour : BuriedItemBase
     [Tooltip("brokenVisual が未設定のときに、壊れた扉を暗く見せるための色")]
     [SerializeField] private Color brokenTint = new Color(0.4f, 0.4f, 0.4f, 1f);
 
+    [Header("埋まっている間の目印ライト")]
+    [Tooltip("土の中にある扉を光らせて見つけやすくする（鍵入りの宝箱と同じ演出）")]
+    [SerializeField] private bool useHintLight = true;
+    [Tooltip("掘って露出したらライトを消す。オフにすると露出後も光り続けます。")]
+    [SerializeField] private bool turnOffHintLightWhenExposed = true;
+    [Tooltip("ライトのワールドX座標。地形は薄いので、手前に出さないと地面に隠れてしまいます。")]
+    [SerializeField] private float hintLightWorldX = 3f;
+    [SerializeField] private float hintLightRange = 30f;
+    [SerializeField] private float hintLightIntensity = 15f;
+    [SerializeField] private Color hintLightColor = new Color(1f, 0.9f, 0.3f);
+
     [Header("入場の案内表示")]
     [Tooltip("プレイヤーが入場範囲にいる間だけ表示するUI（「Yボタンで入る」など）。任意。")]
     [SerializeField] private GameObject enterPrompt;
@@ -49,11 +60,49 @@ public class DoorBehaviour : BuriedItemBase
 
     private bool isPlayerInRange;
 
+    /// <summary>埋まっている間の目印ライト。</summary>
+    private Light hintLight;
+
     protected override void Start()
     {
         base.Start();
+        CreateHintLight();
         ApplyVisual();
         UpdatePrompt();
+    }
+
+    /// <summary>
+    /// 土の中の扉を見つけやすくするための光源を作る。
+    /// 地形はX方向に薄いため、扉と同じ位置に置くと埋もれてしまう。
+    /// そのためXだけ手前の固定値にずらす（鍵入りの宝箱と同じ方式）。
+    /// </summary>
+    private void CreateHintLight()
+    {
+        if (!useHintLight || hintLight != null) return;
+
+        var lightObject = new GameObject("DoorHintLight");
+        lightObject.transform.SetParent(transform);
+
+        Vector3 lightPosition = transform.position;
+        lightPosition.x = hintLightWorldX;
+        lightObject.transform.position = lightPosition;
+
+        hintLight = lightObject.AddComponent<Light>();
+        hintLight.type = LightType.Point;
+        hintLight.range = hintLightRange;
+        hintLight.intensity = hintLightIntensity;
+        hintLight.color = hintLightColor;
+    }
+
+    /// <summary>掘って露出したときに呼ばれる。目印としての役目を終えるのでライトを消す。</summary>
+    protected override void OnExposed()
+    {
+        base.OnExposed();
+
+        if (turnOffHintLightWhenExposed && hintLight != null)
+        {
+            hintLight.enabled = false;
+        }
     }
 
     protected override void Update()
@@ -148,6 +197,10 @@ public class DoorBehaviour : BuriedItemBase
     private void Break()
     {
         IsBroken = true;
+
+        // 使い終わった扉を光らせ続けても誘導にならないので必ず消す。
+        if (hintLight != null) hintLight.enabled = false;
+
         ApplyVisual();
         UpdatePrompt();
     }
