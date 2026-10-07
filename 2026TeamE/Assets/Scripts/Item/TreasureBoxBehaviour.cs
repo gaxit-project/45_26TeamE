@@ -190,17 +190,4 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         Destroy(gameObject);
     }
 
-    private void OnDestroy()
-    {
-        if (isGot || !gameObject.scene.isLoaded) return;
-
-        
-        if (contentPrefab != null && contentPrefab.GetComponent<KeyBehaviour>() != null)
-        {
-            if (VoxelTerrain.Instance != null)
-            {
-                VoxelTerrain.Instance.RespawnKeyTreasureBox(transform.position, zoneIndex);
-            }
-        }
-    }
 }

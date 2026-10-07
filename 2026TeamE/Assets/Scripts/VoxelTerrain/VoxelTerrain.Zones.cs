@@ -69,27 +69,4 @@ public partial class VoxelTerrain
         }
         return currentY;
     }
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    public int GetBoundaryZoneIndex(int y)
-    {
-        int currentY = heightY;
-        for (int i = 0; i < zoneSettings.Count - 1; i++)
-        {
-            currentY -= zoneSettings[i].heightChunks * chunkSizeY;
-            if (y == currentY || y == currentY - 1 || y == currentY + 1)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
 }

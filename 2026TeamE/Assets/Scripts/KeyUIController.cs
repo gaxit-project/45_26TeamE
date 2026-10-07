@@ -41,6 +41,10 @@ public class KeyUIController : MonoBehaviour
         {
             canvasCamera = mainCanvas.worldCamera;
         }
+
+        // 鍵を集める仕様は「掘ると現れる扉に入る」仕様へ置き換えたため、鍵UIは表示しない。
+        // シーンからこのオブジェクトを削除しても問題ない。
+        gameObject.SetActive(false);
     }
 
     public void FlyAndUpdateKeyUI(int collectedCount, Vector3 worldPos)

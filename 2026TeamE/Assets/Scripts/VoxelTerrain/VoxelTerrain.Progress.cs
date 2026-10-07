@@ -3,77 +3,6 @@ using UnityEngine;
 
 public partial class VoxelTerrain
 {
-    public void OnPlayerReachRelayPoint(int y)
-    {
-        Debug.Log($"中継地点到達. 深度：{y}");
-        if (CheckpointManager.Instance == null) return;
-
-        int currentID = GetBoundaryZoneIndex(y);
-        if (currentID < 0) return;
-
-        if (currentID == CheckpointManager.Instance.GetLastCheckpointID())
-        {
-            Debug.Log("同じチェックポイントのためスキップ");
-            return;
-        }
-
-        if (!IsZoneCleared(currentID))
-        {
-            int currentCount = zoneCollectedKeyCounts.ContainsKey(currentID) ? zoneCollectedKeyCounts[currentID] : 0;
-            Debug.Log($"アクセス拒否：ゾーン {currentID} の鍵が足りません ({currentCount}/3)");
-            return;
-        }
-
-        GameObject player = GameObject.FindWithTag("Player");
-        if (player == null) return;
-
-        Vector3 checkpointPos = player.transform.position;
-        checkpointPos.y -= (blockSize * 5f);
-
-        CheckpointManager.Instance.SaveCheckpoint(checkpointPos, currentID);
-
-        // スコア用の酸素記録はここではなく、Yボタンでリザルトに戻る際（SelectPoint.cs）に行います。
-
-        if (TryGetComponent<SelectPoint>(out var selectPoint))
-        {
-            selectPoint.ShowButton();
-        }
-    }
-
-    public void CollectedKey(Vector3 worldPos)
-    {
-        Vector3 localPos = transform.InverseTransformPoint(worldPos);
-        int blockY = Mathf.Clamp(Mathf.FloorToInt(localPos.y / blockSize), 0, heightY - 1);
-        int zoneIndex = GetRelayID(blockY);
-
-        CollectedKeyDirect(zoneIndex, worldPos);
-        Debug.Log($"<color=yellow>[鍵獲得]</color> 深度: {blockY} (ゾーン: {zoneIndex}) | 現在の鍵: {zoneCollectedKeyCounts[zoneIndex]} / 3個");
-    }
-
-    public void CollectedKeyDirect(int zoneIndex, Vector3 worldPos)
-    {
-        if (!zoneCollectedKeyCounts.ContainsKey(zoneIndex))
-        {
-            zoneCollectedKeyCounts[zoneIndex] = 0;
-        }
-        zoneCollectedKeyCounts[zoneIndex]++;
-
-        if (KeyUIController.Instance != null)
-        {
-            KeyUIController.Instance.FlyAndUpdateKeyUI(zoneCollectedKeyCounts[zoneIndex], worldPos);
-        }
-    }
-
-    public bool IsZoneCleared(int zoneIndex)
-    {
-        const int REQUIRED_KEYS = 3;
-        if (zoneCollectedKeyCounts.TryGetValue(zoneIndex, out int count))
-        {
-            return count >= REQUIRED_KEYS;
-        }
-        return false;
-    }
-
     public void RestartFromCheckpoint()
     {
         if (CheckpointManager.Instance == null) return;
@@ -93,7 +22,6 @@ public partial class VoxelTerrain
     public void ResetRuntime(bool regenerateStage = false)
     {
         chunksToUpdate?.Clear();
-        zoneCollectedKeyCounts?.Clear();
         zoneUnlockedFlags?.Clear();
         zoneInitialGemValues?.Clear();
         if (spawnedTreasures != null)

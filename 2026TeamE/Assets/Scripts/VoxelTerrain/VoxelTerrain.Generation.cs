@@ -42,7 +42,7 @@ public partial class VoxelTerrain
             yield return BuildChunksRoutine(budget);
 
             SpawnZoneItems(rnd);
-            SpawnRelayPoints();
+            SpawnDoors(rnd);
             TeleportPlayerToStart(startPoint.x, startPoint.y, startPoint.z);
             ClearBlocksAroundPlayer();
         }
@@ -144,8 +144,6 @@ public partial class VoxelTerrain
         if (y > heightY - SurfaceAirMargin) return (byte)BlockType.Air;
 
         if (y < GoalThresholdY) return DetermineShallowBlockType(y, z, startPoint.z);
-
-        if (IsRelayZoneBottom(y)) return (byte)BlockType.Bedrock;
 
         bool isOre = generationMode == GenerationMode.Layered && rnd.NextDouble() * 100.0 < oreProbability;
         if (isOre) return (byte)BlockType.Ore;
@@ -253,20 +251,6 @@ public partial class VoxelTerrain
             centerY: (zoneTopY + zoneBottomY) / 2,
             centerZ: maxStageWidthZ / 2,
             halfSize: Mathf.RoundToInt(goalChamberRadius));
-    }
-
-    public bool IsRelayZoneBottom(int y)
-    {
-        int currentY = heightY;
-        for (int i = 0; i < zoneSettings.Count - 1; i++)
-        {
-            currentY -= zoneSettings[i].heightChunks * chunkSizeY;
-            if (y == currentY || y == currentY - 1)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     private IEnumerator RemoveIsolatedBlocksRoutine(FrameBudget budget)

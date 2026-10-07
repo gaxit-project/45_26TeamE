@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema xmlns:tns="UnityEditor.UIElements" elementFormDefault="qualified" targetNamespace="UnityEditor.UIElements" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:import schemaLocation="UnityEngine.UIElements.xsd" namespace="UnityEngine.UIElements" />
-  <xs:complexType name="ProjectSettingsThemeDropdownType">
+  <xs:complexType name="ToolbarButtonType">
     <xs:complexContent mixed="false">
-      <xs:extension xmlns:q1="UnityEngine.UIElements" base="q1:DropdownFieldType">
+      <xs:extension xmlns:q1="UnityEngine.UIElements" base="q1:ButtonType">
         <xs:choice />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="ProjectSettingsThemeDropdown" xmlns:q2="UnityEngine.UIElements" substitutionGroup="q2:DropdownField" type="tns:ProjectSettingsThemeDropdownType" />
+  <xs:element name="ToolbarButton" xmlns:q2="UnityEngine.UIElements" substitutionGroup="q2:Button" type="tns:ToolbarButtonType" />
+  <xs:complexType name="ProjectSettingsThemeDropdownType">
+    <xs:complexContent mixed="false">
+      <xs:extension xmlns:q3="UnityEngine.UIElements" base="q3:DropdownFieldType">
+        <xs:choice />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="ProjectSettingsThemeDropdown" xmlns:q4="UnityEngine.UIElements" substitutionGroup="q4:DropdownField" type="tns:ProjectSettingsThemeDropdownType" />
   <xs:complexType name="ToolbarSearchFieldType">
     <xs:complexContent mixed="false">
-      <xs:extension xmlns:q3="UnityEngine.UIElements" base="q3:VisualElementType">
+      <xs:extension xmlns:q5="UnityEngine.UIElements" base="q5:VisualElementType">
         <xs:choice />
         <xs:attribute name="placeholder-text" type="xs:string" />
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
-  <xs:element name="ToolbarSearchField" xmlns:q4="UnityEngine.UIElements" substitutionGroup="q4:VisualElement" type="tns:ToolbarSearchFieldType" />
-  <xs:complexType name="ToolbarButtonType">
-    <xs:complexContent mixed="false">
-      <xs:extension xmlns:q5="UnityEngine.UIElements" base="q5:ButtonType">
-        <xs:choice />
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-  <xs:element name="ToolbarButton" xmlns:q6="UnityEngine.UIElements" substitutionGroup="q6:Button" type="tns:ToolbarButtonType" />
+  <xs:element name="ToolbarSearchField" xmlns:q6="UnityEngine.UIElements" substitutionGroup="q6:VisualElement" type="tns:ToolbarSearchFieldType" />
   <xs:complexType name="ToolbarType">
     <xs:complexContent mixed="false">
       <xs:extension xmlns:q7="UnityEngine.UIElements" base="q7:VisualElementType">

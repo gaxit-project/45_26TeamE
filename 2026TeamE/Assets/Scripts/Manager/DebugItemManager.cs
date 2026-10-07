@@ -75,30 +75,24 @@ public class DebugItemManager : MonoBehaviour
         }
     }
 
-    
+    /// <summary>
+    /// 扉に入ったことにして、リザルト（お金の両替・強化）シーンへ移行する。
+    /// 復帰先は現在のプレイヤー位置になる。
+    /// </summary>
     private void EnterCheckpointProcess()
     {
-        
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null && CheckpointManager.Instance != null)
+        if (player == null || VoxelTerrain.Instance == null || SelectPoint.Instance == null)
         {
-            
-            CheckpointManager.Instance.SaveCheckpoint(player.transform.position, 999);
+            Debug.LogWarning("[Debug] プレイヤー・VoxelTerrain・SelectPoint のいずれかが見つからないため、扉の突入処理を実行できませんでした。");
+            return;
         }
 
-        
-        SelectPoint selectPoint = FindObjectOfType<SelectPoint>();
-        if (selectPoint != null)
-        {
-            selectPoint.ShowButton();
-            Debug.Log("[Debug] チェックポイント突入処理を実行し、UIを表示しました！");
-        }
-        else
-        {
-            Debug.LogWarning("[Debug] シーン内に SelectPoint スクリプトが見つかりませんでした。");
-        }
+        Debug.Log("[Debug] 扉の突入処理を実行します。");
+        VoxelTerrain.Instance.MarkDoorEntered(player.transform.position);
+        SelectPoint.Instance.GoToResult();
     }
-    
+
 
     private void TriggerGoal()
     {

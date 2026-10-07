@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 
 [System.Serializable]
@@ -12,13 +11,13 @@ public class ZoneData
     public int heightChunks = 4;
 
     [Header("このゾーンのアイテム設定")]
-    [Tooltip("このゾーンに出現する宝箱系アイテムの総数（鍵3個を含む）")]
+    [Tooltip("このゾーンに出現する宝箱系アイテムの総数")]
     public int itemsPerStage = 10;
     [Tooltip("このゾーンに出現する爆弾の数")]
     public int bombCount = 20;
 
     [Header("ゴールゾーン設定")]
-    [Tooltip("trueにすると、このゾーンは鍵・爆弾・通常アイテムを一切生成せず、中央にゴールのお宝だけを最初から取得可能な状態で配置する")]
+    [Tooltip("trueにすると、このゾーンは扉・爆弾・通常アイテムを一切生成せず、中央にゴールのお宝だけを最初から取得可能な状態で配置する")]
     public bool isGoalZone = false;
 }
 
@@ -47,7 +46,6 @@ public partial class VoxelTerrain : MonoBehaviour
 
     private enum SpawnItemType
     {
-        Key,
         Jewel,
         Oxygen,
         LeatherBag,
@@ -88,7 +86,7 @@ public partial class VoxelTerrain : MonoBehaviour
     [SerializeField] private Material stoneMaterial;
     [SerializeField] private Material hardRockMaterial;
     [SerializeField] private Material quartziteMaterial;
-    [Tooltip("ステージ端（Z軸両端）の境界壁専用マテリアル。Bedrock（中継地点用）とは別に設定してください。")]
+    [Tooltip("ステージ端（Z軸両端）の境界壁専用マテリアル。Bedrockとは別に設定してください。")]
     [SerializeField] private Material boundaryMaterial;
 
     [Header("同期オプション")]
@@ -111,16 +109,23 @@ public partial class VoxelTerrain : MonoBehaviour
 
     [Header("アイテムPrefab設定")]
     [SerializeField] private GameObject treasurePrefab;
-    [SerializeField] private GameObject keyPrefab;
     [SerializeField] private GameObject bombPrefab;
     [SerializeField] private GameObject treasureBoxPrefab;
     [SerializeField] private GameObject oxygenPrefab;
     [SerializeField] private GameObject leatherBagPrefab;
     [SerializeField] private GameObject GoldleatherBagPrefab;
 
-    [Header("中継地点設定")]
-    [Tooltip("各ゾーンの最下部に自動配置される中継地点のプレハブ")]
-    [SerializeField] private GameObject relayPointPrefab;
+    [Header("扉設定")]
+    [Tooltip("地中にランダムに埋め込まれる扉のプレハブ。DoorBehaviourが付いている必要があります。")]
+    [SerializeField] private GameObject doorPrefab;
+    [Tooltip("扉をステージ左右の端から離す余白（ブロック数）。端に寄りすぎると壁に食い込んで見えるため。")]
+    [SerializeField] private int doorEdgeMarginZ = 8;
+    [Tooltip("扉を1つ置く深さの間隔（チャンク数）。15なら15チャンク掘るごとに扉が1つ現れる。")]
+    [SerializeField] private int chunksPerDoor = 15;
+    [Tooltip("1単位の中で扉が出る範囲を、単位の最深部から何チャンク分にするか")]
+    [SerializeField] private int doorBandChunks = 3;
+    [Tooltip("ゴールゾーンにも扉を配置する。通常はゴール層に寄り道は不要なのでオフ。")]
+    [SerializeField] private bool allowDoorsInGoalZone = false;
 
     [Header("ゴール設定")]
     [Tooltip("isGoalZoneがtrueのゾーンの中央に配置する、最初から取得可能なゴールのお宝プレハブ")]
@@ -138,8 +143,8 @@ public partial class VoxelTerrain : MonoBehaviour
     private byte[,,] mapData;
     private int heightY; 
 
-    private Dictionary<int, int> zoneCollectedKeyCounts = new Dictionary<int, int>();
     private HashSet<int> zoneUnlockedFlags = new HashSet<int>();
+    private bool isRestoreRoutineRunning;
     public Dictionary<int, long> zoneInitialGemValues = new Dictionary<int, long>();
     private const long GEM_VALUE = 300000;
 
@@ -185,11 +190,52 @@ public partial class VoxelTerrain : MonoBehaviour
         if (scene.name == "02_Main")
         {
             SetActiveAllChildren(true);
-            zoneCollectedKeyCounts.Clear();
+            StartCoroutine(RestoreAfterMainSceneLoadedRoutine());
         }
         else
         {
             SetActiveAllChildren(false);
+        }
+    }
+
+    /// <summary>
+    /// メインシーンが読み込まれた直後の復帰処理。
+    /// ステージ生成（初回はこのフレームの後に始まる）が終わるのを待ってから、
+    /// 扉からの復帰またはチェックポイントからの復帰を行う。
+    /// </summary>
+    private System.Collections.IEnumerator RestoreAfterMainSceneLoadedRoutine()
+    {
+        // sceneLoadedイベントとStart()の両方から呼ばれても一度しか走らせない。
+        if (isRestoreRoutineRunning) yield break;
+        isRestoreRoutineRunning = true;
+
+        try
+        {
+            // このフレームの Start() で CreateStage が始まる場合があるため、1フレーム待つ。
+            yield return null;
+
+            while (IsGenerating)
+            {
+                yield return null;
+            }
+
+            if (!IsStageGenerated) yield break;
+
+            // 扉から戻ってきた場合は、その扉の位置が最優先の復帰先。
+            if (HasPendingDoorReturn)
+            {
+                RestorePlayerAtDoor();
+                yield break;
+            }
+
+            if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
+            {
+                RestartFromCheckpoint();
+            }
+        }
+        finally
+        {
+            isRestoreRoutineRunning = false;
         }
     }
 
@@ -209,36 +255,11 @@ public partial class VoxelTerrain : MonoBehaviour
         {
             CreateStage(maxStageWidthZ, GetTotalHeight(), blockSize);
         }
-        StartCoroutine(RestartRoutine());
-    }
 
-    private System.Collections.IEnumerator RestartRoutine()
-    {
-        
-        
-        while (IsGenerating)
+        // sceneLoadedイベントを取り逃した場合（実行中に生成された等）の保険。
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "02_Main")
         {
-            yield return null;
-        }
-
-        yield return null;
-
-        if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())
-        {
-            RestartFromCheckpoint();
+            StartCoroutine(RestoreAfterMainSceneLoadedRoutine());
         }
     }
-
-    void Update()
-    {
-        // 開発用：1キーで周囲の岩盤を消して中継地点を通り抜けられるようにする。
-        // 製品ビルドでは中継地点の鍵の条件を無視できてしまうため、除外する。
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (Keyboard.current != null && Keyboard.current.digit1Key.wasPressedThisFrame)
-        {
-            RemoveBedrockAroundPlayer();
-        }
-#endif
-    }
-
 }

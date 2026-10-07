@@ -248,16 +248,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private bool IsStandingOnRelayZone()
-    {
-        if (VoxelTerrain.Instance == null) return false;
-
-        Vector3 lp = VoxelTerrain.Instance.transform.InverseTransformPoint(transform.position + Vector3.down * 0.2f);
-        int ty = Mathf.FloorToInt(lp.y / VoxelTerrain.Instance.BlockSize);
-
-        return VoxelTerrain.Instance.IsRelayZoneBottom(ty);
-    }
-
     void Update()
     {
         if (!CanMove) return;
@@ -290,13 +280,9 @@ public class PlayerController : MonoBehaviour
             if (currentBattery < 0) currentBattery = 0;
         }
 
-        bool isDownwards = moveInput.y < -0.1f;
-        bool isRelayZone = IsStandingOnRelayZone();
-
         if (drillFlag)
         {
-            float effectiveMoveY = (isRelayZone && isDownwards) ? 0f : moveInput.y;
-            float angle = Mathf.Atan2(effectiveMoveY, Mathf.Abs(moveInput.x)) * Mathf.Rad2Deg;
+            float angle = Mathf.Atan2(moveInput.y, Mathf.Abs(moveInput.x)) * Mathf.Rad2Deg;
             miningZoneRoot.localRotation = Quaternion.Euler(angle, 0, 0);
         }
         else
@@ -339,12 +325,7 @@ public class PlayerController : MonoBehaviour
 
         if (drillFlag)
         {
-            bool isDownwards = moveInput.y < -0.1f;
-            bool isRelayZone = IsStandingOnRelayZone();
-
-            float effectiveMoveY = (isRelayZone && isDownwards) ? 0f : moveInput.y;
-
-            float targetAngle = effectiveMoveY * maxRotationAngle;
+            float targetAngle = moveInput.y * maxRotationAngle;
             drillPivot.localRotation = Quaternion.Euler(-targetAngle, 0, 0);
         }
         else

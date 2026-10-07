@@ -131,38 +131,6 @@ public partial class VoxelTerrain
         return changed;
     }
 
-    public void RemoveBedrockAroundPlayer()
-    {
-        GameObject playerObj = GameObject.FindWithTag("Player");
-        if (playerObj == null) return;
-
-        Vector3 localPos = transform.InverseTransformPoint(playerObj.transform.position);
-        int py = Mathf.FloorToInt(localPos.y / blockSize);
-        int pz = Mathf.FloorToInt(localPos.z / blockSize);
-        int searchRange = 5;
-
-        for (int x = 0; x < thicknessX; x++)
-        {
-            for (int y = py - 2; y <= py + 2; y++)
-            {
-                for (int z = pz - searchRange; z <= pz + searchRange; z++)
-                {
-                    if (!IsInside(x, y, z)) continue;
-
-                    if (mapData[x, y, z] == (byte)BlockType.Bedrock)
-                    {
-                        mapData[x, y, z] = (byte)BlockType.Air;
-                        int cIndex = y / chunkSizeY;
-                        chunksToUpdate.Add(cIndex);
-
-                        if (y % chunkSizeY == 0 && cIndex > 0) chunksToUpdate.Add(cIndex - 1);
-                        if (y % chunkSizeY == chunkSizeY - 1 && cIndex < chunks.Length - 1) chunksToUpdate.Add(cIndex + 1);
-                    }
-                }
-            }
-        }
-    }
-
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldCenter);

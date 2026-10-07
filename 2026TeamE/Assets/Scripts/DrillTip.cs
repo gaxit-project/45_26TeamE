@@ -158,12 +158,6 @@ public class DrillTip : MonoBehaviour
 
                     float h = terrain.GetHardnessAtPosition(tx, ty, tz);
                     if (h > maxHardness) maxHardness = h;
-
-                    if (IsBedrock(terrain, tx, ty, tz))
-                    {
-                        terrain.OnPlayerReachRelayPoint(ty);
-                        return;
-                    }
                 }
 
                 float hardness = maxHardness;
@@ -182,11 +176,6 @@ public class DrillTip : MonoBehaviour
                 int dx = Mathf.FloorToInt(digLocal.x / s);
                 int dy = Mathf.FloorToInt(digLocal.y / s);
                 int dz = Mathf.FloorToInt(digLocal.z / s);
-
-                if (terrain.IsRelayZoneBottom(dy))
-                {
-                    return;
-                }
 
                 BoxCollider box = miningZoneBoxCollider;
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
@@ -307,8 +296,4 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
-    {
-        return terrain.IsRelayZoneBottom(y);
-    }
 }

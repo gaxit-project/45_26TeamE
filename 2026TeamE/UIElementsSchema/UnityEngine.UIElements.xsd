@@ -85,6 +85,46 @@
     </xs:complexContent>
   </xs:complexType>
   <xs:element name="Foldout" substitutionGroup="tns:BindableElement" type="tns:FoldoutType" />
+  <xs:complexType name="TextElementType">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:BindableElementType">
+        <xs:choice />
+        <xs:attribute name="text" type="xs:string" />
+        <xs:attribute default="true" name="enable-rich-text" type="xs:boolean" />
+        <xs:attribute default="true" name="emoji-fallback-support" type="xs:boolean" />
+        <xs:attribute default="false" name="parse-escape-sequences" type="xs:boolean" />
+        <xs:attribute default="false" name="selectable" type="xs:boolean" />
+        <xs:attribute default="true" name="double-click-selects-word" type="xs:boolean" />
+        <xs:attribute default="true" name="triple-click-selects-line" type="xs:boolean" />
+        <xs:attribute default="true" name="display-tooltip-when-elided" type="xs:boolean" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="TextElement" substitutionGroup="tns:BindableElement" type="tns:TextElementType" />
+  <xs:complexType name="ButtonType">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:TextElementType">
+        <xs:choice />
+        <xs:attribute name="icon-image" type="xs:string" />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="Button" substitutionGroup="tns:TextElement" type="tns:ButtonType" />
+  <xs:complexType name="IMGUIContainerType">
+    <xs:complexContent mixed="false">
+      <xs:extension base="tns:VisualElementType">
+        <xs:choice />
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element name="IMGUIContainer" substitutionGroup="tns:VisualElement" type="tns:IMGUIContainerType" />
+  <xs:simpleType name="SelectionTypeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="None" />
+      <xs:enumeration value="Single" />
+      <xs:enumeration value="Multiple" />
+    </xs:restriction>
+  </xs:simpleType>
   <xs:simpleType name="BindingUpdateTriggerType">
     <xs:restriction base="xs:string">
       <xs:enumeration value="WhenDirty" />
@@ -118,31 +158,6 @@
     </xs:complexContent>
   </xs:complexType>
   <xs:element name="ImmediateModeElement" substitutionGroup="tns:VisualElement" type="tns:ImmediateModeElementType" />
-  <xs:complexType name="ButtonType">
-    <xs:complexContent mixed="false">
-      <xs:extension base="tns:TextElementType">
-        <xs:choice />
-        <xs:attribute name="icon-image" type="xs:string" />
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-  <xs:complexType name="TextElementType">
-    <xs:complexContent mixed="false">
-      <xs:extension base="tns:BindableElementType">
-        <xs:choice />
-        <xs:attribute name="text" type="xs:string" />
-        <xs:attribute default="true" name="enable-rich-text" type="xs:boolean" />
-        <xs:attribute default="true" name="emoji-fallback-support" type="xs:boolean" />
-        <xs:attribute default="false" name="parse-escape-sequences" type="xs:boolean" />
-        <xs:attribute default="false" name="selectable" type="xs:boolean" />
-        <xs:attribute default="true" name="double-click-selects-word" type="xs:boolean" />
-        <xs:attribute default="true" name="triple-click-selects-line" type="xs:boolean" />
-        <xs:attribute default="true" name="display-tooltip-when-elided" type="xs:boolean" />
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-  <xs:element name="TextElement" substitutionGroup="tns:BindableElement" type="tns:TextElementType" />
-  <xs:element name="Button" substitutionGroup="tns:TextElement" type="tns:ButtonType" />
   <xs:complexType name="LabelType">
     <xs:complexContent mixed="false">
       <xs:extension base="tns:TextElementType">
@@ -244,13 +259,6 @@
     <xs:restriction base="xs:string">
       <xs:enumeration value="FixedHeight" />
       <xs:enumeration value="DynamicHeight" />
-    </xs:restriction>
-  </xs:simpleType>
-  <xs:simpleType name="SelectionTypeType">
-    <xs:restriction base="xs:string">
-      <xs:enumeration value="None" />
-      <xs:enumeration value="Single" />
-      <xs:enumeration value="Multiple" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="AlternatingRowBackgroundType">
@@ -612,14 +620,6 @@
     </xs:complexContent>
   </xs:complexType>
   <xs:element name="RotateField" substitutionGroup="tns:BindableElement" type="tns:RotateFieldType" />
-  <xs:complexType name="IMGUIContainerType">
-    <xs:complexContent mixed="false">
-      <xs:extension base="tns:VisualElementType">
-        <xs:choice />
-      </xs:extension>
-    </xs:complexContent>
-  </xs:complexType>
-  <xs:element name="IMGUIContainer" substitutionGroup="tns:VisualElement" type="tns:IMGUIContainerType" />
   <xs:complexType name="Vector2FieldType">
     <xs:complexContent mixed="false">
       <xs:extension base="tns:BindableElementType">

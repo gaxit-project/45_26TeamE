@@ -5,10 +5,7 @@ using UnityEngine;
 
 public partial class VoxelTerrain
 {
-    
-    private const int RequiredKeyCount = 3;
 
-    
     private static readonly SpawnItemType[] NormalItemPool =
     {
         SpawnItemType.Oxygen,
@@ -167,13 +164,8 @@ public partial class VoxelTerrain
     {
         var sequence = new List<SpawnItemType>();
 
-        for (int i = 0; i < RequiredKeyCount; i++)
-        {
-            sequence.Add(SpawnItemType.Key);
-        }
-
-        int totalItemCount = Mathf.Max(RequiredKeyCount, zoneSettings[zoneIndex].itemsPerStage);
-        for (int i = sequence.Count; i < totalItemCount; i++)
+        int totalItemCount = Mathf.Max(0, zoneSettings[zoneIndex].itemsPerStage);
+        for (int i = 0; i < totalItemCount; i++)
         {
             sequence.Add(NormalItemPool[rnd.Next(NormalItemPool.Length)]);
         }
@@ -233,26 +225,6 @@ public partial class VoxelTerrain
     
     
     
-    private void SpawnRelayPoints()
-    {
-        if (relayPointPrefab == null) return;
-
-        int centerZ = maxStageWidthZ / 2;
-
-        for (int zoneIndex = 0; zoneIndex < zoneSettings.Count - 1; zoneIndex++)
-        {
-            int relayY = GetZoneBottomY(zoneIndex);
-            Vector3 localPos = new Vector3(startOffsetX * blockSize, relayY * blockSize, centerZ * blockSize);
-            Vector3 worldPos = transform.position + localPos;
-
-            GameObject relay = Instantiate(relayPointPrefab, worldPos, Quaternion.identity, transform);
-            relay.name = $"RelayPoint_{zoneIndex}";
-        }
-    }
-
-    
-    
-    
     private void SpawnGoalTreasure(int zoneIndex, int bottomY, int topY)
     {
         if (goalTreasurePrefab == null) return;
@@ -299,24 +271,6 @@ public partial class VoxelTerrain
             tb.zoneIndex = zoneIndex;
             switch (type)
             {
-                case SpawnItemType.Key:
-                    tb.contentPrefab = keyPrefab;
-                    
-                    // 鍵の場所を分かりやすくするための光源を追加
-                    GameObject lightObj = new GameObject("KeyHintLight");
-                    lightObj.transform.SetParent(box.transform);
-                    
-                    // Y座標とZ座標は宝箱に合わせ、X座標はワールド座標の固定値（3f）にする
-                    Vector3 fixedPos = box.transform.position;
-                    fixedPos.x = 3f; 
-                    lightObj.transform.position = fixedPos;
-                    
-                    Light lightComp = lightObj.AddComponent<Light>();
-                    lightComp.type = LightType.Point;
-                    lightComp.range = 30f;      // より広く
-                    lightComp.intensity = 15f;  // より強く
-                    lightComp.color = new Color(1f, 0.9f, 0.3f);
-                    break;
                 case SpawnItemType.Jewel:
                     tb.contentPrefab = treasurePrefab;
                     spawnedTreasures.Add(box);
@@ -335,34 +289,9 @@ public partial class VoxelTerrain
         }
     }
 
-    
-    
-    
-    public void RespawnKeyTreasureBox(Vector3 destroyedPos, int zoneIndex)
-    {
-        if (zoneIndex < 0 || zoneIndex >= zoneSettings.Count) return;
 
-        int currentStageTopY = heightY;
-        for (int i = 0; i < zoneIndex; i++)
-        {
-            currentStageTopY -= zoneSettings[i].heightChunks * chunkSizeY;
-        }
-        int currentStageBottomY = currentStageTopY - (zoneSettings[zoneIndex].heightChunks * chunkSizeY);
 
-        List<Vector3Int> validPositions = CollectDiggablePositions(currentStageBottomY, currentStageTopY);
-        if (validPositions.Count == 0) return;
 
-        var rnd = new System.Random();
-        Vector3Int targetCoord = validPositions[rnd.Next(validPositions.Count)];
-
-        
-        SpawnItemAt(SpawnItemType.Key, targetCoord, zoneIndex);
-        Debug.Log($"<color=orange>[鍵リスポーン]</color> ゾーン {zoneIndex} の空きブロック ({targetCoord.x}, {targetCoord.y}, {targetCoord.z}) に再配置しました。");
-    }
-
-    
-    
-    
     private void SpawnSmartBombs(int zoneIndex, int bombCount, List<Vector3Int> candidates, List<Vector3Int> treasureCoords, System.Random rnd)
     {
         if (candidates.Count == 0 || bombCount <= 0) return;
