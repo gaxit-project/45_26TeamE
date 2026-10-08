@@ -48,6 +48,8 @@ public class DoorBehaviour : BuriedItemBase
 
     [Header("判定")]
     [SerializeField] private string playerTag = "Player";
+    [Tooltip("扉に入れる距離（ワールド単位）。横から見るゲームなので奥行き（X）は無視して判定します。")]
+    [SerializeField] private float enterRadius = 2.5f;
 
     /// <summary>この扉が既に使われて壊れているか。</summary>
     public bool IsBroken { get; private set; }
@@ -59,6 +61,9 @@ public class DoorBehaviour : BuriedItemBase
     private GameObject spawnedBrokenVisual;
 
     private bool isPlayerInRange;
+
+    /// <summary>プレイヤーのTransform。シーンをまたぐと作り直されるため、見失ったら探し直す。</summary>
+    private Transform cachedPlayer;
 
     /// <summary>埋まっている間の目印ライト。</summary>
     private Light hintLight;
@@ -109,8 +114,35 @@ public class DoorBehaviour : BuriedItemBase
     {
         base.Update();
 
+        UpdatePlayerRange();
+
         // 露出した瞬間に案内表示を出すため、範囲内にいる間は毎フレーム更新する。
         if (isPlayerInRange) UpdatePrompt();
+    }
+
+    /// <summary>
+    /// プレイヤーが入場距離にいるかを毎フレーム判定する。
+    /// 扉のColliderに依存すると、プレハブの当たり判定の大きさや
+    /// IsTriggerの設定次第で入場できなくなるため、距離で判定している。
+    /// </summary>
+    private void UpdatePlayerRange()
+    {
+        if (cachedPlayer == null)
+        {
+            GameObject playerObject = GameObject.FindWithTag(playerTag);
+            if (playerObject == null)
+            {
+                SetPlayerInRange(false);
+                return;
+            }
+            cachedPlayer = playerObject.transform;
+        }
+
+        // 横から見るゲームなので、奥行き（X）の差は無視してYZ平面で測る。
+        Vector3 delta = cachedPlayer.position - transform.position;
+        float distanceSqr = delta.y * delta.y + delta.z * delta.z;
+
+        SetPlayerInRange(distanceSqr <= enterRadius * enterRadius);
     }
 
     /// <summary>扉はソナーに反応させないため、エコーもマーカーも持たない。</summary>
@@ -125,26 +157,6 @@ public class DoorBehaviour : BuriedItemBase
         return VoxelTerrain.Instance.IsJewelExposed(transform.position, exposureSize);
     }
 
-    protected override void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag(playerTag))
-        {
-            SetPlayerInRange(true);
-            return;
-        }
-
-        // プレイヤー以外（ソナーなど）は基底クラスの既定処理に任せる。
-        base.OnTriggerEnter(other);
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag(playerTag))
-        {
-            SetPlayerInRange(false);
-        }
-    }
-
     private void OnDisable()
     {
         // シーン遷移で扉が非アクティブになったとき、入場対象として残らないようにする。
@@ -153,6 +165,10 @@ public class DoorBehaviour : BuriedItemBase
 
     private void SetPlayerInRange(bool inRange)
     {
+        if (isPlayerInRange != inRange)
+        {
+            Debug.Log($"[Door] {name} 入場範囲: {(inRange ? "入った" : "出た")}（露出済み: {isExposed} / 破壊済み: {IsBroken}）");
+        }
         isPlayerInRange = inRange;
 
         if (VoxelTerrain.Instance != null)
@@ -179,7 +195,11 @@ public class DoorBehaviour : BuriedItemBase
     /// <returns>入場できた場合はtrue。</returns>
     public bool TryEnter()
     {
-        if (!CanEnter) return false;
+        if (!CanEnter)
+        {
+            Debug.Log($"[Door] {name} には入れません（露出済み: {isExposed} / 破壊済み: {IsBroken}）");
+            return false;
+        }
         if (VoxelTerrain.Instance == null) return false;
 
         Break();

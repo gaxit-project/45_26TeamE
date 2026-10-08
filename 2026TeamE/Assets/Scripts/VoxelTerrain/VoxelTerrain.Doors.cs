@@ -17,19 +17,46 @@ public partial class VoxelTerrain
     /// <summary>復帰待ちの扉があるか。</summary>
     public bool HasPendingDoorReturn { get; private set; }
 
-    /// <summary>いまプレイヤーが入場できる扉。範囲外なら null。</summary>
-    public DoorBehaviour CurrentDoorInRange { get; private set; }
+    /// <summary>
+    /// いまプレイヤーが重なっている扉。
+    /// 壊れた扉の上に復帰することがあるため、1つだけでなく重なっている分すべてを保持する。
+    /// </summary>
+    private readonly List<DoorBehaviour> doorsInRange = new List<DoorBehaviour>();
+
+    /// <summary>いまプレイヤーが入場できる扉。入れる扉が無ければ null。</summary>
+    public DoorBehaviour CurrentDoorInRange
+    {
+        get
+        {
+            RemoveDestroyedDoors();
+
+            foreach (DoorBehaviour door in doorsInRange)
+            {
+                if (door.CanEnter) return door;
+            }
+            return null;
+        }
+    }
 
     /// <summary>プレイヤーが入場範囲に入っている扉として登録する。</summary>
     public void SetDoorInRange(DoorBehaviour door)
     {
-        CurrentDoorInRange = door;
+        if (door == null || doorsInRange.Contains(door)) return;
+        doorsInRange.Add(door);
     }
 
-    /// <summary>登録されている扉を解除する。別の扉が登録済みなら何もしない。</summary>
+    /// <summary>登録されている扉を解除する。</summary>
     public void ClearDoorInRange(DoorBehaviour door)
     {
-        if (CurrentDoorInRange == door) CurrentDoorInRange = null;
+        doorsInRange.Remove(door);
+    }
+
+    private void RemoveDestroyedDoors()
+    {
+        for (int i = doorsInRange.Count - 1; i >= 0; i--)
+        {
+            if (doorsInRange[i] == null) doorsInRange.RemoveAt(i);
+        }
     }
 
     /// <summary>
@@ -39,8 +66,21 @@ public partial class VoxelTerrain
     /// <returns>入場できた場合はtrue。呼び出し側はtrueならリザルトへ遷移させる。</returns>
     public bool TryEnterDoorInRange()
     {
-        if (CurrentDoorInRange == null) return false;
-        return CurrentDoorInRange.TryEnter();
+        RemoveDestroyedDoors();
+
+        if (doorsInRange.Count == 0)
+        {
+            Debug.Log("[VoxelTerrain] 入場範囲に扉がありません。");
+            return false;
+        }
+
+        foreach (DoorBehaviour door in doorsInRange)
+        {
+            if (door.TryEnter()) return true;
+        }
+
+        Debug.Log($"[VoxelTerrain] 範囲内の扉 {doorsInRange.Count} 個はいずれも入場できる状態ではありません。");
+        return false;
     }
 
     // --- 生成 -------------------------------------------------------------

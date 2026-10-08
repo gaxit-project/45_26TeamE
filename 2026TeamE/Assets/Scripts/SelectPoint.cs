@@ -70,9 +70,19 @@ public class SelectPoint : MonoBehaviour
 
     private void Update()
     {
-        if (isTransitioning) return;
         if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
-        if (VoxelTerrain.Instance == null) return;
+
+        if (isTransitioning)
+        {
+            Debug.LogWarning("[SelectPoint] 遷移中フラグが立っているため入力を無視しました。前回の遷移後にフラグが戻っていない可能性があります。");
+            return;
+        }
+
+        if (VoxelTerrain.Instance == null)
+        {
+            Debug.LogWarning("[SelectPoint] VoxelTerrain が見つかりません。");
+            return;
+        }
 
         // 扉に入れたときだけ画面を切り替える。
         if (VoxelTerrain.Instance.TryEnterDoorInRange())
