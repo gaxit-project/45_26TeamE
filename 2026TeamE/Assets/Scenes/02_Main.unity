@@ -192,7 +192,7 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 150
+  m_Intensity: 100
   m_Range: 200
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -8255,7 +8255,7 @@ MonoBehaviour:
   Speed: 2
   normalSpeed: 10
   dashSpeed: 6
-  jumpPower: 20
+  jumpPower: 50
   fallMultiplier: 5
   lowJumpMultiplier: 20
   landLayer:
@@ -8713,6 +8713,8 @@ MonoBehaviour:
   rumbleDuration: 0.12
   landingSeName: 
   cooldown: 0.2
+  ignoreUntilControlEnabled: 1
+  startupGraceTime: 0.5
 --- !u!1 &610964210
 GameObject:
   m_ObjectHideFlags: 0
