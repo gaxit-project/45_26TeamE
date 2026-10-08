@@ -8124,7 +8124,7 @@ MonoBehaviour:
   initializesAtom: 1
   atomConfig:
     acfFileName: 2026TeamESounds
-    maxVirtualVoices: 32
+    maxVirtualVoices: 40
     maxVoiceLimitGroups: 32
     maxCategories: 32
     maxAisacs: 8
@@ -8133,8 +8133,8 @@ MonoBehaviour:
     maxBeatSyncCallbacksPerFrame: 1
     maxCueLinkCallbacksPerFrame: 1
     standardVoicePoolConfig:
-      memoryVoices: 16
-      streamingVoices: 8
+      memoryVoices: 24
+      streamingVoices: 16
     hcaMxVoicePoolConfig:
       memoryVoices: 0
       streamingVoices: 0
