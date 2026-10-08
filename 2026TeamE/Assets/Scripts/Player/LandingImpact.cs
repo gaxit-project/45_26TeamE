@@ -35,7 +35,15 @@ public class LandingImpact : MonoBehaviour
     [Header("連続で鳴らさないための最小間隔（秒）")]
     [SerializeField] private float cooldown = 0.2f;
 
+    [Header("開始直後の抑制")]
+    [Tooltip("操作が解禁されるまで着地演出を出さない。ゲーム開始時、スタート地点へ落下する着地で振動してしまうのを防ぐ。")]
+    [SerializeField] private bool ignoreUntilControlEnabled = true;
+    [Tooltip("操作解禁から、この秒数が経つまでは着地演出を出さない")]
+    [SerializeField] private float startupGraceTime = 0.5f;
+
     private Rigidbody body;
+    private PlayerController player;
+    private float controlEnabledTime = -1f;
 
     // 1フレーム前の落下速度（下向きを正とする）
     private float previousFallSpeed;
@@ -44,6 +52,8 @@ public class LandingImpact : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        player = GetComponent<PlayerController>();
+        if (player == null) player = GetComponentInParent<PlayerController>();
     }
 
     private void FixedUpdate()
@@ -51,15 +61,37 @@ public class LandingImpact : MonoBehaviour
         // 着地の瞬間には速度が消えてしまうため、毎フレーム落下速度を控えておく
         float downwardSpeed = -body.linearVelocity.y;
         previousFallSpeed = downwardSpeed > 0f ? downwardSpeed : 0f;
+
+        // 操作が解禁された時刻を覚えておき、その直後の着地は無視する
+        if (controlEnabledTime < 0f && player != null && player.IsControlEnabled)
+        {
+            controlEnabledTime = Time.time;
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (IsStartupSuppressed()) return;
         if (Time.time < lastImpactTime + cooldown) return;
         if (previousFallSpeed < minFallSpeed) return;
 
         lastImpactTime = Time.time;
         PlayImpact(Mathf.InverseLerp(minFallSpeed, maxFallSpeed, previousFallSpeed));
+    }
+
+    /// <summary>
+    /// 開始直後で着地演出を抑制すべきか。
+    /// ゲーム開始時はスタート地点へ落下するため、そのままだと必ず着地演出が出てしまう。
+    /// </summary>
+    private bool IsStartupSuppressed()
+    {
+        if (!ignoreUntilControlEnabled) return false;
+        if (player == null) return false;
+
+        if (!player.IsControlEnabled) return true;
+        if (controlEnabledTime >= 0f && Time.time < controlEnabledTime + startupGraceTime) return true;
+
+        return false;
     }
 
     /// <summary>

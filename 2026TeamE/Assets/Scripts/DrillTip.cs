@@ -44,6 +44,7 @@ public class DrillTip : MonoBehaviour
 
     private float lastDrillTime;
     private float lastGrindParticleTime;
+    private bool wasDrilling;
     private PlayerController player;
 
     private float lastDirtTouchTime = -100f;
@@ -105,7 +106,58 @@ public class DrillTip : MonoBehaviour
 
     private void Update()
     {
+        HandleDrillStart();
+        RefreshTerrainContact();
         HandleDrillSound();
+    }
+
+    /// <summary>
+    /// ドリルの周囲に掘れるブロックがあれば、地形に接触しているものとして扱う。
+    /// </summary>
+    /// <remarks>
+    /// 接触判定を OnTriggerStay だけに頼ると、掘った直後にできる空洞や
+    /// チャンクのメッシュ再生成でトリガーが数フレーム途切れ、
+    /// Contact Timeout を超えた時点で掘削音のループが止まってしまう。
+    /// 地形データを直接見ることで、掘り続けている間は音が途切れないようにする。
+    /// </remarks>
+    private void RefreshTerrainContact()
+    {
+        if (player == null || !player.IsDrilling) return;
+
+        VoxelTerrain terrain = VoxelTerrain.Instance;
+        if (terrain == null) return;
+
+        // 地形はX方向に薄く、掘削は常にx=0の面で行われる
+        Vector3 checkPosition = transform.position;
+        checkPosition.x = 0f;
+
+        if (terrain.HasDiggableBlockNear(checkPosition, CurrentDrillRadius))
+        {
+            lastDirtTouchTime = Time.time;
+        }
+    }
+
+    /// <summary>
+    /// 掘り始めた瞬間にクールダウンを入れ直す。
+    /// </summary>
+    /// <remarks>
+    /// クールダウンは「最後に掘った時刻 + 硬さに応じた待ち時間」で判定している。
+    /// ボタンを離して時間が経つと待ち時間を消化済みの状態になるため、
+    /// これが無いと押し直した1フレーム目で即座に掘れてしまい、
+    /// 単押しの連打でどんな硬いブロックも一瞬で壊せてしまう。
+    /// </remarks>
+    private void HandleDrillStart()
+    {
+        if (player == null) return;
+
+        bool isDrilling = player.IsDrilling;
+
+        if (isDrilling && !wasDrilling)
+        {
+            lastDrillTime = Time.time;
+        }
+
+        wasDrilling = isDrilling;
     }
 
     private void HandleDrillSound()

@@ -69,6 +69,29 @@ public class CameraController : MonoBehaviour
         if (player != null) previousPlayerPosition = player.position;
     }
 
+    /// <summary>
+    /// 補間を挟まずに、カメラをプレイヤーの位置へ即座に合わせる。
+    /// 扉から戻ってきた時やチェックポイント復帰時など、
+    /// プレイヤーを瞬間移動させた直後に呼ぶ。呼ばないとカメラが遠くから追いかけてくる。
+    /// </summary>
+    public void SnapToPlayer()
+    {
+        if (player == null)
+        {
+            GameObject found = GameObject.FindWithTag("Player");
+            if (found != null) player = found.transform;
+        }
+        if (player == null) return;
+
+        // 追従と先読みの慣性を捨てる。残っていると直後に流れてしまう。
+        currentVelocity = Vector3.zero;
+        currentLookAhead = Vector3.zero;
+        lookAheadVelocity = Vector3.zero;
+        previousPlayerPosition = player.position;
+
+        transform.position = player.position + offset;
+    }
+
     void LateUpdate()
     {
         if (player == null) return;

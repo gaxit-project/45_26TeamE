@@ -258,6 +258,12 @@ public partial class VoxelTerrain
         ClearBlocksAroundPoint(worldPos, DoorReturnClearRadius);
         player.transform.position = worldPos;
 
+        // カメラを追いつかせるのではなく、最初からプレイヤーに合わせておく。
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.SnapToPlayer();
+        }
+
         Debug.Log($"[VoxelTerrain] 扉の位置へ復帰しました: {worldPos}");
     }
 }

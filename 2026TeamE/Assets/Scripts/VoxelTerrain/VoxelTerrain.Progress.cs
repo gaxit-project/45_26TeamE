@@ -15,6 +15,12 @@ public partial class VoxelTerrain
             player.transform.position = lastPos;
             ClearBlocksAroundPoint(lastPos, 4.0f);
 
+            // 瞬間移動させた直後なので、カメラも同時に合わせる。
+            if (CameraController.Instance != null)
+            {
+                CameraController.Instance.SnapToPlayer();
+            }
+
             CheckpointManager.Instance.MarkCheckpointAsUsed();
         }
     }

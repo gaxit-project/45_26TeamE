@@ -131,6 +131,37 @@ public partial class VoxelTerrain
         return changed;
     }
 
+    /// <summary>
+    /// 指定したワールド座標の周囲に、掘れるブロックがあるかを調べる。
+    /// </summary>
+    /// <remarks>
+    /// 物理トリガーによる接触判定は、掘った直後の空洞やチャンクのメッシュ再生成で
+    /// 数フレーム途切れることがある。地形データを直接見ることでその影響を受けずに判定できる。
+    /// </remarks>
+    public bool HasDiggableBlockNear(Vector3 worldCenter, float radius)
+    {
+        if (mapData == null) return false;
+
+        Vector3 localPos = transform.InverseTransformPoint(worldCenter);
+        int centerY = Mathf.RoundToInt(localPos.y / blockSize);
+        int centerZ = Mathf.RoundToInt(localPos.z / blockSize);
+        int r = Mathf.Max(1, Mathf.CeilToInt(radius / blockSize));
+
+        for (int y = centerY - r; y <= centerY + r; y++)
+        {
+            for (int z = centerZ - r; z <= centerZ + r; z++)
+            {
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+                    if (IsDiggable(mapData[x, y, z])) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldCenter);

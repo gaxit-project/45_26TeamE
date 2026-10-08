@@ -82,7 +82,6 @@ public class FinalResultManager : MonoBehaviour
         int isCleared = (GoalJewelry.isGoalReached || PlayerPrefs.GetInt("GoalReached", 0) == 1) ? 1 : 0;
         int clearScore = isCleared * pointsForClear;
 
-        // UI縺ｫ縺昴ｌ縺槭ｌ縺ｮ蝗樊焚縺ｨ蟆剰ｨ医ｒ陦ｨ遉ｺ
         if (boxCountText != null) boxCountText.text = CollectedTreasureBoxes.ToString("N0");
         if (boxSubtotalText != null) boxSubtotalText.text = boxScore.ToString("N0");
         if (bombCountText != null) bombCountText.text = TriggeredBombs.ToString("N0");
@@ -154,19 +153,34 @@ public class FinalResultManager : MonoBehaviour
     {
         if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
         
-        // 谺｡縺ｮ逕滓・縺ｧ蜷後§繧ｷ繝ｼ繝峨ｒ菴ｿ縺・ｈ縺・↓謖・､ｺ
+        // 次の生成で同じシードを使うように指示
         VoxelTerrain.ForceUseSeed = true;
 
-        // 蜈ｨ縺ｦ繝ｪ繧ｻ繝・ヨ縺励※蜀阪せ繧ｿ繝ｼ繝・        ResetManager.ResetAll();
+        // 全てリセットして再スタート（DontDestroyOnLoadのマネージャ群を破棄する）
+        ResetManager.ResetAll();
 
-        // 繝｡繧､繝ｳ繧ｲ繝ｼ繝繧ｷ繝ｼ繝ｳ繧偵Ο繝ｼ繝・(MainManager縺ｮ繧ｳ繝ｼ繝峨↓蜷医ｏ縺帙※ "02_Main" 繧呈欠螳・
+        // メインゲームシーンをロード（MainManagerのコードに合わせて "02_Main" を指定）
+        StartCoroutine(LoadMainAfterResetRoutine());
+    }
+
+    [Header("ランキング機能")]
+    [SerializeField] private GameObject rankingPanel;
+
+    /// <summary>
+    /// リセット後にメインシーンを読み込む。
+    /// ResetManager は DontDestroyOnLoad のマネージャ群を Destroy するが、
+    /// Destroy の実行はフレーム末なので、同じフレームでシーンを読み込むと
+    /// 古い VoxelTerrain が生き残ったままになり、新しいシーンの VoxelTerrain が
+    /// 「Instance が既にある」と判断して自分を消してしまう。
+    /// その結果、前回のステージがそのまま残る。1フレーム待って破棄を確定させる。
+    /// </summary>
+    private IEnumerator LoadMainAfterResetRoutine()
+    {
+        yield return null;
         SceneManager.LoadScene("02_Main");
     }
 
-    [Header("繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ讖溯・")]
-    [SerializeField] private GameObject rankingPanel;
-
-    // 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ縺ｮ陦ｨ遉ｺ繝ｻ髱櫁｡ｨ遉ｺ繧貞・繧頑崛縺医ｋ繝｡繧ｽ繝・ラ
+    // ランキングの表示・非表示を切り替えるメソッド
     public void ToggleRankingPanel()
     {
         if (rankingPanel != null)

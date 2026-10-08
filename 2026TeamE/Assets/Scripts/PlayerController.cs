@@ -91,6 +91,9 @@ public class PlayerController : MonoBehaviour
     public void UpgradeDrill() => drillLevel++;
 
     public bool IsDrilling => drillFlag && currentState == PlayerState.Normal;
+
+    /// <summary>プレイヤーの操作が解禁されているか。導入演出中はfalse。</summary>
+    public bool IsControlEnabled => CanMove;
     public bool HasBattery => currentBattery > 0f;
     public bool IsDashing => Time.time < dashEndTime;
 
@@ -512,7 +515,7 @@ public class PlayerController : MonoBehaviour
     public void EnablePlayerControl()
     {
         CanMove = true;
-        TextManager.Instance.ShowText("鍵を集めて下へ進もう！");
+        TextManager.Instance.ShowText("お宝を掘り当てて下へ進もう！");
     }
 
     private void OnTriggerEnter(Collider other)
