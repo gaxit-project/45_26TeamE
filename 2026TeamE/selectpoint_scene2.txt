@@ -1,0 +1,65 @@
+﻿
+  Assets\Scenes\02_Main.unity:742:  m_PrefabInstance: {fileID: 0}
+  Assets\Scenes\02_Main.unity:743:  m_PrefabAsset: {fileID: 0}
+  Assets\Scenes\02_Main.unity:744:  m_GameObject: {fileID: 104744987}
+  Assets\Scenes\02_Main.unity:745:  m_CullTransparentMesh: 1
+  Assets\Scenes\02_Main.unity:746:--- !u!1 &116572835
+  Assets\Scenes\02_Main.unity:747:GameObject:
+  Assets\Scenes\02_Main.unity:748:  m_ObjectHideFlags: 0
+  Assets\Scenes\02_Main.unity:749:  m_CorrespondingSourceObject: {fileID: 0}
+  Assets\Scenes\02_Main.unity:750:  m_PrefabInstance: {fileID: 0}
+  Assets\Scenes\02_Main.unity:751:  m_PrefabAsset: {fileID: 0}
+  Assets\Scenes\02_Main.unity:752:  serializedVersion: 6
+  Assets\Scenes\02_Main.unity:753:  m_Component:
+  Assets\Scenes\02_Main.unity:754:  - component: {fileID: 116572836}
+  Assets\Scenes\02_Main.unity:755:  - component: {fileID: 116572837}
+  Assets\Scenes\02_Main.unity:756:  m_Layer: 5
+> Assets\Scenes\02_Main.unity:757:  m_Name: SelectPointUI
+  Assets\Scenes\02_Main.unity:758:  m_TagString: SelectPanel
+  Assets\Scenes\02_Main.unity:759:  m_Icon: {fileID: 0}
+  Assets\Scenes\02_Main.unity:760:  m_NavMeshLayer: 0
+  Assets\Scenes\02_Main.unity:761:  m_StaticEditorFlags: 0
+  Assets\Scenes\02_Main.unity:762:  m_IsActive: 1
+  Assets\Scenes\02_Main.unity:763:--- !u!224 &116572836
+  Assets\Scenes\02_Main.unity:764:RectTransform:
+  Assets\Scenes\02_Main.unity:765:  m_ObjectHideFlags: 0
+  Assets\Scenes\02_Main.unity:766:  m_CorrespondingSourceObject: {fileID: 0}
+  Assets\Scenes\02_Main.unity:767:  m_PrefabInstance: {fileID: 0}
+  Assets\Scenes\02_Main.unity:768:  m_PrefabAsset: {fileID: 0}
+  Assets\Scenes\02_Main.unity:769:  m_GameObject: {fileID: 116572835}
+  Assets\Scenes\02_Main.unity:770:  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  Assets\Scenes\02_Main.unity:771:  m_LocalPosition: {x: 0, y: 0, z: 0}
+  Assets\Scenes\02_Main.unity:772:  m_LocalScale: {x: 1, y: 1, z: 1}
+  Assets\Scenes\02_Main.unity:1622:  m_EditorHideFlags: 0
+  Assets\Scenes\02_Main.unity:1623:  m_Script: {fileID: 11500000, guid: 89856c0d876edff40840531c8a46dde3, type: 3}
+  Assets\Scenes\02_Main.unity:1624:  m_Name: 
+  Assets\Scenes\02_Main.unity:1625:  m_EditorClassIdentifier: Assembly-CSharp::GiveMoney
+  Assets\Scenes\02_Main.unity:1626:--- !u!114 &221685968
+  Assets\Scenes\02_Main.unity:1627:MonoBehaviour:
+  Assets\Scenes\02_Main.unity:1628:  m_ObjectHideFlags: 0
+  Assets\Scenes\02_Main.unity:1629:  m_CorrespondingSourceObject: {fileID: 0}
+  Assets\Scenes\02_Main.unity:1630:  m_PrefabInstance: {fileID: 0}
+  Assets\Scenes\02_Main.unity:1631:  m_PrefabAsset: {fileID: 0}
+  Assets\Scenes\02_Main.unity:1632:  m_GameObject: {fileID: 221685961}
+  Assets\Scenes\02_Main.unity:1633:  m_Enabled: 1
+  Assets\Scenes\02_Main.unity:1634:  m_EditorHideFlags: 0
+  Assets\Scenes\02_Main.unity:1635:  m_Script: {fileID: 11500000, guid: c099c1f832b1f7a4cace20ba2bde464c, type: 3}
+  Assets\Scenes\02_Main.unity:1636:  m_Name: 
+> Assets\Scenes\02_Main.unity:1637:  m_EditorClassIdentifier: Assembly-CSharp::SelectPoint
+  Assets\Scenes\02_Main.unity:1638:  enterDoorAction:
+  Assets\Scenes\02_Main.unity:1639:    m_Name: Enter Door
+  Assets\Scenes\02_Main.unity:1640:    m_Type: 0
+  Assets\Scenes\02_Main.unity:1641:    m_ExpectedControlType: 
+  Assets\Scenes\02_Main.unity:1642:    m_Id: fb692c70-d38e-4b5f-822e-a4cd523f841b
+  Assets\Scenes\02_Main.unity:1643:    m_Processors: 
+  Assets\Scenes\02_Main.unity:1644:    m_Interactions: 
+  Assets\Scenes\02_Main.unity:1645:    m_SingletonActionBindings:
+  Assets\Scenes\02_Main.unity:1646:    - m_Name: 
+  Assets\Scenes\02_Main.unity:1647:      m_Id: b71233e4-3d56-4b3d-98bf-6750e96d81ca
+  Assets\Scenes\02_Main.unity:1648:      m_Path: <Gamepad>/buttonNorth
+  Assets\Scenes\02_Main.unity:1649:      m_Interactions: Press
+  Assets\Scenes\02_Main.unity:1650:      m_Processors: 
+  Assets\Scenes\02_Main.unity:1651:      m_Groups: 
+  Assets\Scenes\02_Main.unity:1652:      m_Action: Enter Door
+
+

@@ -32,6 +32,10 @@ public class SelectPoint : MonoBehaviour
     [Tooltip("SEを聞かせるための待ち時間（秒・実時間）")]
     [SerializeField] private float transitionDelay = 0.1f;
 
+    [Header("UI")]
+    [Tooltip("扉の前にいるときに表示する案内UI（これまで使っていたSelectPointUIなど）")]
+    [SerializeField] private GameObject actionPromptUI;
+
     private bool isTransitioning;
 
     private void Awake()
@@ -70,6 +74,19 @@ public class SelectPoint : MonoBehaviour
 
     private void Update()
     {
+        if (VoxelTerrain.Instance == null) return;
+
+        // UIの表示状態を毎フレーム更新（扉の範囲内にいるかどうか）
+        if (actionPromptUI != null)
+        {
+            bool canEnter = !isTransitioning && VoxelTerrain.Instance.CurrentDoorInRange != null;
+            if (actionPromptUI.activeSelf != canEnter)
+            {
+                actionPromptUI.SetActive(canEnter);
+            }
+        }
+
+        // ボタンの入力判定
         if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
 
         if (isTransitioning)
@@ -78,15 +95,10 @@ public class SelectPoint : MonoBehaviour
             return;
         }
 
-        if (VoxelTerrain.Instance == null)
-        {
-            Debug.LogWarning("[SelectPoint] VoxelTerrain が見つかりません。");
-            return;
-        }
-
         // 扉に入れたときだけ画面を切り替える。
         if (VoxelTerrain.Instance.TryEnterDoorInRange())
         {
+            if (actionPromptUI != null) actionPromptUI.SetActive(false);
             GoToResult();
         }
     }
