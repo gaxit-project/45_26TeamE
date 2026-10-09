@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using TMPro;
 
 public class MoneyExchange : MonoBehaviour
@@ -6,24 +6,42 @@ public class MoneyExchange : MonoBehaviour
     [SerializeField] private TextMeshProUGUI totalMoneyText;
 
     private MoneyManager mm;
+    private bool cashed = false;
 
-    void Awake()
+    void Start()
     {
-        mm = MoneyManager.Instance;
-
-        if (mm != null)
+        if (mm == null)
         {
-            
-            mm.Cash();
-            UpdateMoneyText(mm.GetMoney());
-
-            Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
+            mm = MoneyManager.Instance;
+            if (mm != null && !cashed)
+            {
+                mm.Cash();
+                cashed = true;
+                UpdateMoneyText(mm.GetMoney());
+                Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
+                mm.OnMoneyChanged += UpdateMoneyText;
+            }
         }
     }
 
     void OnEnable()
     {
-        if (mm != null) mm.OnMoneyChanged += UpdateMoneyText;
+        if (mm == null) mm = MoneyManager.Instance;
+        if (mm != null)
+        {
+            if (!cashed)
+            {
+                mm.Cash();
+                cashed = true;
+                UpdateMoneyText(mm.GetMoney());
+                Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
+            }
+            else
+            {
+                UpdateMoneyText(mm.GetMoney());
+            }
+            mm.OnMoneyChanged += UpdateMoneyText;
+        }
     }
 
     void OnDisable()

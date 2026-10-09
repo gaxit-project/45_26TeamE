@@ -24,7 +24,7 @@ public class SelectPoint : MonoBehaviour
     [SerializeField] private InputAction enterDoorAction;
 
     [Header("遷移先")]
-    [SerializeField] private string resultSceneName = "Result";
+    [SerializeField] private string resultSceneName = "Money Exchange";
 
     [Header("演出")]
     [Tooltip("遷移直前に鳴らすSE名。空なら鳴らしません。")]

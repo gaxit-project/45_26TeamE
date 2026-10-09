@@ -18,6 +18,9 @@ public class BombReaction : BuriedItemBase
     [Header("爆発エフェクト（任意）")]
     [SerializeField] private GameObject explosionEffectPrefab;
 
+    [Header("被弾時のお金アイコン")]
+    [SerializeField] private Sprite moneyIconSprite;
+
     [Header("ソナー検知時のエコープレハブ")]
     public GameObject visualEchoPrefab;
     [Header("レベル2以上でのソナー検知時のエコープレハブ")]
@@ -362,19 +365,9 @@ public class BombReaction : BuriedItemBase
                         Debug.Log("[BombReaction] 爆発により制限時間が10秒減少しました！");
                     }
 
-                    System.Collections.Generic.List<ItemInventoryManager.ItemData> removedItems = null;
-                    if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.GetTotalItemCount() > 0)
-                    {
-                        removedItems = ItemInventoryManager.Instance.RemoveItemsRandomWithData(1);
-                        if (removedItems.Count > 0)
-                        {
-                            Debug.Log("[BombReaction] 爆発によりアイテムを1つ失いました！");
-                        }
-                    }
-
                     if (pc != null)
                     {
-                        pc.TakeDamageWithItems(removedItems);
+                        pc.TakeDamageWithMoney(moneyIconSprite);
                     }
                 }
             }

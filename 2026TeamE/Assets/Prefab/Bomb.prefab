@@ -163,6 +163,7 @@ MonoBehaviour:
   emissionIntensity: 5
   moneyPenalty: 50000
   explosionEffectPrefab: {fileID: 5199285825958712247, guid: b874c8eec07fa424bba1c5df17f03f8e, type: 3}
+  moneyIconSprite: {fileID: 21300000, guid: 2ecf92d37367065479c087abfde1fe5b, type: 3}
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}
   visualEchoPrefabV2: {fileID: 8559125908501948008, guid: d449ce611dea53d4ca013d420413ddcb, type: 3}
   marker: {fileID: 4524295200723672389, guid: 5118e0c5f6db57146989346cda639b67, type: 3}

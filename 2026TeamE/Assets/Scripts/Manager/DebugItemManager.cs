@@ -98,7 +98,7 @@ public class DebugItemManager : MonoBehaviour
     {
         Debug.Log("[Debug] 7キー: BigJewelry取得として、ゴール・リザルトシーンへ移行します。");
         GoalJewelry.isGoalReached = true;
-        SceneManager.LoadScene("Result");
+        SceneManager.LoadScene("Money Exchange");
     }
 
 #endif

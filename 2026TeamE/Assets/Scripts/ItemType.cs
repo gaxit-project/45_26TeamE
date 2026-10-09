@@ -1,7 +1,3 @@
-﻿
-
-
-
 public enum ItemType
 {
     Jewelry,        
@@ -9,4 +5,5 @@ public enum ItemType
     GoldLeatherBag, 
     LeatherBag,     
     Key,            
+    Bill,           
 }

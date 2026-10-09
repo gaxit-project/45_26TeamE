@@ -541,15 +541,15 @@ public class PlayerController : MonoBehaviour
     {
     }
 
-    public void TakeDamageWithItems(System.Collections.Generic.List<ItemInventoryManager.ItemData> lostItems = null)
+    public void TakeDamageWithMoney(Sprite dropIcon = null)
     {
         if (currentState == PlayerState.Normal)
         {
-            StartCoroutine(DamageRoutine(lostItems));
+            StartCoroutine(DamageRoutine(dropIcon));
         }
     }
 
-    private System.Collections.IEnumerator DamageRoutine(System.Collections.Generic.List<ItemInventoryManager.ItemData> lostItems)
+    private System.Collections.IEnumerator DamageRoutine(Sprite dropIcon)
     {
         currentState = PlayerState.TakingDamage;
 
@@ -564,12 +564,13 @@ public class PlayerController : MonoBehaviour
         // 速度をゼロにして慣性で滑るのを防ぐ
         rb.linearVelocity = Vector3.zero;
 
-        // 失ったアイテムのアイコンを使って、ぽろっと落とす演出
-        if (lostItems != null)
+        // 指定されたお金アイコンを複数個ぽろっと落とす演出
+        if (dropIcon != null)
         {
-            foreach (var item in lostItems)
+            int dropCount = 3; // 演出用に適当な数を散らす
+            for (int i = 0; i < dropCount; i++)
             {
-                DropVisualItem(item.icon);
+                DropVisualItem(dropIcon);
             }
         }
 

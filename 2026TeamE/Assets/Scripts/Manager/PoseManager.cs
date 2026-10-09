@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -99,7 +99,7 @@ public class PoseManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.1f);
         Time.timeScale = 1f; 
 
-        SceneManager.LoadScene("Result"); 
+        SceneManager.LoadScene("Money Exchange"); 
         
     }
 
