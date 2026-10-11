@@ -8189,7 +8189,7 @@ MonoBehaviour:
   Speed: 2
   normalSpeed: 10
   dashSpeed: 6
-  jumpPower: 50
+  jumpPower: 30
   fallMultiplier: 5
   lowJumpMultiplier: 20
   landLayer:
