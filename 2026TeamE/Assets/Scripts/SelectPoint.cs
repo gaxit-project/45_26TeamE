@@ -95,11 +95,27 @@ public class SelectPoint : MonoBehaviour
             return;
         }
 
-        // 扉に入れたときだけ画面を切り替える。
+        // 扉に入れたときの処理
         if (VoxelTerrain.Instance.TryEnterDoorInRange())
         {
             if (actionPromptUI != null) actionPromptUI.SetActive(false);
-            GoToResult();
+
+            // メインシーン内にショップUIが存在する場合はその場で開く
+            ShoppingManager shop = ShoppingManager.Instance;
+            if (shop == null)
+            {
+                shop = Object.FindFirstObjectByType<ShoppingManager>(FindObjectsInactive.Include);
+            }
+
+            if (shop != null)
+            {
+                shop.OpenShop();
+            }
+            else
+            {
+                // ショップUIが未配置の場合はフォールバックとして旧シーン遷移を行う
+                GoToResult();
+            }
         }
     }
 

@@ -14,18 +14,17 @@ public class PoseManager : MonoBehaviour
     [SerializeField] private GameObject firstSelectedButton;
 
     
-    public bool IsPaused => pauseMenu != null && pauseMenu.activeSelf;
+    public bool IsPaused => (pauseMenu != null && pauseMenu.activeSelf) || (ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen);
 
     private float inputBlockEndTime = 0f;
     public bool IsTransitioning { get; private set; } = false;
 
-    
-    public bool IsInputBlocked => (pauseMenu != null && pauseMenu.activeSelf) || IsTransitioning || Time.unscaledTime < inputBlockEndTime;
+    public bool IsInputBlocked => (pauseMenu != null && pauseMenu.activeSelf) || (ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen) || IsTransitioning || Time.unscaledTime < inputBlockEndTime;
 
     public void TogglePause(InputAction.CallbackContext context)
     {
-        
         if (SceneLoader.Instance != null && SceneLoader.Instance.IsLoading) return;
+        if (ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen) return;
 
         if (pauseMenu.activeSelf)
         {
