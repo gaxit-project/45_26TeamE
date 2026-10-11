@@ -14,22 +14,36 @@ public class GoalJewelry : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         
-        if (other.gameObject.CompareTag("Player") && !isProcessed)
+        bool isPlayer = other.gameObject.CompareTag("Player") || 
+                        (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("Player")) || 
+                        other.transform.root.CompareTag("Player");
+
+        if (isPlayer && !isProcessed)
         {
             isProcessed = true;
 
-            // 繧ｴ繝ｼ繝ｫ譎ゅ↓謖ｯ蜍輔ｒ蛛懈ｭ｢
+            // 即座にゴール到達フラグとセーブデータを書き込む
+            isGoalReached = true;
+            PlayerPrefs.SetInt("GoalReached", 1);
+            PlayerPrefs.Save();
+            Debug.LogWarning("[GoalJewelry] ゴール判定が発火しました！ isGoalReached = true, PlayerPrefs(GoalReached) = 1 を保存しました。");
+
+            // タイマーを完全停止し、酸素残量を即座に記録
+            if (TimerManager.Instance != null)
+            {
+                TimerManager.Instance.StopTimer();
+                TimerManager.Instance.StopAllCoroutines();
+                FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+                Debug.LogWarning($"[GoalJewelry] タイマー停止。最終フロアの残り酸素: {TimerManager.Instance.TotalTime} を記録しました。");
+            }
+
+            // ゴール時に振動を停止
             if (HapticsManager.Instance != null)
             {
                 HapticsManager.Instance.Stop();
             }
 
-            // 繧ｿ繧､繝槭・繧貞●豁｢・医け繝ｪ繧｢貍泌・荳ｭ縺ｫ譎る俣蛻・ｌ縺ｫ縺ｪ繧九・繧帝亟縺撰ｼ・            if (TimerManager.Instance != null)
-            {
-                TimerManager.Instance.StopTimer();
-            }
-
-            PlayerController player = other.GetComponent<PlayerController>();
+            PlayerController player = other.GetComponentInParent<PlayerController>();
             if (player != null)
             {
                 player.currentState = PlayerController.PlayerState.GameClear;
@@ -37,13 +51,12 @@ public class GoalJewelry : MonoBehaviour
                 if (rb != null) rb.linearVelocity = Vector3.zero;
             }
 
-            Animator playerAnim = other.GetComponent<Animator>();
+            Animator playerAnim = other.GetComponentInParent<Animator>();
             if (playerAnim != null)
             {
                 playerAnim.SetTrigger("Clear");
             }
 
-            
             StartCoroutine(ClearSequence());
         }
     }
@@ -67,18 +80,10 @@ public class GoalJewelry : MonoBehaviour
         
         yield return new WaitForSeconds(6.0f);
 
-        
-        isGoalReached = true;
-        PlayerPrefs.SetInt("GoalReached", 1);
-        PlayerPrefs.Save();
-        if (TimerManager.Instance != null) { FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime); }
-
-        
-        // 莉･蜑阪・繧ｿ繧､繝医Ν縺ｫ謌ｻ縺｣縺ｦ縺・◆蜃ｦ逅・ｒ Result (FinalResult) 縺ｸ螟画峩
+        Debug.LogWarning("[GoalJewelry] 6秒のクリア演出が完了しました。FinalResult シーンをロードします。");
         string targetScene = "FinalResult";
         SceneManager.LoadScene(targetScene);
 
-        
         Destroy(gameObject);
     }
 }
