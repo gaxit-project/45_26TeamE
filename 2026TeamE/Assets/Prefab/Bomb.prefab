@@ -161,7 +161,7 @@ MonoBehaviour:
   explosionRadius: 8
   expandSpeed: 4
   emissionIntensity: 5
-  moneyPenalty: 50000
+  moneyPenalty: 5000
   explosionEffectPrefab: {fileID: 5199285825958712247, guid: b874c8eec07fa424bba1c5df17f03f8e, type: 3}
   moneyIconSprite: {fileID: 21300000, guid: 2ecf92d37367065479c087abfde1fe5b, type: 3}
   visualEchoPrefab: {fileID: 8559125908501948008, guid: 0e7644cab722001438e8e0c1d277f8c9, type: 3}

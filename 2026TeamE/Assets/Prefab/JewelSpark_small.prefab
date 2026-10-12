@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2565510487682908411}
   - component: {fileID: 2055487735319941864}
   - component: {fileID: 1780718668309417732}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: JewelSpark_small
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51,7 +51,7 @@ ParticleSystem:
   looping: 0
   prewarm: 0
   playOnAwake: 1
-  useUnscaledTime: 0
+  useUnscaledTime: 1
   autoRandomSeed: 1
   startDelay:
     serializedVersion: 2

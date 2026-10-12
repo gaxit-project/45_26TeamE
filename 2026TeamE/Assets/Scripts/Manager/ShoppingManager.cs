@@ -61,6 +61,24 @@ public class ShoppingManager : MonoBehaviour
     [Header("所持金表示（任意）")]
     [SerializeField] private TextMeshProUGUI totalMoneyText;
 
+    [Header("カメラ切り替え設定")]
+    [Tooltip("普段のゲームプレイ用カメラ（未設定の場合は Camera.main を自動検索）")]
+    [SerializeField] private Camera mainCamera;
+
+    [Tooltip("ショップ画面用のカメラ（開いた時にON、閉じた時にOFF）")]
+    [SerializeField] private Camera shopCamera;
+
+    [Header("ショップ開店時に非表示にするCanvas・UI設定")]
+    [Tooltip("ショップを開いた際に非表示にし、閉じた際に再表示するCanvas（またはUIオブジェクト）")]
+    [SerializeField] private List<GameObject> canvasesToHide = new List<GameObject>();
+
+    [Header("時間停止中のアニメーション設定")]
+    [Tooltip("ショップ表示中（時間停止中）でも動かしたいプレイヤーのAnimator。2つあるうち動かしたい方をアタッチしてください。")]
+    [SerializeField] private Animator animatedPlayerAnimator;
+
+    private AnimatorUpdateMode originalUpdateMode = AnimatorUpdateMode.Normal;
+    private Animator activeAnimatedAnimator;
+
     [Header("ショップ設定")]
     [SerializeField] private List<ShopItem> shopItems = new List<ShopItem>();
 
@@ -70,8 +88,28 @@ public class ShoppingManager : MonoBehaviour
     [Header("動画表示")]
     [SerializeField] private VideoPlayer videoPlayer;
 
-    [Header("エフェクト")]
+    [Header("エフェクト設定")]
+    [Tooltip("強化購入時にキャラクターから生成するエフェクトのプレハブ")]
+    [SerializeField] private GameObject purchaseEffectPrefab;
+
+    [Tooltip("以前の設定との互換用（purchaseEffectPrefabが空の場合に使用）")]
     [SerializeField] private GameObject jewelSparkEffect;
+
+    [Tooltip("エフェクトを発生させる位置（特定の手や頭など）。未設定の場合は指定したキャラクターの位置になります。")]
+    [SerializeField] private Transform effectSpawnPoint;
+
+    [Tooltip("エフェクトの発生位置オフセット（高さなどの微調整用）")]
+    [SerializeField] private Vector3 effectOffset = Vector3.zero;
+
+    [Tooltip("プレハブ自体の回転をそのまま使用するかどうか")]
+    [SerializeField] private bool usePrefabRotation = false;
+
+    [Tooltip("usePrefabRotationがfalseの場合の回転角度")]
+    [SerializeField] private Vector3 customEffectRotation = new Vector3(-90, -90, 0);
+
+    [Tooltip("生成したエフェクトをキャラクターの子オブジェクトにするかどうか")]
+    [SerializeField] private bool parentEffectToCharacter = false;
+
     [SerializeField] private GameObject player;
 
     [Header("ボタンカラー")]
@@ -108,6 +146,13 @@ public class ShoppingManager : MonoBehaviour
         if (shopPanelRoot != null && shopPanelRoot != gameObject)
         {
             shopPanelRoot.SetActive(false);
+        }
+
+        // 起動時はショップ用カメラをOFFにしておく
+        if (shopCamera != null)
+        {
+            shopCamera.enabled = false;
+            shopCamera.gameObject.SetActive(false);
         }
     }
 
@@ -322,12 +367,47 @@ public class ShoppingManager : MonoBehaviour
             shopPanelRoot.SetActive(true);
         }
 
+        // 指定されたCanvas・UIを非表示にする
+        if (canvasesToHide != null)
+        {
+            foreach (var ui in canvasesToHide)
+            {
+                if (ui != null) ui.SetActive(false);
+            }
+        }
+
+        // カメラの切り替え（メインカメラOFF -> ショップカメラON）
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+        }
+
+        if (mainCamera != null && shopCamera != null)
+        {
+            mainCamera.enabled = false;
+            shopCamera.gameObject.SetActive(true);
+            shopCamera.enabled = true;
+        }
+
         // ゲーム内時間を一時停止
         Time.timeScale = 0f;
 
         if (player == null)
         {
             player = GameObject.FindWithTag("Player");
+        }
+
+        // 指定されたAnimatorを時間停止中（UnscaledTime）でも動くように設定
+        activeAnimatedAnimator = animatedPlayerAnimator;
+        if (activeAnimatedAnimator == null && player != null)
+        {
+            activeAnimatedAnimator = player.GetComponentInChildren<Animator>();
+        }
+
+        if (activeAnimatedAnimator != null)
+        {
+            originalUpdateMode = activeAnimatedAnimator.updateMode;
+            activeAnimatedAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
         }
 
         RefreshAll();
@@ -359,6 +439,34 @@ public class ShoppingManager : MonoBehaviour
         if (shopPanelRoot != null)
         {
             shopPanelRoot.SetActive(false);
+        }
+
+        // Animatorの動作モードを元に戻す
+        if (activeAnimatedAnimator != null)
+        {
+            activeAnimatedAnimator.updateMode = originalUpdateMode;
+            activeAnimatedAnimator = null;
+        }
+
+        // 指定されたCanvas・UIを再表示する
+        if (canvasesToHide != null)
+        {
+            foreach (var ui in canvasesToHide)
+            {
+                if (ui != null) ui.SetActive(true);
+            }
+        }
+
+        // カメラを元に戻す（ショップカメラOFF -> メインカメラON）
+        if (shopCamera != null)
+        {
+            shopCamera.enabled = false;
+            shopCamera.gameObject.SetActive(false);
+        }
+
+        if (mainCamera != null)
+        {
+            mainCamera.enabled = true;
         }
 
         // ゲーム内時間を再開
@@ -422,11 +530,36 @@ public class ShoppingManager : MonoBehaviour
             SoundManager.Instance.PlaySE("つるはしで掘る4");
             mm.SpendMoney(cost);
 
-            if (jewelSparkEffect != null)
+            GameObject effectPrefabToSpawn = purchaseEffectPrefab != null ? purchaseEffectPrefab : jewelSparkEffect;
+            if (effectPrefabToSpawn != null)
             {
-                if (player == null) player = GameObject.FindWithTag("Player");
-                Vector3 spawnPos = player != null ? player.transform.position : transform.position;
-                Instantiate(jewelSparkEffect, spawnPos, Quaternion.Euler(-90, -90, 0));
+                Transform targetTransform = effectSpawnPoint;
+                if (targetTransform == null)
+                {
+                    targetTransform = (activeAnimatedAnimator != null) ? activeAnimatedAnimator.transform : (player != null ? player.transform : transform);
+                }
+
+                Vector3 spawnPos = (targetTransform != null ? targetTransform.position : Vector3.zero) + effectOffset;
+                Quaternion spawnRot = usePrefabRotation ? effectPrefabToSpawn.transform.rotation : Quaternion.Euler(customEffectRotation);
+                Transform parentTransform = parentEffectToCharacter ? targetTransform : null;
+
+                GameObject effect = Instantiate(effectPrefabToSpawn, spawnPos, spawnRot, parentTransform);
+
+                // 時間停止中でもパーティクルが動くように設定
+                var pSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
+                foreach (var ps in pSystems)
+                {
+                    var main = ps.main;
+                    main.useUnscaledTime = true;
+                    ps.Play();
+                }
+
+                // エフェクト内にAnimatorがある場合も時間停止中に動くように設定
+                var animators = effect.GetComponentsInChildren<Animator>(true);
+                foreach (var anim in animators)
+                {
+                    anim.updateMode = AnimatorUpdateMode.UnscaledTime;
+                }
             }
 
             UpgradeManager.IncreaseLevel(item.itemName);
