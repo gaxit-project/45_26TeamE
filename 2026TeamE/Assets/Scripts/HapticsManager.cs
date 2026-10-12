@@ -51,8 +51,43 @@ public class HapticsManager : MonoBehaviour
         Stop();
     }
 
+    /// <summary>
+    /// 現在の状態でゲームパッドの振動が許可されているか。
+    /// キャラクターの操作が不可能な状態（ムービー中、ポーズ中、被弾中など）では一切の振動を禁止する。
+    /// </summary>
+    public bool IsVibrationAllowed
+    {
+        get
+        {
+            if (Time.timeScale == 0f) return false;
+
+            if (TimelineManager.IsPlaying) return false;
+
+            if (PlayerController.Instance != null)
+            {
+                return PlayerController.Instance.IsControlEnabled;
+            }
+
+            // プレイヤーが存在しないシーン（タイトルやリザルトなど）でもゲームパッド振動は起こさない
+            return false;
+        }
+    }
+
     void Update()
     {
+        if (!IsVibrationAllowed)
+        {
+            if (baseLow > 0f || baseHigh > 0f || pulseLow > 0f || pulseHigh > 0f || pulseRemainingTime > 0f)
+            {
+                Stop();
+            }
+            else
+            {
+                ApplyMotorSpeeds();
+            }
+            return;
+        }
+
         // 常にモーター出力を更新（ポーズ/解除の切り替えに即座に対応するため）
         ApplyMotorSpeeds();
 
@@ -75,6 +110,12 @@ public class HapticsManager : MonoBehaviour
     /// </summary>
     public void PlayContinuous(float low, float high)
     {
+        if (!IsVibrationAllowed)
+        {
+            Stop();
+            return;
+        }
+
         baseLow = low;
         baseHigh = high;
         ApplyMotorSpeeds();
@@ -86,6 +127,7 @@ public class HapticsManager : MonoBehaviour
     /// </summary>
     public void PlayPulse(float low, float high, float duration)
     {
+        if (!IsVibrationAllowed) return;
         if (duration <= 0f) return;
 
         // 重なった場合は強い方・長い方を優先し、弱いパルスで上書きしない
@@ -126,7 +168,7 @@ public class HapticsManager : MonoBehaviour
         float low = Mathf.Clamp01(Mathf.Max(baseLow, pulseLow));
         float high = Mathf.Clamp01(Mathf.Max(baseHigh, pulseHigh));
 
-        if (Time.timeScale == 0f)
+        if (!IsVibrationAllowed)
         {
             low = 0f;
             high = 0f;

@@ -118,6 +118,7 @@ public class TimerManager : MonoBehaviour
     /// </summary>
     private void UpdateHeartbeat()
     {
+        if (PlayerController.Instance != null && !PlayerController.Instance.IsControlEnabled) return;
         if (Time.time < nextHeartbeatTime) return;
 
         // 残り時間の割合（警告開始時が1、時間切れ間際が0）
@@ -178,9 +179,19 @@ public class TimerManager : MonoBehaviour
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
+            player.DisablePlayerControl();
             player.currentState = PlayerController.PlayerState.GameOver;
             Rigidbody rb = player.GetComponent<Rigidbody>();
             if (rb != null) rb.linearVelocity = Vector3.zero;
+        }
+
+        if (HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
         }
 
         

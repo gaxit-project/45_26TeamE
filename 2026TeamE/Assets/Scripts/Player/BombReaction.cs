@@ -75,6 +75,7 @@ public class BombReaction : BuriedItemBase
     {
         if (player == null) return;
         if (Time.timeScale == 0f) return; // ポーズ中は強制的に振動をストップ
+        if (!player.IsControlEnabled) return;
         
         float distance = Vector3.Distance(transform.position, player.transform.position);
         if (distance <= vibrationWarningDistance)

@@ -41,7 +41,15 @@ public class PoseManager : MonoBehaviour
     private void PauseGame()
     {
         Time.timeScale = 0f; 
-        if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlaySE("つるはしで掘る1");
+            SoundManager.Instance.StopLoopSE();
+        }
+        if (HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+        }
         pauseMenu.SetActive(true); 
 
         

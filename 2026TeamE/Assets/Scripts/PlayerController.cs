@@ -3,11 +3,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
-using System.Linq;
-using Unity.VisualScripting;
-using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
 
 public class PlayerController : MonoBehaviour
 {
@@ -90,10 +85,12 @@ public class PlayerController : MonoBehaviour
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
-    public bool IsDrilling => drillFlag && currentState == PlayerState.Normal;
+    public static PlayerController Instance { get; private set; }
 
-    /// <summary>プレイヤーの操作が解禁されているか。導入演出中はfalse。</summary>
-    public bool IsControlEnabled => CanMove;
+    public bool IsDrilling => IsControlEnabled && drillFlag;
+
+    /// <summary>プレイヤーの操作が解禁されており、かつ行動可能な状態か。ムービー中や被弾・ポーズ中はfalse。</summary>
+    public bool IsControlEnabled => CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked) && Time.timeScale > 0f && !TimelineManager.IsPlaying;
     public bool HasBattery => currentBattery > 0f;
     public bool IsDashing => Time.time < dashEndTime;
 
@@ -107,7 +104,30 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         Application.targetFrameRate = 60;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    private void OnDisable()
+    {
+        drillFlag = false;
+        if (isRumbling && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
     }
 
     private void UpdateRumbleState()
@@ -115,7 +135,7 @@ public class PlayerController : MonoBehaviour
         if (HapticsManager.Instance == null) return;
 
         bool contacting = drillTip != null && drillTip.IsContactingDiggableSurface;
-        bool shouldRumble = drillFlag && contacting;
+        bool shouldRumble = IsControlEnabled && drillFlag && contacting;
 
         if (shouldRumble)
         {
@@ -178,9 +198,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return; // 状態がNormal以外の時は移動させない
-        if (poseManager != null && poseManager.IsPaused) return;
+        if (!IsControlEnabled) return;
 
         if (Time.time < dashEndTime)
         {
@@ -253,9 +271,19 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return; // 状態がNormal以外の時は入力を受け付けない
-        if (poseManager != null && poseManager.IsPaused) return;
+        if (!IsControlEnabled)
+        {
+            drillFlag = false;
+            isJumpPressed = false;
+            moveInput = Vector2.zero;
+            if (animator != null)
+            {
+                animator.SetBool("drillFlag", false);
+                animator.SetFloat("Move_X", 0f);
+            }
+            UpdateRumbleState();
+            return;
+        }
         CheckGround();
 
         float zMove = moveInput.x;
@@ -418,6 +446,11 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputAction.CallbackContext context)
     {
+        if (!IsControlEnabled)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
         moveInput = context.ReadValue<Vector2>();
     }
 
@@ -425,10 +458,15 @@ public class PlayerController : MonoBehaviour
     {
         if (context.performed)
         {
+            if (!IsControlEnabled)
+            {
+                drillFlag = false;
+                return;
+            }
+
             drillFlag = true;
 
-            bool canAction = CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked);
-            if (canAction && Time.time >= lastDashTime + dashCooldown)
+            if (Time.time >= lastDashTime + dashCooldown)
             {
                 lastDashTime = Time.time;
                 PerformDash();
@@ -444,23 +482,25 @@ public class PlayerController : MonoBehaviour
     {
         if (context.performed)
         {
+            if (!IsControlEnabled)
+            {
+                isJumpPressed = false;
+                return;
+            }
+
             isJumpPressed = true;
             
-            bool canAction = CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked);
-            if (canAction)
+            if (isGround)
             {
-                if (isGround)
+                rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
+                isGround = false;
+            }
+            else
+            {
+                // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
+                if (rb.linearVelocity.y < 0)
                 {
-                    rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
-                    isGround = false;
-                }
-                else
-                {
-                    // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
-                    if (rb.linearVelocity.y < 0)
-                    {
-                        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-                    }
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
                 }
             }
         }
@@ -477,9 +517,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnSonar(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (currentState != PlayerState.Normal) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
+        if (!IsControlEnabled) return;
 
         if (context.performed)
         {
@@ -515,7 +553,32 @@ public class PlayerController : MonoBehaviour
     public void EnablePlayerControl()
     {
         CanMove = true;
-        TextManager.Instance.ShowText("お宝を掘り当てて下へ進もう！");
+        if (TextManager.Instance != null)
+        {
+            TextManager.Instance.ShowText("お宝を掘り当てて下へ進もう！");
+        }
+    }
+
+    public void DisablePlayerControl()
+    {
+        CanMove = false;
+        drillFlag = false;
+        isJumpPressed = false;
+        moveInput = Vector2.zero;
+        if (animator != null)
+        {
+            animator.SetBool("drillFlag", false);
+            animator.SetFloat("Move_X", 0f);
+        }
+        if (isRumbling && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -557,6 +620,15 @@ public class PlayerController : MonoBehaviour
         drillFlag = false;
         isJumpPressed = false;
         moveInput = Vector2.zero;
+        if (isRumbling && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
         UpdateAnimation();
 
         animator.SetTrigger("Damage");

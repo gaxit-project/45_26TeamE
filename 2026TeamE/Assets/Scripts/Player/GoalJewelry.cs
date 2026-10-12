@@ -42,10 +42,15 @@ public class GoalJewelry : MonoBehaviour
             {
                 HapticsManager.Instance.Stop();
             }
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.StopLoopSE();
+            }
 
             PlayerController player = other.GetComponentInParent<PlayerController>();
             if (player != null)
             {
+                player.DisablePlayerControl();
                 player.currentState = PlayerController.PlayerState.GameClear;
                 Rigidbody rb = player.GetComponent<Rigidbody>();
                 if (rb != null) rb.linearVelocity = Vector3.zero;

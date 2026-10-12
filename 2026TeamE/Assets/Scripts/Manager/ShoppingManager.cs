@@ -415,6 +415,11 @@ public class ShoppingManager : MonoBehaviour
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySE("つるはしで掘る1");
+            SoundManager.Instance.StopLoopSE();
+        }
+        if (HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
         }
 
         // 最初のボタンを選択状態にしてコントローラー操作を可能にする

@@ -104,6 +104,14 @@ public class DrillTip : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+    }
+
     private void Update()
     {
         HandleDrillStart();
@@ -122,7 +130,7 @@ public class DrillTip : MonoBehaviour
     /// </remarks>
     private void RefreshTerrainContact()
     {
-        if (player == null || !player.IsDrilling) return;
+        if (player == null || !player.IsControlEnabled || !player.IsDrilling) return;
 
         VoxelTerrain terrain = VoxelTerrain.Instance;
         if (terrain == null) return;
@@ -148,7 +156,11 @@ public class DrillTip : MonoBehaviour
     /// </remarks>
     private void HandleDrillStart()
     {
-        if (player == null) return;
+        if (player == null || !player.IsControlEnabled)
+        {
+            wasDrilling = false;
+            return;
+        }
 
         bool isDrilling = player.IsDrilling;
 
@@ -162,10 +174,11 @@ public class DrillTip : MonoBehaviour
 
     private void HandleDrillSound()
     {
-        if (SoundManager.Instance == null || player == null || string.IsNullOrEmpty(drillSECueName)) return;
+        if (SoundManager.Instance == null || string.IsNullOrEmpty(drillSECueName)) return;
 
-        bool isDrilling = player.IsDrilling && player.HasBattery;
-        bool shouldPlaySound = requireTerrainContact ? (isDrilling && IsContactingDiggableSurface) : isDrilling;
+        bool isOperable = player != null && player.IsControlEnabled;
+        bool isDrilling = isOperable && player.IsDrilling && player.HasBattery;
+        bool shouldPlaySound = isDrilling && (requireTerrainContact ? IsContactingDiggableSurface : true);
 
         if (shouldPlaySound)
         {
@@ -179,7 +192,7 @@ public class DrillTip : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (player == null || !player.IsDrilling) return;
+        if (player == null || !player.IsControlEnabled || !player.IsDrilling) return;
         if (other.CompareTag("VoxelTerrain") || other.CompareTag("Block_dirt"))
         {
             lastDirtTouchTime = Time.time;
