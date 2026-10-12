@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -17,6 +17,7 @@ public class SettingManager : MonoBehaviour
 
     [Header("UI Panels")]
     [SerializeField] private GameObject settingCanvas;
+    public bool IsOpen => settingCanvas != null && settingCanvas.activeSelf;
 
     [Header("Dropdowns")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,6 +16,8 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private GameObject optionFirstSelected;
 
     private bool isWaitingInput = true;
+    private UnityEngine.InputSystem.Controls.ButtonControl[] cachedGamepadButtons;
+    private Gamepad cachedGamepad;
 
     public void Start()
     {
@@ -32,7 +34,7 @@ public class TitleManager : MonoBehaviour
             {
                 if (btn.gameObject.name == "CloseButton")
                 {
-                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.RemoveListener(CloseOptionPanel);
                     btn.onClick.AddListener(CloseOptionPanel);
                 }
             }
@@ -54,29 +56,41 @@ public class TitleManager : MonoBehaviour
 
         bool keyboardPressed = Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame;
 
-        bool gamepadPressed = false;
-        if (Gamepad.current != null)
-        {
-            foreach(var control in Gamepad.current.allControls)
-            {
-                if (control is UnityEngine.InputSystem.Controls.ButtonControl button && button.wasPressedThisFrame)
-                {
-                    gamepadPressed = true;
-                    break;
-                }
-            }
-        }
+        bool gamepadPressed = CheckGamepadPressed();
 
-        if(keyboardPressed || gamepadPressed)
+        if (keyboardPressed || gamepadPressed)
         {
             PushToStart();
         }
     }
 
-    
+    private bool CheckGamepadPressed()
+    {
+        Gamepad pad = Gamepad.current;
+        if (pad == null) return false;
+
+        if (cachedGamepad != pad)
+        {
+            cachedGamepad = pad;
+            cachedGamepadButtons = pad.allControls.OfType<UnityEngine.InputSystem.Controls.ButtonControl>().ToArray();
+        }
+
+        if (cachedGamepadButtons != null)
+        {
+            for (int i = 0; i < cachedGamepadButtons.Length; i++)
+            {
+                if (cachedGamepadButtons[i].wasPressedThisFrame) return true;
+            }
+        }
+        return false;
+    }
+
     private void LateUpdate()
     {
-        if(EventSystem.current.currentSelectedGameObject == null && !isWaitingInput)
+        if (isWaitingInput || EventSystem.current == null) return;
+        if (SettingManager.Instance != null && SettingManager.Instance.IsOpen) return;
+
+        if (EventSystem.current.currentSelectedGameObject == null)
         {
             EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }

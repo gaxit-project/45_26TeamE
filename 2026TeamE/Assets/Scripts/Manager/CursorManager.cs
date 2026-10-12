@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
@@ -44,16 +44,36 @@ public class CursorManager : MonoBehaviour
     
     
     
+    private ButtonControl[] cachedButtons;
+    private Gamepad cachedGamepad;
+
     private bool IsGamepadInput()
     {
         Gamepad pad = Gamepad.current;
         if (pad == null) return false;
 
-        foreach (var control in pad.allControls)
+        if (cachedGamepad != pad)
         {
-            if (control is ButtonControl button && button.wasPressedThisFrame)
+            cachedGamepad = pad;
+            var buttonList = new System.Collections.Generic.List<ButtonControl>();
+            foreach (var control in pad.allControls)
             {
-                return true;
+                if (control is ButtonControl btn)
+                {
+                    buttonList.Add(btn);
+                }
+            }
+            cachedButtons = buttonList.ToArray();
+        }
+
+        if (cachedButtons != null)
+        {
+            for (int i = 0; i < cachedButtons.Length; i++)
+            {
+                if (cachedButtons[i].wasPressedThisFrame)
+                {
+                    return true;
+                }
             }
         }
 

@@ -27,8 +27,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dropForce = 5f;
 
     public GameObject sonar;
-    [Header("カメラ連携")]
-    [SerializeField] Animator cameraAnimator;
 
     [Header("プレイヤーパラメータ")]
     [SerializeField] float Speed = 5f;
@@ -187,12 +185,6 @@ public class PlayerController : MonoBehaviour
         if (jetpackEffectRight != null)
             jetpackEffectRight.Stop();
 
-        if (cameraAnimator == null)
-        {
-            Camera mainCam = Camera.main;
-            if (mainCam != null) cameraAnimator = mainCam.GetComponent<Animator>();
-        }
-
         drillTip = GetComponentInChildren<DrillTip>();
     }
 
@@ -306,11 +298,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (drillFlag && HasBattery)
-        {
-            if (currentBattery < 0) currentBattery = 0;
-        }
-
         if (drillFlag)
         {
             float angle = Mathf.Atan2(moveInput.y, Mathf.Abs(moveInput.x)) * Mathf.Rad2Deg;
@@ -379,31 +366,6 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 boxCenter = transform.position + groundBoxOffset;
         isGround = Physics.CheckBox(boxCenter, groundBoxExtents, Quaternion.identity, landLayer);
-    }
-
-    private void DestractBlock()
-    {
-        if (drillFlag)
-        {
-            Vector3 drillDirection = moveInput.magnitude > 0.1f ?
-                new Vector3(0, moveInput.y, moveInput.x).normalized : transform.forward;
-
-            Ray ray = new Ray(transform.position + new Vector3(0, 2, 0), drillDirection);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD)
-            {
-                if (hit.collider.CompareTag("Block_dirt"))
-                {
-                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
-                    if (targetBlock != null)
-                    {
-                        targetBlock.TakeDamage(1);
-                        drillCDstarttime = Time.time;
-                    }
-                }
-            }
-        }
     }
 
     private void PerformDash()

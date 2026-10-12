@@ -28,6 +28,11 @@ public class LightController : MonoBehaviour
     // 明滅の残り時間。掘るたびに補充される
     private float flashRemainingTime;
 
+    private int cachedLightLevel = -1;
+    private float cachedBaseRange;
+    private float cachedBaseIntensity;
+    private float nextLevelCheckTime = 0f;
+
     private void Awake()
     {
         Instance = this;
@@ -40,12 +45,21 @@ public class LightController : MonoBehaviour
             playerPointLight = GetComponent<Light>();
         }
 
+        RefreshCachedLightLevel();
         UpdateLightParameters();
     }
 
     private void Update()
     {
-        UpdateLightParameters();
+        if (flashRemainingTime > 0f)
+        {
+            UpdateLightParameters();
+        }
+        else if (Time.time >= nextLevelCheckTime)
+        {
+            nextLevelCheckTime = Time.time + 1.0f;
+            RefreshCachedLightLevel();
+        }
     }
 
     /// <summary>
@@ -54,15 +68,15 @@ public class LightController : MonoBehaviour
     public void Flash()
     {
         flashRemainingTime = digFlashDuration;
+        UpdateLightParameters();
     }
 
     public float CurrentLightRange
     {
         get
         {
-            int lightLevel = UpgradeManager.GetLevel(UpgradeManager.LIGHT);
-            float rangeBonus = (lightLevel - 1) * rangeBonusPerLevel;
-            return baseLightRange + rangeBonus;
+            RefreshCachedLightLevel();
+            return cachedBaseRange;
         }
     }
 
@@ -70,9 +84,24 @@ public class LightController : MonoBehaviour
     {
         get
         {
-            int lightLevel = UpgradeManager.GetLevel(UpgradeManager.LIGHT);
-            float intensityBonus = (lightLevel - 1) * intensityBonusPerLevel;
-            return baseLightIntensity + intensityBonus;
+            RefreshCachedLightLevel();
+            return cachedBaseIntensity;
+        }
+    }
+
+    private void RefreshCachedLightLevel()
+    {
+        int lightLevel = UpgradeManager.GetLevel(UpgradeManager.LIGHT);
+        if (lightLevel != cachedLightLevel)
+        {
+            cachedLightLevel = lightLevel;
+            cachedBaseRange = baseLightRange + (lightLevel - 1) * rangeBonusPerLevel;
+            cachedBaseIntensity = baseLightIntensity + (lightLevel - 1) * intensityBonusPerLevel;
+            if (playerPointLight != null && flashRemainingTime <= 0f)
+            {
+                playerPointLight.range = cachedBaseRange;
+                playerPointLight.intensity = cachedBaseIntensity;
+            }
         }
     }
 
@@ -80,11 +109,12 @@ public class LightController : MonoBehaviour
     {
         if (playerPointLight == null) return;
 
+        RefreshCachedLightLevel();
         float flashAmount = ConsumeFlashAmount();
 
         // 明滅していない時（flashAmountが0）は、これまで通りベース値がそのまま使われる
-        playerPointLight.range = CurrentLightRange * Mathf.Lerp(1f, digFlashRangeScale, flashAmount);
-        playerPointLight.intensity = CurrentLightIntensity * Mathf.Lerp(1f, digFlashIntensityScale, flashAmount);
+        playerPointLight.range = cachedBaseRange * Mathf.Lerp(1f, digFlashRangeScale, flashAmount);
+        playerPointLight.intensity = cachedBaseIntensity * Mathf.Lerp(1f, digFlashIntensityScale, flashAmount);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public abstract class BuriedItemBase : MonoBehaviour
 {
@@ -13,6 +13,10 @@ public abstract class BuriedItemBase : MonoBehaviour
     protected float startTime;
     protected float checkDelay = 3.0f;
 
+    [Header("露出チェック間隔（秒）")]
+    [SerializeField] protected float checkInterval = 0.15f;
+    protected float nextCheckTime;
+
     protected virtual void Awake()
     {
         isExposed = false;
@@ -21,15 +25,17 @@ public abstract class BuriedItemBase : MonoBehaviour
     protected virtual void Start()
     {
         startTime = Time.time;
+        // 同一フレームに露出チェックが集中しないよう少し分散させる
+        nextCheckTime = startTime + checkDelay + (Mathf.Abs(GetInstanceID()) % 10) * 0.02f;
     }
 
     protected virtual void Update()
     {
-        if(Time.time - startTime < checkDelay) return;
-        if (!isExposed)
-        {
-            CheckExposed();
-        }
+        if (isExposed) return;
+        if (Time.time < nextCheckTime) return;
+
+        nextCheckTime = Time.time + checkInterval;
+        CheckExposed();
     }
 
     protected virtual void CheckExposed()

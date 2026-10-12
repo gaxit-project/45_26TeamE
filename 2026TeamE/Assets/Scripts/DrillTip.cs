@@ -48,6 +48,7 @@ public class DrillTip : MonoBehaviour
     private PlayerController player;
 
     private float lastDirtTouchTime = -100f;
+    private readonly Vector3[] cachedCheckOffsets = new Vector3[4];
     [SerializeField] private float contactTimeout = 0.5f;
 
     private SphereCollider myCollider;
@@ -205,14 +206,12 @@ public class DrillTip : MonoBehaviour
                 float s = terrain.BlockSize;
                 float maxHardness = 0f;
 
-                Vector3[] checkOffsets = {
-                    transform.forward * 0.7f,
-                    transform.forward * 0.5f + transform.right * 0.3f,
-                    transform.forward * 0.5f - transform.right * 0.3f,
-                    transform.forward * 0.5f + transform.up * 0.3f
-                };
+                cachedCheckOffsets[0] = transform.forward * 0.7f;
+                cachedCheckOffsets[1] = transform.forward * 0.5f + transform.right * 0.3f;
+                cachedCheckOffsets[2] = transform.forward * 0.5f - transform.right * 0.3f;
+                cachedCheckOffsets[3] = transform.forward * 0.5f + transform.up * 0.3f;
 
-                foreach (Vector3 offset in checkOffsets)
+                foreach (Vector3 offset in cachedCheckOffsets)
                 {
                     Vector3 checkPos = transform.position + offset;
                     checkPos.x = 0f; 

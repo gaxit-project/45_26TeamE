@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
@@ -129,7 +129,7 @@ public class Chunk : MonoBehaviour
         mesh.Clear();
         if (vertices.Count == 0)
         {
-            mesh.Clear();
+            if (meshCollider == null) meshCollider = GetComponent<MeshCollider>();
             meshCollider.sharedMesh = null;
             return;
         }
@@ -151,7 +151,7 @@ public class Chunk : MonoBehaviour
         mesh.RecalculateBounds();
 
         if (meshFilter == null) meshFilter = GetComponent<MeshFilter>();
-        meshFilter.mesh = mesh;
+        meshFilter.sharedMesh = mesh;
 
         if (meshCollider == null) meshCollider = GetComponent<MeshCollider>();
         meshCollider.sharedMesh = null;

@@ -129,13 +129,20 @@ public class DoorBehaviour : BuriedItemBase
     {
         if (cachedPlayer == null)
         {
-            GameObject playerObject = GameObject.FindWithTag(playerTag);
-            if (playerObject == null)
+            if (PlayerController.Instance != null)
             {
-                SetPlayerInRange(false);
-                return;
+                cachedPlayer = PlayerController.Instance.transform;
             }
-            cachedPlayer = playerObject.transform;
+            else
+            {
+                GameObject playerObject = GameObject.FindWithTag(playerTag);
+                if (playerObject == null)
+                {
+                    SetPlayerInRange(false);
+                    return;
+                }
+                cachedPlayer = playerObject.transform;
+            }
         }
 
         // 横から見るゲームなので、奥行き（X）の差は無視してYZ平面で測る。

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
 public class VisualEcho : MonoBehaviour
@@ -12,15 +12,11 @@ public class VisualEcho : MonoBehaviour
     public Color echoColor = Color.blue;
 
     private LineRenderer lineRenderer;
-    private Material lineMaterial;
 
     void Start()
     {
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.useWorldSpace = false; 
-
-        
-        lineMaterial = lineRenderer.material;
     }
 
     void Update()

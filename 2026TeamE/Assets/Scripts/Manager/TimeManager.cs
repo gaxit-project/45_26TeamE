@@ -66,7 +66,6 @@ public class TimerManager : MonoBehaviour
     
     public void StartTimer()
     {
-        totalTime = totalTime;
         isTimerEnded = false;
         isTimerRunning = true;
 

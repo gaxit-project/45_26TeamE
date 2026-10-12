@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -14,7 +14,7 @@ public class UICursor : MonoBehaviour
     [SerializeField] private Vector2 sizePadding = new Vector2(20f, 20f); 
 
     [Header("SE")]
-    [SerializeField] private string moveSE = "Select";
+    [SerializeField] private string moveSE = "つるはしで掘る2";
     private GameObject lastSelected;
     private RectTransform lastSelectedRect;
 
@@ -68,7 +68,8 @@ public class UICursor : MonoBehaviour
 
         if (selected != lastSelected)
         {
-            SoundManager.Instance?.PlaySE("つるはしで掘る2");
+            string seToPlay = (!string.IsNullOrEmpty(moveSE) && moveSE != "Select") ? moveSE : "つるはしで掘る2";
+            SoundManager.Instance?.PlaySE(seToPlay);
             lastSelected = selected;
             lastSelectedRect = selected.GetComponent<RectTransform>();
         }

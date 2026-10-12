@@ -53,7 +53,7 @@ public class BatteryManager : MonoBehaviour
         {
             if (targetIndex != previousTargetIndex)
             {
-                UpdateAppearance();
+                UpdateActiveStates();
                 isBlinkVisible = true; 
                 timer = 0f;
             }
@@ -123,11 +123,8 @@ public class BatteryManager : MonoBehaviour
     }
 
     
-    private void UpdateAppearance()
+    private void UpdateActiveStates()
     {
-        UpdateFillAmounts();
-
-        
         for (int i = 0; i < 5; i++)
         {
             if (batteryImages[i] != null && battery[i] != null)
@@ -139,6 +136,12 @@ public class BatteryManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void UpdateAppearance()
+    {
+        UpdateFillAmounts();
+        UpdateActiveStates();
     }
 
     

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -116,7 +116,8 @@ public class FinalResultManager : MonoBehaviour
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) wasPressed = true;
         if (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; 
 
-        // 繧｢繝九Γ繝ｼ繧ｷ繝ｧ繝ｳ荳ｭ縺ｮ繧ｹ繧ｭ繝・・縺ｮ縺ｿ蜿励￠莉倥￠繧九・        // ・医す繝ｼ繝ｳ驕ｷ遘ｻ縺ｯ蟆ら畑縺ｮ繝懊ち繝ｳ縺九ｉ陦後≧縺溘ａ縲√％縺薙〒縺ｮ閾ｪ蜍暮・遘ｻ縺ｯ蜑企勁・・        if (wasPressed && !isAnimationFinished)
+        // アニメーション中のスキップのみ受け付ける
+        if (wasPressed && !isAnimationFinished)
         {
             skipRequested = true;
         }
