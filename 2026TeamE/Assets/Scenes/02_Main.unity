@@ -8526,6 +8526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f813675a4da54f47a45714ebd96aba4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  controlEnableTimeout: 20
   currentState: 0
   characterRenderers: []
   blinkInterval: 0.1
@@ -9423,6 +9424,7 @@ MonoBehaviour:
   customEffectRotation: {x: -90, y: -90, z: 0}
   parentEffectToCharacter: 0
   player: {fileID: 1987350074}
+  refillBatteryOnClose: 1
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   maxLevelColor: {r: 0.49685526, g: 0.49685526, b: 0.49685526, a: 1}
   cannotBuyColor: {r: 1, g: 0.47484267, b: 0.47484267, a: 1}
@@ -10310,7 +10312,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2638090605212538298, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5236797797392859978, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 5236797797392859978, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 450
+      objectReference: {fileID: 0}
+    - target: {fileID: 5236797797392859978, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -652
+      objectReference: {fileID: 0}
+    - target: {fileID: 5236797797392859978, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 168
       objectReference: {fileID: 0}
     - target: {fileID: 8274568439792842969, guid: d878cff8b23a65a44886daf2bc4aac2c, type: 3}
       propertyPath: m_Pivot.x
@@ -23997,6 +24015,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimelineManager
   timelineDirector: {fileID: 1546445452}
+  targetSceneName: 02_Main
 --- !u!114 &1546445454
 MonoBehaviour:
   m_ObjectHideFlags: 0
