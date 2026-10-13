@@ -130,7 +130,18 @@ public class ShoppingManager : MonoBehaviour
     private bool isInitialized = false;
 
     /// <summary>ショップ画面が開いているかどうか</summary>
-    public bool IsOpen => (shopPanelRoot != null ? shopPanelRoot.activeSelf : gameObject.activeSelf);
+    /// <summary>
+    /// ショップが開いているか。
+    /// </summary>
+    /// <remarks>
+    /// 以前は shopPanelRoot の活性状態から推測していたが、参照が外れていると
+    /// 自分自身の活性状態（常にtrue）にフォールバックし、「開きっぱなし」と報告してしまう。
+    /// その状態では PoseManager.IsInputBlocked が常にtrueになり、
+    /// プレイヤーの操作判定が全て無効になるため、開閉で明示的に切り替える。
+    /// </remarks>
+    public bool IsOpen => isShopOpen;
+
+    private bool isShopOpen;
 
     private void Awake()
     {
@@ -147,6 +158,8 @@ public class ShoppingManager : MonoBehaviour
     private void Start()
     {
         InitializeIfNeeded();
+
+        isShopOpen = false;
 
         // 起動時はパネルを閉じておく（メインシーン配置の場合）
         if (shopPanelRoot != null && shopPanelRoot != gameObject)
@@ -367,6 +380,8 @@ public class ShoppingManager : MonoBehaviour
     {
         InitializeIfNeeded();
 
+        isShopOpen = true;
+
         SoundManager.Instance.PlayBGM("room2");
 
         if (shopPanelRoot != null)
@@ -448,6 +463,8 @@ public class ShoppingManager : MonoBehaviour
     /// </summary>
     public void CloseShop()
     {
+        isShopOpen = false;
+
         SoundManager.Instance.PlayBGM("メインBGM");
 
         if (shopPanelRoot != null)
