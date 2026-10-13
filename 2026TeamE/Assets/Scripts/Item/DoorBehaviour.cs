@@ -49,6 +49,10 @@ public class DoorBehaviour : BuriedItemBase
     [Tooltip("扉に入った瞬間に鳴らすSE名。空なら鳴らしません。")]
     [SerializeField] private string enterSeName = "";
 
+    [Header("制限時間")]
+    [Tooltip("扉に入ったときに制限時間を初期値まで戻す")]
+    [SerializeField] private bool resetTimerOnEnter = true;
+
     [Header("判定")]
     [SerializeField] private string playerTag = "Player";
     [Tooltip("扉に入れる距離（ワールド単位）。横から見るゲームなので奥行き（X）は無視して判定します。")]
@@ -226,6 +230,12 @@ public class DoorBehaviour : BuriedItemBase
         }
 
         VoxelTerrain.Instance.MarkDoorEntered(transform.position);
+
+        if (resetTimerOnEnter && TimerManager.Instance != null)
+        {
+            TimerManager.Instance.ResetTimer();
+        }
+
         return true;
     }
 

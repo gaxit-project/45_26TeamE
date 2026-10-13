@@ -12,16 +12,39 @@ public class TimerManager : MonoBehaviour
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
 
+    /// <summary>Inspectorで設定された初期値。リセット時に戻す基準になる。</summary>
+    private float initialTime;
+
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            initialTime = totalTime;
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// 制限時間を初期値まで戻す。扉に入って換金所へ移動したときに呼ぶ。
+    /// </summary>
+    public void ResetTimer()
+    {
+        totalTime = initialTime;
+        isTimerEnded = false;
+
+        nextHeartbeatTime = 0f;
+
+        if (timerText != null)
+        {
+            timerText.transform.localScale = Vector3.one;
+            timerText.color = Color.white;
+        }
+
+        DisplayTime(totalTime);
     }
 
     [Header("演出用コンポーネント")]
