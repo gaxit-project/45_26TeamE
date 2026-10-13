@@ -22,6 +22,7 @@ public class GoalJewelry : MonoBehaviour
         {
             isProcessed = true;
 
+            SoundManager.Instance.PlayBGM("Clear");
             // 即座にゴール到達フラグとセーブデータを書き込む
             isGoalReached = true;
             PlayerPrefs.SetInt("GoalReached", 1);
