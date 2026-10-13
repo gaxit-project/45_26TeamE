@@ -6319,7 +6319,7 @@ AnimationClip:
   m_HasGenericRootTransform: 1
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 6
+  - time: 8
     functionName: ChangeScene
     data: 
     objectReferenceParameter: {fileID: 0}

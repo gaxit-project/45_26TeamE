@@ -155,4 +155,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoalJewelry
   SceneName: 
-  EfectPrefab: {fileID: 0}
+  EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}

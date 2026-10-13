@@ -586,6 +586,28 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// プレイヤーの向きを右向き（Y軸0度）にする。
+    /// ダンスアニメーションなどの右向き前提演出で使用。
+    /// </summary>
+    public void FaceRight()
+    {
+        if (Mathf.Abs(Mathf.DeltaAngle(transform.rotation.eulerAngles.y, 0f)) > 1f)
+        {
+            transform.rotation = Quaternion.Euler(0, 0, 0);
+            FlipLightX();
+        }
+
+        if (miningZoneRoot != null)
+        {
+            miningZoneRoot.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+        if (drillPivot != null)
+        {
+            drillPivot.localRotation = Quaternion.identity;
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         ICollectible collectible = other.GetComponent<ICollectible>();

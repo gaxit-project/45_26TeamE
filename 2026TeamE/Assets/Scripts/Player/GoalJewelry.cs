@@ -22,7 +22,8 @@ public class GoalJewelry : MonoBehaviour
         {
             isProcessed = true;
 
-            SoundManager.Instance.PlayBGM("Clear");
+            SoundManager.Instance.StopBGM();
+            SoundManager.Instance.PlaySE("Clear");
             // 即座にゴール到達フラグとセーブデータを書き込む
             isGoalReached = true;
             PlayerPrefs.SetInt("GoalReached", 1);
@@ -52,9 +53,18 @@ public class GoalJewelry : MonoBehaviour
             if (player != null)
             {
                 player.DisablePlayerControl();
+                player.FaceRight();
                 player.currentState = PlayerController.PlayerState.GameClear;
                 Rigidbody rb = player.GetComponent<Rigidbody>();
                 if (rb != null) rb.linearVelocity = Vector3.zero;
+            }
+            else
+            {
+                Transform root = other.transform.root;
+                if (root != null && Mathf.Abs(Mathf.DeltaAngle(root.eulerAngles.y, 0f)) > 1f)
+                {
+                    root.rotation = Quaternion.Euler(0, 0, 0);
+                }
             }
 
             Animator playerAnim = other.GetComponentInParent<Animator>();
@@ -84,9 +94,9 @@ public class GoalJewelry : MonoBehaviour
 
         
         
-        yield return new WaitForSeconds(6.0f);
+        yield return new WaitForSeconds(8.0f);
 
-        Debug.LogWarning("[GoalJewelry] 6秒のクリア演出が完了しました。FinalResult シーンをロードします。");
+        Debug.LogWarning("[GoalJewelry] 8秒のクリア演出が完了しました。FinalResult シーンをロードします。");
         string targetScene = "FinalResult";
         SceneManager.LoadScene(targetScene);
 
