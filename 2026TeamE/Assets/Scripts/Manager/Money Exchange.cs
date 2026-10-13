@@ -18,7 +18,6 @@ public class MoneyExchange : MonoBehaviour
                 mm.Cash();
                 cashed = true;
                 UpdateMoneyText(mm.GetMoney());
-                Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
                 mm.OnMoneyChanged += UpdateMoneyText;
             }
         }
@@ -34,7 +33,6 @@ public class MoneyExchange : MonoBehaviour
                 mm.Cash();
                 cashed = true;
                 UpdateMoneyText(mm.GetMoney());
-                Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
             }
             else
             {

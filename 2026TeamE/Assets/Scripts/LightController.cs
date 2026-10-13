@@ -25,7 +25,6 @@ public class LightController : MonoBehaviour
     [Tooltip("明滅のちらつく速さ")]
     [SerializeField] private float digFlickerSpeed = 30f;
 
-    // 明滅の残り時間。掘るたびに補充される
     private float flashRemainingTime;
 
     private int cachedLightLevel = -1;

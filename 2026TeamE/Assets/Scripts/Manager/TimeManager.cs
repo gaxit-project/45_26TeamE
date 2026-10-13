@@ -46,7 +46,6 @@ public class TimerManager : MonoBehaviour
     [Tooltip("鼓動のSE（空なら鳴らさない）")]
     [SerializeField] private string heartbeatSeName = "HeartBeat";
 
-    // 次に鼓動を鳴らす時刻
     private float nextHeartbeatTime;
 
     private static bool firstLoad = true;
@@ -63,7 +62,6 @@ public class TimerManager : MonoBehaviour
         }
     }
 
-    
     public void StartTimer()
     {
         isTimerEnded = false;
@@ -174,7 +172,6 @@ public class TimerManager : MonoBehaviour
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
 
-        // プレイヤーの操作を無効化
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
         {
@@ -193,7 +190,6 @@ public class TimerManager : MonoBehaviour
             SoundManager.Instance.StopLoopSE();
         }
 
-        
         StartCoroutine(ReturnToTitleAfterTimeUp());
     }
 
@@ -207,9 +203,6 @@ public class TimerManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("FinalResult");
     }
 
-    
-    
-    
     public void AddTime(float seconds)
     {
         if (isTimerEnded) return;
@@ -218,9 +211,6 @@ public class TimerManager : MonoBehaviour
         isTimerRunning = true;
     }
 
-    
-    
-    
     public static void ResetFirstLoad()
     {
         firstLoad = true;

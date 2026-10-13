@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-
 public partial class VoxelTerrain
 {
     public void UpdateChunkMesh(int index)

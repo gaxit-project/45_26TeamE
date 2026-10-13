@@ -12,7 +12,6 @@ public class Block_dirt : MonoBehaviour
 
     private MeshRenderer meshRenderer;
 
-    
     private bool isDead = false;
 
     void Start()
@@ -24,7 +23,7 @@ public class Block_dirt : MonoBehaviour
 
     public void TakeDamage(int damageAmount)
     {
-        
+
         if (isDead) return;
 
         currentHP -= damageAmount;
@@ -44,7 +43,7 @@ public class Block_dirt : MonoBehaviour
 
     private void UpdateAppearance()
     {
-        
+
         float healthRatio = (float)currentHP / maxHP;
 
         if (healthRatio == 1.0f)
@@ -63,7 +62,7 @@ public class Block_dirt : MonoBehaviour
 
     private void DestroyChain()
     {
-        
+
         Vector3[] directions = { Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
         float maxDistance = 0.55f;
 
@@ -78,16 +77,15 @@ public class Block_dirt : MonoBehaviour
 
                     if (targetBlock != null)
                     {
-                        
+
                         if (targetBlock.currentHP == 1)
                         {
-                            
+
                             targetBlock.TakeDamage(1);
                         }
                         else
                         {
-                            
-                            
+
                             targetBlock.TakeDamage(targetBlock.maxHP / 3);
                         }
                     }

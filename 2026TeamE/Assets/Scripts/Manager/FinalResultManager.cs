@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 public class FinalResultManager : MonoBehaviour
 {
-    // --- 繧ｰ繝ｭ繝ｼ繝舌Ν繧ｹ繧ｳ繧｢險倬鹸逕ｨ・医す繝ｼ繝ｳ髢捺戟縺｡雜翫＠・・---
+    // --- グローバルスコア記録用（シーンをまたいで持ち越す） ---
     public static int CollectedTreasureBoxes { get; private set; } = 0;
     public static int TriggeredBombs { get; private set; } = 0;
     public static List<float> OxygenRemainingPerFloor { get; private set; } = new List<float>();
@@ -42,15 +42,15 @@ public class FinalResultManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI clearSubtotalText;
 
     [Header("")]
-    [Tooltip("螳晉ｮｱ1蛟九≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
+    [Tooltip("宝箱1個あたりのスコア")]
     [SerializeField] private int pointsPerTreasureBox = 10000;
     [Tooltip("")]
     [SerializeField] private int pointsPerBomb = -5000;
-    [Tooltip("谿九ｊ驟ｸ邏1遘偵≠縺溘ｊ縺ｮ繧ｹ繧ｳ繧｢")]
+    [Tooltip("残り酸素1秒あたりのスコア")]
     [SerializeField] private int pointsPerOxygenSecond = 100;
-    [Tooltip("繧ｯ繝ｪ繧｢縺励◆髫帙・繝懊・繝翫せ繧ｹ繧ｳ繧｢")]
+    [Tooltip("クリアした際のボーナススコア")]
     [SerializeField] private int pointsForClear = 50000;
-    [Tooltip("繧ｲ繝ｼ繝荳ｭ縺ｫ遞ｼ縺・□縺企≡繧偵せ繧ｳ繧｢縺ｫ蜷育ｮ励☆繧九°縺ｩ縺・°")]
+    [Tooltip("ゲーム中に稼いだお金をスコアに合算するかどうか")]
     [SerializeField] private bool includeMoneyInScore = false;
 
     [Header("")]
@@ -97,7 +97,7 @@ public class FinalResultManager : MonoBehaviour
 
         finalScoreAmount = boxScore + bombScore + oxygenScore + clearScore;
 
-        // 遞ｼ縺・□縺企≡繧貞粋邂励☆繧九°縺ｩ縺・°
+        // 稼いだお金を合算するかどうか
         if (includeMoneyInScore && MoneyManager.Instance != null)
         {
             finalScoreAmount += MoneyManager.Instance.GetTotalEarnedMoney(); 
@@ -131,22 +131,22 @@ public class FinalResultManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float progress = elapsed / countDuration;
             int currentTotalValue = (int)(finalScoreAmount * progress);
-            
+
             if (totalEarnedText != null) totalEarnedText.text = currentTotalValue.ToString("N0");
-            
+
             yield return null;
         }
 
         if (totalEarnedText != null) totalEarnedText.text = finalScoreAmount.ToString("N0");
-        
-        // 莉雁屓縺ｮ譛邨ゅせ繧ｳ繧｢繧偵Λ繝ｳ繧ｭ繝ｳ繧ｰ縺ｫ逋ｻ骭ｲ
+
+        // 今回の最終スコアをランキングに登録
         RankingManager.SaveScore(finalScoreAmount);
 
         yield return new WaitForSeconds(0.2f);
         isAnimationFinished = true;
     }
 
-    // --- 繝懊ち繝ｳ縺九ｉ蜻ｼ縺ｳ蜃ｺ縺輔ｌ繧句・逅・---
+    // --- ボタンから呼び出される処理 ---
 
     public void ReturnToTitle()
     {
@@ -157,7 +157,7 @@ public class FinalResultManager : MonoBehaviour
     public void RetrySameSeed()
     {
         if (SoundManager.Instance != null) SoundManager.Instance.StopBGM();
-        
+
         // 次の生成で同じシードを使うように指示
         VoxelTerrain.ForceUseSeed = true;
 
@@ -195,7 +195,6 @@ public class FinalResultManager : MonoBehaviour
         }
     }
 
-    // ランキングの表示・非表示を切り替えるメソッド
     public void ToggleRankingPanel()
     {
         if (rankingPanel != null)
@@ -204,4 +203,3 @@ public class FinalResultManager : MonoBehaviour
         }
     }
 }
-

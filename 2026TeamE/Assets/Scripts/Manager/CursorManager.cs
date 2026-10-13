@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
-
-
-
-
 public class CursorManager : MonoBehaviour
 {
     public static CursorManager Instance { get; private set; }
@@ -41,9 +37,6 @@ public class CursorManager : MonoBehaviour
         }
     }
 
-    
-    
-    
     private ButtonControl[] cachedButtons;
     private Gamepad cachedGamepad;
 
@@ -85,9 +78,6 @@ public class CursorManager : MonoBehaviour
         return false;
     }
 
-    
-    
-    
     private bool IsKeyboardOrMouseInput()
     {
         if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)

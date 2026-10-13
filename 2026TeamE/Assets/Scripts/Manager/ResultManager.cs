@@ -45,7 +45,7 @@ public class ResultManager : MonoBehaviour
 
     void Start()
     {
-        
+
         StartCoroutine(AutoResultSequence());
     }
 
@@ -61,7 +61,7 @@ public class ResultManager : MonoBehaviour
             if (Gamepad.current.buttonEast.wasPressedThisFrame) wasPressed = true; 
             if (Gamepad.current.buttonSouth.wasPressedThisFrame) wasPressed = true; 
         }
-        
+
         if (wasPressed)
         {
             isSkipRequested = true;
@@ -85,7 +85,6 @@ public class ResultManager : MonoBehaviour
         List<ItemInventoryManager.ItemData> items = ItemInventoryManager.GetCollectedItemsForResult();
         MoneyManager mm = MoneyManager.Instance;
 
-        
         if (mm != null)
         {
             onHandResultText.text = mm.GetMoneyOnHand().ToString("N0");
@@ -106,9 +105,6 @@ public class ResultManager : MonoBehaviour
             }
         }
 
-        
-        
-        
         if (gems.Count > 0)
         {
             int gemTotalMoney = 0;
@@ -116,7 +112,7 @@ public class ResultManager : MonoBehaviour
             {
                 gemTotalMoney += gem.moneyValue;
             }
-            
+
             if (mm != null && gemTotalMoney > 0)
             {
                 mm.MoneyOnHandIncrease(gemTotalMoney);
@@ -126,14 +122,10 @@ public class ResultManager : MonoBehaviour
             yield return StartCoroutine(WaitOrSkip(0.5f));
         }
 
-        
-        
-        
         if (bags.Count > 0)
         {
             List<GameObject> bagIconObjs = new List<GameObject>();
 
-            
             foreach (var bag in bags)
             {
                 GameObject bagIconObj = CreateIconObject(bag.icon);
@@ -143,16 +135,13 @@ public class ResultManager : MonoBehaviour
 
             yield return StartCoroutine(WaitOrSkip(iconInterval));
 
-            
             for (int i = 0; i < bags.Count; i++)
             {
                 var bag = bags[i];
                 var bagObj = bagIconObjs[i];
 
-                
                 LootItem loot = RollLoot(bag.type);
 
-                
                 Image img = bagObj.GetComponent<Image>();
                 if (img != null)
                 {
@@ -160,14 +149,12 @@ public class ResultManager : MonoBehaviour
                         img.sprite = openLeatherBagSprite;
                     else if (bag.type == ItemType.GoldLeatherBag && openGoldLeatherBagSprite != null)
                         img.sprite = openGoldLeatherBagSprite;
-                    
-                    
+
                     img.color = Color.white;
                 }
 
                 Image lootImg = null;
 
-                
                 if (loot != null && loot.sprite != null)
                 {
                     GameObject lootIcon = new GameObject("LootIcon");
@@ -185,32 +172,26 @@ public class ResultManager : MonoBehaviour
 
                     yield return StartCoroutine(PopInAnimation(lootIcon.transform));
 
-                    
                     if (mm != null && loot.moneyValue > 0)
                     {
                         mm.MoneyOnHandIncrease(loot.moneyValue);
                         onHandResultText.text = mm.GetMoneyOnHand().ToString("N0");
 
-                        
                         StartCoroutine(PopupMoneyText(bagObj.transform, loot.moneyValue));
                     }
                 }
 
-                
                 if (img != null) img.color = new Color(0.6f, 0.6f, 0.6f, 1f);
                 if (lootImg != null) lootImg.color = new Color(0.6f, 0.6f, 0.6f, 1f);
 
-                
                 yield return StartCoroutine(WaitOrSkip(iconInterval));
             }
         }
 
-        
         yield return StartCoroutine(WaitOrSkip(iconInterval * 2));
 
         isAnimationFinished = true;
 
-        
         if (nextFocusButton != null && UnityEngine.EventSystems.EventSystem.current != null)
         {
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(nextFocusButton);
@@ -237,7 +218,6 @@ public class ResultManager : MonoBehaviour
         layout.preferredWidth = iconSize;
         layout.preferredHeight = iconSize;
 
-        
         Button btn = iconObj.GetComponent<Button>();
         if (btn != null)
         {
@@ -275,7 +255,6 @@ public class ResultManager : MonoBehaviour
     {
         if (parent == null || amount <= 0) yield break;
 
-        
         GameObject textObj = new GameObject("PopupMoneyText");
         textObj.transform.SetParent(parent, false);
 
@@ -286,7 +265,6 @@ public class ResultManager : MonoBehaviour
         tmp.color = new Color(1f, 0.9f, 0.4f, 1f); 
         tmp.alignment = TextAlignmentOptions.Center;
 
-        
         if (onHandResultText != null)
         {
             tmp.font = onHandResultText.font;
@@ -297,7 +275,6 @@ public class ResultManager : MonoBehaviour
         rect.anchoredPosition = Vector2.zero;
         rect.sizeDelta = new Vector2(400f, 100f); 
 
-        
         tmp.enableWordWrapping = false;
         tmp.raycastTarget = false;
 
@@ -314,11 +291,9 @@ public class ResultManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
-            
             float easedT = 1f - Mathf.Pow(1f - t, 3f);
             rect.anchoredPosition = startPos + new Vector2(0f, moveDistance * easedT);
 
-            
             if (t > 0.5f)
             {
                 Color c = tmp.color;
@@ -352,7 +327,7 @@ public class ResultManager : MonoBehaviour
             {
                 chance = loot.leatherBagChance; 
             }
-            
+
             if (chance <= 0) continue;
 
             weightedList.Add((loot, chance));
@@ -374,6 +349,6 @@ public class ResultManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        
+
     }
 }

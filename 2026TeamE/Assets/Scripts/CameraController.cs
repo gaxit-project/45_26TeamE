@@ -30,7 +30,6 @@ public class CameraController : MonoBehaviour
     private Vector3 lookAheadVelocity = Vector3.zero;
     private Vector3 previousPlayerPosition;
 
-    // 揺れの残り時間と、その揺れ全体の長さ・強さ
     private float shakeRemainingTime;
     private float shakeTotalDuration;
     private float shakeStrength;

@@ -23,7 +23,6 @@ public class CheckpointManager : MonoBehaviour
         }
     }
 
-    
     public void SaveCheckpoint(Vector3 worldPos, int checkpointID)
     {
         if (VoxelTerrain.Instance != null)
@@ -38,7 +37,6 @@ public class CheckpointManager : MonoBehaviour
         hasCheckpoint = true;
         lastCheckpointID = checkpointID;
 
-        Debug.Log($"チェックポイント保存 ID:{checkpointID}");
     }
 
     public bool HasCheckpoint() => hasCheckpoint;
@@ -52,7 +50,6 @@ public class CheckpointManager : MonoBehaviour
         return savedLocalPosition;
     }
 
-    
     public void MarkCheckpointAsUsed()
     {
         usedCheckpointID = lastCheckpointID;

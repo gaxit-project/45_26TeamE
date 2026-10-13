@@ -70,7 +70,7 @@ public class ItemInventoryManager : MonoBehaviour
                 canvasCamera = canvas.worldCamera;
             }
         }
-        
+
         ClearItems();
     }
 
@@ -94,7 +94,6 @@ public class ItemInventoryManager : MonoBehaviour
             }
         }
 
-        // 袋のアイコンを1つだけ生成する
         if (iconContainer != null && iconPrefab != null)
         {
             bagSlotObj = Instantiate(iconPrefab, iconContainer);
@@ -106,7 +105,7 @@ public class ItemInventoryManager : MonoBehaviour
             if (layout == null) layout = bagSlotObj.AddComponent<LayoutElement>();
             layout.preferredWidth = iconWidth;
             layout.preferredHeight = iconWidth;
-            
+
             // NOTE: 金額のテキストは別途 MoneyUIInitializer 等で表示される想定
         }
     }
@@ -126,7 +125,7 @@ public class ItemInventoryManager : MonoBehaviour
             OnFlyFinished(moneyValue);
             yield break;
         }
-        
+
         GameObject flyIcon = Instantiate(iconPrefab, canvasRect);
         Image flyImage = flyIcon.GetComponent<Image>();
         if (flyImage != null)
@@ -153,7 +152,7 @@ public class ItemInventoryManager : MonoBehaviour
             canvasRect, screenStart, canvasCamera, out startLocalPos);
 
         Vector3 containerScreenPos = RectTransformUtility.WorldToScreenPoint(canvasCamera, iconContainer.position);
-        
+
         if (bagSlotObj != null)
         {
             containerScreenPos = RectTransformUtility.WorldToScreenPoint(canvasCamera, bagSlotObj.transform.position);
@@ -166,12 +165,6 @@ public class ItemInventoryManager : MonoBehaviour
         float elapsed = 0f;
         flyRect.anchoredPosition = startLocalPos;
         flyRect.localScale = Vector3.one * startScale;
-
-        if (SoundManager.Instance != null)
-        {
-            // お金が飛ぶ音などがあれば再生
-            // SoundManager.Instance.PlaySE("コイン");
-        }
 
         while (elapsed < flyDuration)
         {
@@ -201,9 +194,9 @@ public class ItemInventoryManager : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
-        
+
         Destroy(flyIcon);
-        
+
         OnFlyFinished(moneyValue);
     }
 
@@ -223,7 +216,7 @@ public class ItemInventoryManager : MonoBehaviour
     private IEnumerator PopInAnimation(Transform target)
     {
         float elapsed = 0f;
-        
+
         while (elapsed < popDuration)
         {
             float t = elapsed / popDuration;

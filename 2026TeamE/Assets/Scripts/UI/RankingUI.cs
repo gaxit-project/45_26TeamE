@@ -13,7 +13,7 @@ public class RankingUI : MonoBehaviour
 
     [Header("ランキング行のUI (1位〜5位)")]
     public RankingRow[] rankingRows;
-    
+
     [Header("ハイライト設定")]
     public Color normalColor = Color.white;
     public Color highlightColor = Color.yellow;
@@ -39,13 +39,11 @@ public class RankingUI : MonoBehaviour
                 if (rankingRows[i].scoreText != null) rankingRows[i].scoreText.text = entry.score.ToString("N0");
                 if (rankingRows[i].dateText != null) rankingRows[i].dateText.text = entry.date;
 
-                // 今回のスコアなら色を変える
                 bool isCurrent = (!string.IsNullOrEmpty(currentRunId) && entry.runId == currentRunId);
                 SetRowColor(rankingRows[i], isCurrent ? highlightColor : normalColor);
             }
             else
             {
-                // データがない場合は0点として表記
                 if (rankingRows[i].rankText != null) rankingRows[i].rankText.text = rankString;
                 if (rankingRows[i].scoreText != null) rankingRows[i].scoreText.text = "0";
                 if (rankingRows[i].dateText != null) rankingRows[i].dateText.text = "---";

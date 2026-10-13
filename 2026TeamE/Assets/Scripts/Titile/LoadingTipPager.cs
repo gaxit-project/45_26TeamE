@@ -4,16 +4,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-
-
-
-
-
-
-
-
-
-
 public class LoadingTipPager : MonoBehaviour
 {
     [Header("説明画像を表示するImage（ローディング画面の中央に配置する）")]
@@ -52,10 +42,8 @@ public class LoadingTipPager : MonoBehaviour
 
     private int currentPageIndex;
 
-    
     private bool isStickNeutral = true;
 
-    
     private Vector3 previousArrowBaseScale = Vector3.one;
     private Vector3 nextArrowBaseScale = Vector3.one;
     private float previousArrowPunchTimer;
@@ -83,7 +71,6 @@ public class LoadingTipPager : MonoBehaviour
     {
         UpdateArrowPunch();
 
-        
         if (pages.Count <= 1) return;
 
         int direction = ReadPageDirection();
@@ -93,23 +80,16 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    
-
-    
     public void ShowPreviousPage()
     {
         MovePage(-1);
     }
 
-    
     public void ShowNextPage()
     {
         MovePage(1);
     }
 
-    
-    
-    
     private void WireArrowButtons()
     {
         if (previousArrow != null && previousArrow.TryGetComponent(out Button previousButton))
@@ -125,11 +105,6 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    
-
-    
-    
-    
     private int ReadPageDirection()
     {
         Keyboard keyboard = Keyboard.current;
@@ -145,7 +120,6 @@ public class LoadingTipPager : MonoBehaviour
         if (pad.dpad.left.wasPressedThisFrame || pad.leftShoulder.wasPressedThisFrame) return -1;
         if (pad.dpad.right.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame) return 1;
 
-        
         float horizontal = pad.leftStick.ReadValue().x;
 
         if (Mathf.Abs(horizontal) < stickThreshold)
@@ -159,8 +133,6 @@ public class LoadingTipPager : MonoBehaviour
         isStickNeutral = false;
         return horizontal < 0f ? -1 : 1;
     }
-
-    
 
     private void MovePage(int direction)
     {
@@ -178,13 +150,11 @@ public class LoadingTipPager : MonoBehaviour
             nextIndex = Mathf.Clamp(nextIndex, 0, pages.Count - 1);
         }
 
-        
         if (nextIndex == currentPageIndex) return;
 
         currentPageIndex = nextIndex;
         ApplyCurrentPage();
 
-        
         if (direction < 0) previousArrowPunchTimer = arrowPunchDuration;
         else nextArrowPunchTimer = arrowPunchDuration;
 
@@ -194,7 +164,6 @@ public class LoadingTipPager : MonoBehaviour
         }
     }
 
-    
     private void ApplyCurrentPage()
     {
         if (tipImage != null)
@@ -203,7 +172,6 @@ public class LoadingTipPager : MonoBehaviour
                         && currentPageIndex < pages.Count
                         && pages[currentPageIndex] != null;
 
-            
             tipImage.enabled = hasPage;
 
             if (hasPage)
@@ -223,10 +191,6 @@ public class LoadingTipPager : MonoBehaviour
         UpdateArrowVisibility();
     }
 
-    
-    
-    
-    
     private void UpdateArrowVisibility()
     {
         bool hasMultiplePages = pages.Count > 1;
@@ -237,17 +201,12 @@ public class LoadingTipPager : MonoBehaviour
         if (nextArrow != null) nextArrow.SetActive(canGoNext);
     }
 
-    
-
     private void UpdateArrowPunch()
     {
         previousArrowPunchTimer = AdvancePunch(previousArrow, previousArrowBaseScale, previousArrowPunchTimer);
         nextArrowPunchTimer = AdvancePunch(nextArrow, nextArrowBaseScale, nextArrowPunchTimer);
     }
 
-    
-    
-    
     private float AdvancePunch(GameObject arrow, Vector3 baseScale, float remainingTime)
     {
         if (arrow == null || arrowPunchDuration <= 0f) return 0f;
@@ -260,7 +219,6 @@ public class LoadingTipPager : MonoBehaviour
 
         remainingTime = Mathf.Max(0f, remainingTime - Time.unscaledDeltaTime);
 
-        
         float progress = remainingTime / arrowPunchDuration;
         arrow.transform.localScale = baseScale * Mathf.Lerp(1f, arrowPunchScale, progress);
 

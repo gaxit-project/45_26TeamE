@@ -48,18 +48,11 @@ public abstract class BuriedItemBase : MonoBehaviour
         }
     }
 
-
-    
-    
-    
     protected virtual bool IsExposedCheck()
     {
         return VoxelTerrain.Instance.IsJewelExposed(transform.position);
     }
 
-    
-    
-    
     protected virtual void OnExposed()
     {
 
@@ -100,9 +93,6 @@ public abstract class BuriedItemBase : MonoBehaviour
         Invoke(nameof(ResetReaction), cooldownTime);
     }
 
-    
-    
-    
     protected abstract (GameObject echoPrefab, GameObject markerPrefab) GetReactionPrefabs();
 
     protected virtual void ResetReaction()

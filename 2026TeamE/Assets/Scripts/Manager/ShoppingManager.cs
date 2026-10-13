@@ -360,7 +360,6 @@ public class ShoppingManager : MonoBehaviour
         }
     }
 
-
     /// <summary>
     /// メインシーン上でショップ画面を開く
     /// </summary>
@@ -375,7 +374,6 @@ public class ShoppingManager : MonoBehaviour
             shopPanelRoot.SetActive(true);
         }
 
-        // 指定されたCanvas・UIを非表示にする
         if (canvasesToHide != null)
         {
             foreach (var ui in canvasesToHide)
@@ -384,7 +382,6 @@ public class ShoppingManager : MonoBehaviour
             }
         }
 
-        // カメラの切り替え（メインカメラOFF -> ショップカメラON）
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -397,7 +394,6 @@ public class ShoppingManager : MonoBehaviour
             shopCamera.enabled = true;
         }
 
-        // ゲーム内時間を一時停止
         Time.timeScale = 0f;
 
         // 換金所に着いた時点でバッテリーを満タンに戻す
@@ -459,14 +455,12 @@ public class ShoppingManager : MonoBehaviour
             shopPanelRoot.SetActive(false);
         }
 
-        // Animatorの動作モードを元に戻す
         if (activeAnimatedAnimator != null)
         {
             activeAnimatedAnimator.updateMode = originalUpdateMode;
             activeAnimatedAnimator = null;
         }
 
-        // 指定されたCanvas・UIを再表示する
         if (canvasesToHide != null)
         {
             foreach (var ui in canvasesToHide)
@@ -475,7 +469,6 @@ public class ShoppingManager : MonoBehaviour
             }
         }
 
-        // カメラを元に戻す（ショップカメラOFF -> メインカメラON）
         if (shopCamera != null)
         {
             shopCamera.enabled = false;
@@ -487,7 +480,6 @@ public class ShoppingManager : MonoBehaviour
             mainCamera.enabled = true;
         }
 
-        // ゲーム内時間を再開
         Time.timeScale = 1f;
 
         RefillPlayerBattery();

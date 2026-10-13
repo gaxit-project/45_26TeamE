@@ -70,7 +70,6 @@ public partial class VoxelTerrain
 
         if (doorsInRange.Count == 0)
         {
-            Debug.Log("[VoxelTerrain] 入場範囲に扉がありません。");
             return false;
         }
 
@@ -79,7 +78,6 @@ public partial class VoxelTerrain
             if (door.TryEnter()) return true;
         }
 
-        Debug.Log($"[VoxelTerrain] 範囲内の扉 {doorsInRange.Count} 個はいずれも入場できる状態ではありません。");
         return false;
     }
 
@@ -129,7 +127,6 @@ public partial class VoxelTerrain
             if (TrySpawnDoorInBand(unit, bandStartChunk, unitEndChunk, bandBottomY, bandTopY, rnd)) placedCount++;
         }
 
-        Debug.Log($"[VoxelTerrain] 扉を {placedCount}/{unitCount} 個配置しました（全{totalChunks}チャンクを{unitChunks}チャンクずつに分割し、各単位の最深{bandChunks}チャンクに1つ）。");
     }
 
     /// <summary>
@@ -138,27 +135,19 @@ public partial class VoxelTerrain
     /// <returns>配置できた場合はtrue。</returns>
     private bool TrySpawnDoorInBand(int unit, int bandStartChunk, int bandEndChunk, int bottomY, int topY, System.Random rnd)
     {
-        string bandLabel = $"単位{unit}（地表から{bandStartChunk + 1}～{bandEndChunk}チャンク目 / Chunk_{(heightY - bandEndChunk * chunkSizeY) / chunkSizeY}～Chunk_{(heightY - bandStartChunk * chunkSizeY) / chunkSizeY - 1}）";
-
         List<Vector3Int> candidates = CollectDoorCandidates(bottomY, topY);
         if (candidates.Count == 0)
         {
-            if (!allowDoorsInGoalZone && IsEntirelyGoalZone(bottomY, topY))
+            // ゴールゾーンを除外した結果なら想定どおり。それ以外は設定を見直す必要がある。
+            bool excludedByGoalZone = !allowDoorsInGoalZone && IsEntirelyGoalZone(bottomY, topY);
+            if (!excludedByGoalZone)
             {
-                Debug.Log($"[VoxelTerrain] {bandLabel} はゴールゾーンのため扉を配置しませんでした。配置したい場合は allowDoorsInGoalZone をオンにしてください。");
-            }
-            else
-            {
-                Debug.LogWarning($"[VoxelTerrain] {bandLabel} に扉を置ける場所がありません。");
+                Debug.LogWarning($"[VoxelTerrain] 単位{unit}（地表から{bandStartChunk + 1}～{bandEndChunk}チャンク目）に扉を置ける場所がありません。");
             }
             return false;
         }
 
-        Vector3Int coord = candidates[rnd.Next(candidates.Count)];
-        SpawnDoorAt(coord);
-
-        int chunkFromSurface = (heightY - coord.y - 1) / chunkSizeY + 1;
-        Debug.Log($"[VoxelTerrain] 扉を配置：単位{unit} / Chunk_{coord.y / chunkSizeY}（地表から{chunkFromSurface}チャンク目） (y={coord.y}, z={coord.z})");
+        SpawnDoorAt(candidates[rnd.Next(candidates.Count)]);
         return true;
     }
 
@@ -267,7 +256,6 @@ public partial class VoxelTerrain
         doorReturnLocalPosition = transform.InverseTransformPoint(doorWorldPosition);
         HasPendingDoorReturn = true;
 
-        Debug.Log($"[VoxelTerrain] 扉に入りました。復帰位置を記録: {doorReturnLocalPosition}");
     }
 
     /// <summary>
@@ -294,6 +282,5 @@ public partial class VoxelTerrain
             CameraController.Instance.SnapToPlayer();
         }
 
-        Debug.Log($"[VoxelTerrain] 扉の位置へ復帰しました: {worldPos}");
     }
 }

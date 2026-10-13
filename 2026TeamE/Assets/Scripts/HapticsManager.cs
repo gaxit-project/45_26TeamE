@@ -13,11 +13,9 @@ public class HapticsManager : MonoBehaviour
 {
     public static HapticsManager Instance { get; private set; }
 
-    // 継続的に鳴らし続ける振動
     private float baseLow;
     private float baseHigh;
 
-    // 下地に一時的に重ねる振動
     private float pulseLow;
     private float pulseHigh;
     private float pulseRemainingTime;

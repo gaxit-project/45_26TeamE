@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-
 public partial class VoxelTerrain
 {
     public bool IsJewelExposed(Vector3 worldPos)

@@ -7,11 +7,11 @@ public class MoneyManager : MonoBehaviour
 
     [SerializeField, Header("所持金 (統合済み)")]
     private int Money = 0;
-    
+
     // シリアライズ互換性のために残す（使用しない）
     [SerializeField, Header("仮の資金(未使用)")]
     private int MoneyOnHand = 0;
-    
+
     [SerializeField, Header("累計獲得金額")]
     private int TotalEarnedMoney = 0;
     [SerializeField, Header("目標金額")]

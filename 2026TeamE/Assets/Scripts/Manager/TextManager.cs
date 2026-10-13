@@ -44,7 +44,7 @@ public class TextManager : MonoBehaviour
 
     private void FindUIComponents()
     {
-        
+
         if (Image == null)
         {
             Image = FindInactiveComponentByName<Image>(imageName);
@@ -54,7 +54,6 @@ public class TextManager : MonoBehaviour
             }
         }
 
-        
         if (Text == null)
         {
             Text = FindInactiveComponentByName<TextMeshProUGUI>(textName);
@@ -63,21 +62,19 @@ public class TextManager : MonoBehaviour
                 Debug.LogWarning($"TextManager: '{textName}' という名前のテキストオブジェクトが見つかりません。");
             }
         }
-        
-        
+
         if (Image != null)
         {
             Image.gameObject.SetActive(false);
         }
     }
 
-    
     private T FindInactiveComponentByName<T>(string name) where T : Component
     {
         T[] allComponents = Resources.FindObjectsOfTypeAll<T>();
         foreach (T comp in allComponents)
         {
-            
+
             if (comp.gameObject.name == name && comp.gameObject.scene.isLoaded)
             {
                 return comp;

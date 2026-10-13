@@ -18,7 +18,7 @@ public class MoneyUIInitializer : MonoBehaviour
             {
                 mm.OnMoneyOnHandChanged += UpdateOnHandText;
                 mm.OnTargetAmountOnPartChanged += UpdateTargetPartText;
-                
+
                 UpdateOnHandText(mm.GetMoneyOnHand());
                 UpdateTargetPartText(mm.GetTargetAmountOnPart());
             }

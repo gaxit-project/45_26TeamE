@@ -10,10 +10,8 @@ public static class ResetManager
 
         ItemInventoryManager.ClearCollectedData();
 
-        // スコア記録の初期化
         FinalResultManager.ResetStats();
 
-        
         if (MainManager.Instance != null)
         {
             Object.Destroy(MainManager.Instance.gameObject);
@@ -43,13 +41,10 @@ public static class ResetManager
         }
         TimelineManager.ResetTimeline();
 
-
         UpgradeManager.ResetUpgrades();
 
-        
         TimerManager.ResetFirstLoad();
 
-        
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.StopLoopSE();

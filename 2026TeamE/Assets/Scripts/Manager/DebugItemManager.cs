@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
-
-
-
-
 public class DebugItemManager : MonoBehaviour
 {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -24,13 +20,11 @@ public class DebugItemManager : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        
         if (kb.digit1Key.wasPressedThisFrame) AddDebugItem(ItemType.Jewelry, jewelryData);
         if (kb.digit2Key.wasPressedThisFrame) AddDebugItem(ItemType.LeatherBag, leatherBagData);
         if (kb.digit3Key.wasPressedThisFrame) AddDebugItem(ItemType.GoldLeatherBag, GoldleatherBagData);
         if (kb.digit4Key.wasPressedThisFrame) AddDebugItem(ItemType.Key, keyData);
 
-        
         if (kb.digit5Key.wasPressedThisFrame)
         {
             if (TimerManager.Instance != null)
@@ -40,19 +34,16 @@ public class DebugItemManager : MonoBehaviour
             }
         }
 
-        
         if (kb.digit6Key.wasPressedThisFrame)
         {
             EnterCheckpointProcess();
         }
 
-        
         if (kb.digit7Key.wasPressedThisFrame)
         {
             TriggerGoal();
         }
 
-        
         if (kb.digit9Key.wasPressedThisFrame)
         {
             if (ItemInventoryManager.Instance != null && ItemInventoryManager.Instance.RemoveLastItem())
@@ -92,7 +83,6 @@ public class DebugItemManager : MonoBehaviour
         VoxelTerrain.Instance.MarkDoorEntered(player.transform.position);
         SelectPoint.Instance.GoToResult();
     }
-
 
     private void TriggerGoal()
     {

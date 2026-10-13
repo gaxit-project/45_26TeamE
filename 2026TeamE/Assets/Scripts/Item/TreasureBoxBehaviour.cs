@@ -78,14 +78,12 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         }
         transform.position = initialPos;
 
-        
         if (spriteRenderer != null && openSprite != null)
         {
             spriteRenderer.sprite = openSprite;
             spriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 1f);
         }
 
-        
         GameObject spawnedItem = null;
         if (contentPrefab != null)
         {
@@ -106,7 +104,6 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             }
         }
 
-        
         float duration = 0.5f;
         float elapsed = 0f;
 
@@ -135,7 +132,6 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             yield return null;
         }
 
-        
         if (spawnedItem != null)
         {
             spawnedItem.transform.position = itemStartPos;
@@ -173,9 +169,9 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
     {
         float duration = 1.0f;
         float elapsed = 0f;
-        
+
         Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
-        
+
         while (elapsed < duration)
         {
             if (spriteRenderer != null)

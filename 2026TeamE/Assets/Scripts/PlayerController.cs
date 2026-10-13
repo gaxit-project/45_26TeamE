@@ -198,7 +198,6 @@ public class PlayerController : MonoBehaviour
         // これまではシーン再読込でSerializeFieldの初期値に戻るという副作用に頼っていたため、
         // 読み込み方や初期値の変更で簡単に壊れる状態だった。
         currentBattery = maxBattery;
-        Debug.Log($"[PlayerController] Start: バッテリーを {currentBattery} で初期化しました。");
 
         if (characterRenderers == null || characterRenderers.Length == 0)
         {
@@ -207,8 +206,6 @@ public class PlayerController : MonoBehaviour
                 .ToArray();
         }
 
-        
-        
         bool isLoading = SceneLoader.Instance != null && SceneLoader.Instance.IsLoading;
         if (!isLoading)
         {
@@ -494,7 +491,7 @@ public class PlayerController : MonoBehaviour
             }
 
             isJumpPressed = true;
-            
+
             if (isGround)
             {
                 rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
@@ -659,11 +656,10 @@ public class PlayerController : MonoBehaviour
         UpdateAnimation();
 
         animator.SetTrigger("Damage");
-        
+
         // 速度をゼロにして慣性で滑るのを防ぐ
         rb.linearVelocity = Vector3.zero;
 
-        // 指定されたお金アイコンを複数個ぽろっと落とす演出
         if (dropIcon != null)
         {
             int dropCount = 3; // 演出用に適当な数を散らす
@@ -673,16 +669,15 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 点滅処理をしながら待機 (1秒間)
         float duration = 1.0f;
         float elapsed = 0f;
-        
+
         while (elapsed < duration)
         {
             SetRenderersEnabled(false);
             yield return new WaitForSeconds(blinkInterval);
             elapsed += blinkInterval;
-            
+
             SetRenderersEnabled(true);
             yield return new WaitForSeconds(blinkInterval);
             elapsed += blinkInterval;
@@ -719,7 +714,6 @@ public class PlayerController : MonoBehaviour
         rb.AddForce(randomDirection * dropForce, ForceMode.Impulse);
         rb.AddTorque(new Vector3(Random.Range(-15f, 15f), 0f, 0f), ForceMode.Impulse);
 
-        // 画像表示用の子オブジェクト
         GameObject visualObj = new GameObject("Visual");
         visualObj.transform.SetParent(physicsObj.transform);
         visualObj.transform.localPosition = Vector3.zero;

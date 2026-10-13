@@ -62,7 +62,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    
     public void OpenSettingPanel()
     {
         settingCanvas.SetActive(true);
@@ -78,7 +77,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    
     public void CloseSettingPanel(bool playSound = true)
     {
         settingCanvas.SetActive(false);
@@ -88,7 +86,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    
     /// <summary>
     /// このモニタで実際に表示できる解像度だけを選択肢に残したもの。
     /// </summary>
@@ -153,14 +150,13 @@ public class SettingManager : MonoBehaviour
         return int.TryParse(parts[0].Trim(), out width) && int.TryParse(parts[1].Trim(), out height);
     }
 
-    
     public void InitFrameRateSettings()
     {
         framerateDropdown.ClearOptions();
-        
+
         List<string> labels = fpsOptions.Select(x => x.Label).ToList();
         framerateDropdown.AddOptions(labels);
-        
+
         int currentFPS = Application.targetFrameRate;
         int currentIndex = fpsOptions.FindIndex(x => x.Value == currentFPS);
 
@@ -168,7 +164,6 @@ public class SettingManager : MonoBehaviour
         framerateDropdown.RefreshShownValue();
     }
 
-    
     public void SetResolution(int index)
     {
         if (index < 0 || index >= availableResolutionOptions.Count) return;
@@ -179,7 +174,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    
     public void SetFrameRate(int index)
     {
         if(index < 0 || index >= fpsOptions.Count)
@@ -193,7 +187,6 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    
     public void SetScreenMode(int index)
     {
         Screen.fullScreenMode = (index == 0) ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;

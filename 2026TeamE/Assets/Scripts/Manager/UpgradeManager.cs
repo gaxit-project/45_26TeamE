@@ -10,14 +10,12 @@ public static class UpgradeManager
     public const string LIGHT = "Light";
     public const string JET = "Jet";
 
-    
     private static Dictionary<string, int> currentLevels = new Dictionary<string, int>();
 
-    
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void ResetUpgrades()
     {
-        
+
         currentLevels.Clear();
 
         PlayerPrefs.DeleteKey($"Upgrade_{DRILL}");
@@ -28,12 +26,8 @@ public static class UpgradeManager
         PlayerPrefs.DeleteKey($"Upgrade_{JET}");
         PlayerPrefs.Save();
 
-        Debug.Log("【UpgradeManager】ゲーム起動に伴い、すべての強化レベルを初期化しました。");
     }
 
-    
-    
-    
     public static int GetLevel(string itemName)
     {
         if (currentLevels.ContainsKey(itemName))
@@ -43,15 +37,11 @@ public static class UpgradeManager
         return 1; 
     }
 
-    
-    
-    
     public static void IncreaseLevel(string itemName)
     {
         int nextLevel = GetLevel(itemName) + 1;
         currentLevels[itemName] = nextLevel;
 
-        
         PlayerPrefs.SetInt($"Upgrade_{itemName}", nextLevel);
         PlayerPrefs.Save();
     }

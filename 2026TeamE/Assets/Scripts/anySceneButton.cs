@@ -36,15 +36,12 @@ public class anySceneButton : MonoBehaviour
             SoundManager.Instance.PlaySE(seCueName);
         }
 
-        
         yield return new WaitForSeconds(delay);
 
-        
         if (!string.IsNullOrEmpty(sceneName))
         {
             string targetScene = sceneName;
 
-            
             if (GoalJewelry.isGoalReached && UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Result")
             {
                 targetScene = "FinalResult";
@@ -67,4 +64,3 @@ public class anySceneButton : MonoBehaviour
         }
     }
 }
-

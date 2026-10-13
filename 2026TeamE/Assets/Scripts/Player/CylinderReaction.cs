@@ -20,7 +20,6 @@ public class CylinderReaction : BuriedItemBase, ICollectible
         return (visualEchoPrefab, marker);
     }
 
-    
     public void Collect()
     {
         if (isExposed)
@@ -34,13 +33,11 @@ public class CylinderReaction : BuriedItemBase, ICollectible
         if (isGot) return; 
         isGot = true;
 
-        
         if (currentMarker != null)
         {
             Destroy(currentMarker);
         }
 
-        
         if (TimerManager.Instance != null)
         {
             TimerManager.Instance.AddTime(timeBonus);

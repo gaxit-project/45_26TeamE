@@ -46,41 +46,27 @@ public class SceneLoader : MonoBehaviour
         }
     }
 
-    
-    
-    
     public void LoadScene(string sceneName)
     {
         LoadScene(sceneName, false);
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
     public void LoadScene(string sceneName, bool waitForStartInput)
     {
         if(loadingCanvas.activeSelf) return;
         StartCoroutine(LoadAsynchronously(sceneName, waitForStartInput));
     }
 
-    
     private IEnumerator LoadAsynchronously(string sceneName, bool waitForStartInput)
     {
         SoundManager.Instance?.StopBGM();
 
-        
-        
         IsLoading = true;
         Time.timeScale = 0f;
 
         try
         {
-            
+
             loadingCanvas.SetActive(true);
             float fadeTime = 0.5f;
             while (canvasGroup.alpha < 1)
@@ -89,14 +75,12 @@ public class SceneLoader : MonoBehaviour
                 yield return null;
             }
 
-            
             if (progressText != null)
             {
                 progressText.text = loadingMessage;
                 textWaveRoutine = StartCoroutine(AnimateLoadingText());
             }
 
-            
             float displayedProgress = 0f;
             AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
             operation.allowSceneActivation = false;
@@ -110,7 +94,6 @@ public class SceneLoader : MonoBehaviour
 
             yield return new WaitForSecondsRealtime(0.5f);
 
-            
             operation.allowSceneActivation = true;
 
             while (!operation.isDone)
@@ -118,27 +101,22 @@ public class SceneLoader : MonoBehaviour
                 yield return null;
             }
 
-            
             while (SceneInitializationGate.IsBusy)
             {
                 yield return null;
             }
 
-            
             if (textWaveRoutine != null)
             {
                 StopCoroutine(textWaveRoutine);
                 textWaveRoutine = null;
             }
 
-            
-            
             if (waitForStartInput)
             {
                 yield return WaitForStartInputRoutine();
             }
 
-            
             while (canvasGroup.alpha > 0)
             {
                 canvasGroup.alpha -= Time.unscaledDeltaTime / fadeTime;
@@ -150,15 +128,12 @@ public class SceneLoader : MonoBehaviour
         }
         finally
         {
-            
+
             Time.timeScale = 1f;
             IsLoading = false;
         }
     }
 
-    
-    
-    
     private IEnumerator WaitForStartInputRoutine()
     {
         if (progressText != null)
@@ -179,9 +154,6 @@ public class SceneLoader : MonoBehaviour
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
     }
 
-    
-    
-    
     private static bool IsStartPressed()
     {
         Keyboard keyboard = Keyboard.current;
@@ -204,28 +176,23 @@ public class SceneLoader : MonoBehaviour
         return false;
     }
 
-    
-    
-    
     private IEnumerator AnimateLoadingText()
     {
         while (true)
         {
-            
-            
+
             progressText.ForceMeshUpdate();
             TMP_TextInfo textInfo = progressText.textInfo;
             int characterCount = textInfo.characterCount;
 
             if (characterCount > 0 && secondsPerCharacter > 0f)
             {
-                
+
                 float cycleDuration = characterCount * secondsPerCharacter;
                 float cycleTime = Time.unscaledTime % cycleDuration;
                 int activeIndex = Mathf.Clamp(Mathf.FloorToInt(cycleTime / secondsPerCharacter), 0, characterCount - 1);
                 float t = (cycleTime - activeIndex * secondsPerCharacter) / secondsPerCharacter; 
 
-                
                 float bounce = Mathf.Sin(Mathf.Clamp01(t) * Mathf.PI) * bounceHeight;
 
                 for (int i = 0; i < characterCount; i++)

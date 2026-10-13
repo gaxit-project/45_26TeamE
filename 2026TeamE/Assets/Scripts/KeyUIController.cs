@@ -70,7 +70,7 @@ public class KeyUIController : MonoBehaviour
         Image flyImage = flyIcon.AddComponent<Image>();
         flyImage.sprite = targetImage.sprite;
         flyImage.raycastTarget = false;
-        
+
         RectTransform flyRect = flyIcon.GetComponent<RectTransform>();
         flyRect.sizeDelta = targetImage.rectTransform.rect.size;
 
@@ -136,7 +136,6 @@ public class KeyUIController : MonoBehaviour
                 {
                     keyImages[i].color = unlockedColor;
 
-                    
                     StartCoroutine(AnimateKeyGet(keyImages[i].rectTransform, collectedCount));
                 }
             }
@@ -195,7 +194,7 @@ public class KeyUIController : MonoBehaviour
 
     private bool isWarningActive = false;
     private Coroutine warningCoroutine;
-    
+
     public void SetWarningActive(bool active)
     {
         if (isWarningActive == active) return;

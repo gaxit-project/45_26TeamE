@@ -19,7 +19,6 @@ public class BatteryManager : MonoBehaviour
     private float stopConsumeTimer = 0f;
     private int previousTargetIndex = -1;
 
-    
     private List<Image> batteryImages = new List<Image>();
 
     void Start()
@@ -29,7 +28,6 @@ public class BatteryManager : MonoBehaviour
             previousBattery = playerController.currentBattery;
         }
 
-        
         foreach (GameObject obj in battery)
         {
             if (obj != null)
@@ -59,8 +57,7 @@ public class BatteryManager : MonoBehaviour
             }
 
             HandleBlinking(targetIndex);
-            
-            
+
             UpdateFillAmounts();
         }
         else
@@ -122,7 +119,6 @@ public class BatteryManager : MonoBehaviour
         battery[targetIndex].SetActive(isBlinkVisible);
     }
 
-    
     private void UpdateActiveStates()
     {
         for (int i = 0; i < 5; i++)
@@ -144,7 +140,6 @@ public class BatteryManager : MonoBehaviour
         UpdateActiveStates();
     }
 
-    
     private void UpdateFillAmounts()
     {
         float currentBat = playerController.currentBattery;
@@ -167,7 +162,7 @@ public class BatteryManager : MonoBehaviour
             }
             else
             {
-                
+
                 fill = (currentBat - segmentMin) / 200f;
             }
 

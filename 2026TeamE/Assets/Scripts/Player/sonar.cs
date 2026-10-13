@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 
-
 [RequireComponent(typeof(LineRenderer))]
 [RequireComponent(typeof(SphereCollider))]
 public class Sonar : MonoBehaviour
@@ -12,9 +11,8 @@ public class Sonar : MonoBehaviour
     public int sonarLV = 1;
     public int makertime = 10; 
 
-    
     public float holdTime = 0.3f;
-    
+
     private bool isHolding = false;
 
     private LineRenderer lineRenderer;
@@ -30,31 +28,26 @@ public class Sonar : MonoBehaviour
         sphereCollider.isTrigger = true;
         sphereCollider.radius = currentRadius;
 
-        Debug.Log("ソナー発射");
     }
 
     void Update()
     {
-        
+
         if (!isHolding)
         {
             currentRadius += expansionSpeed * Time.deltaTime;
 
-            
             if (currentRadius >= CurrentMaxSonarRadius)
             {
                 currentRadius = CurrentMaxSonarRadius;
                 isHolding = true;
 
-                
                 Destroy(gameObject, holdTime);
             }
         }
 
-        
         LineRendererCircleUtil.DrawCircle(lineRenderer, currentRadius, segments);
 
-        
         sphereCollider.radius = currentRadius;
     }
 
@@ -68,12 +61,4 @@ public class Sonar : MonoBehaviour
         }
     }
 
-    
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("jewelry"))
-        {
-            Debug.Log("宝石を検知しました！: " + other.gameObject.name);
-        }
-    }
 }

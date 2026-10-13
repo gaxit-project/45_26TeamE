@@ -56,7 +56,6 @@ public class BombReaction : BuriedItemBase
 
         player = FindObjectOfType<PlayerController>();
 
-        
         if (VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale))
         {
             Destroy(this);
@@ -76,7 +75,7 @@ public class BombReaction : BuriedItemBase
         if (player == null) return;
         if (Time.timeScale == 0f) return; // ポーズ中は強制的に振動をストップ
         if (!player.IsControlEnabled) return;
-        
+
         float distance = Vector3.Distance(transform.position, player.transform.position);
         if (distance <= vibrationWarningDistance)
         {
@@ -93,14 +92,12 @@ public class BombReaction : BuriedItemBase
 
     public void TriggerChainReaction()
     {
-        
+
         if (isChainReacting) return;
         isChainReacting = true;
 
-        
         expandSpeed *= 2f;
 
-        
         if (!isExposed)
         {
             isExposed = true;
@@ -110,13 +107,13 @@ public class BombReaction : BuriedItemBase
 
     protected override bool IsExposedCheck()
     {
-        
+
         return VoxelTerrain.Instance.IsJewelExposed(transform.position, transform.localScale);
     }
 
     protected override void OnExposed()
     {
-        
+
         if (currentMarker != null)
         {
             Destroy(currentMarker);
@@ -127,12 +124,11 @@ public class BombReaction : BuriedItemBase
 
     protected override void OnTriggerEnter(Collider other)
     {
-        
+
         if (isExploding) return;
         base.OnTriggerEnter(other);
     }
 
-    
     protected override (GameObject echoPrefab, GameObject markerPrefab) GetReactionPrefabs()
     {
         int sonarLV = UpgradeManager.GetLevel("Sonar");
@@ -153,11 +149,9 @@ public class BombReaction : BuriedItemBase
         {
             float angle = (float)i / circleSegments * Mathf.PI * 2f;
 
-            
             float y = Mathf.Sin(angle) * explosionRadius;
             float z = Mathf.Cos(angle) * explosionRadius;
 
-            
             rangeCircle.SetPosition(i, center + new Vector3(circleXOffset, y, z));
         }
     }
@@ -166,10 +160,8 @@ public class BombReaction : BuriedItemBase
     {
         isExploding = true;
 
-        
         DrawExplosionRangeCircle();
 
-        
         if (expandingCircle != null)
         {
             expandingCircle.gameObject.SetActive(true);
@@ -177,10 +169,8 @@ public class BombReaction : BuriedItemBase
             expandingCircle.positionCount = circleSegments + 1;
         }
 
-        
         Renderer[] renderers = GetComponentsInChildren<Renderer>();
 
-        
         Color[] origColors = new Color[renderers.Length];
         for (int i = 0; i < renderers.Length; i++)
         {
@@ -197,50 +187,43 @@ public class BombReaction : BuriedItemBase
 
         float elapsedTime = 0f;
 
-        
         while (true)
         {
-            
+
             float safeExpandSpeed = Mathf.Max(0.01f, expandSpeed);
             float calculatedTimeToExplode = explosionRadius / safeExpandSpeed;
 
-            
             if (elapsedTime >= calculatedTimeToExplode)
             {
                 break;
             }
 
-            
             float currentSpeed = Mathf.Lerp(5f, 20f, elapsedTime / calculatedTimeToExplode);
 
-            
             float pingPong = Mathf.PingPong(elapsedTime * currentSpeed, 1f);
 
             for (int i = 0; i < renderers.Length; i++)
             {
                 if (renderers[i] != null)
                 {
-                    
+
                     Color blinkColor = Color.Lerp(origColors[i], Color.red, pingPong);
 
-                    
                     if (renderers[i].material.HasProperty("_BaseColor"))
                         renderers[i].material.SetColor("_BaseColor", blinkColor);
                     else if (renderers[i].material.HasProperty("_Color"))
                         renderers[i].material.color = blinkColor;
 
-                    
                     renderers[i].material.EnableKeyword("_EMISSION");
                     renderers[i].material.SetColor("_EmissionColor", Color.red * pingPong * emissionIntensity);
                 }
             }
 
-            
             if (expandingCircle != null)
             {
-                
+
                 float t = elapsedTime / calculatedTimeToExplode;
-                
+
                 float currentExpandingRadius = Mathf.Lerp(0f, explosionRadius, t);
 
                 Vector3 center = transform.position;
@@ -251,7 +234,6 @@ public class BombReaction : BuriedItemBase
                     float y = Mathf.Sin(angle) * currentExpandingRadius;
                     float z = Mathf.Cos(angle) * currentExpandingRadius;
 
-                    
                     expandingCircle.SetPosition(i, center + new Vector3(circleXOffset, y, z));
                 }
             }
@@ -260,7 +242,6 @@ public class BombReaction : BuriedItemBase
             yield return null; 
         }
 
-        
         if (rangeCircle != null) rangeCircle.gameObject.SetActive(false);
         if (expandingCircle != null) expandingCircle.gameObject.SetActive(false);
 
@@ -272,33 +253,24 @@ public class BombReaction : BuriedItemBase
         // スコア用：爆弾が起爆した時点で加算
         FinalResultManager.AddTriggeredBomb();
 
-        
         if (VoxelTerrain.Instance != null)
         {
-            
+
             Vector3 centerPos = transform.position;
 
-            
-            
-            
-
-            
             Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(centerPos);
             int centerX = Mathf.RoundToInt(localPos.x / VoxelTerrain.Instance.BlockSize);
             int centerY = Mathf.RoundToInt(localPos.y / VoxelTerrain.Instance.BlockSize);
             int centerZ = Mathf.RoundToInt(localPos.z / VoxelTerrain.Instance.BlockSize);
 
-            
             float radiusInBlocks = explosionRadius / VoxelTerrain.Instance.BlockSize;
 
-            
             Vector3 minLimit = Vector3.zero;
             Vector3 maxLimit = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
             VoxelTerrain.Instance.ExecuteDig(centerX, centerY, centerZ, radiusInBlocks, minLimit, maxLimit, false);
         }
 
-        
         Vector2 bombPos2DForChain = new Vector2(transform.position.y, transform.position.z);
         Vector3 boxExtents = new Vector3(100f, explosionRadius + 2f, explosionRadius + 2f); 
         Collider[] hits = Physics.OverlapBox(transform.position, boxExtents);
@@ -315,7 +287,7 @@ public class BombReaction : BuriedItemBase
 
             if (distance <= explosionRadius + radius)
             {
-                
+
                 BombReaction otherBomb = obj.GetComponent<BombReaction>();
                 if (otherBomb != null)
                 {
@@ -323,7 +295,6 @@ public class BombReaction : BuriedItemBase
                     continue;
                 }
 
-                
                 JewelryReaction jewelScript = obj.GetComponent<JewelryReaction>();
                 if (jewelScript != null && !jewelScript.IsGot)
                 {
@@ -331,7 +302,6 @@ public class BombReaction : BuriedItemBase
                     continue;
                 }
 
-                
                 TreasureBoxBehaviour boxScript = obj.GetComponent<TreasureBoxBehaviour>();
                 if (boxScript != null && !boxScript.IsGot)
                 {
@@ -339,11 +309,10 @@ public class BombReaction : BuriedItemBase
                     continue;
                 }
 
-                
                 if (obj.CompareTag("Player"))
                 {
                     PlayerController pc = obj.GetComponent<PlayerController>();
-                    
+
                     if (MoneyManager.Instance != null)
                     {
                         int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
@@ -352,18 +321,12 @@ public class BombReaction : BuriedItemBase
                         if (actualPenalty > 0)
                         {
                             MoneyManager.Instance.MoneyOnHandDecrease(actualPenalty);
-                            Debug.Log($"[BombReaction] プレイヤーが爆発に巻き込まれました！ 換金予定のお金が {actualPenalty} 減りました。");
-                        }
-                        else
-                        {
-                            Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定のお金はすでに0です。");
                         }
                     }
 
                     if (TimerManager.Instance != null)
                     {
                         TimerManager.Instance.AddTime(-10f);
-                        Debug.Log("[BombReaction] 爆発により制限時間が10秒減少しました！");
                     }
 
                     if (pc != null)
@@ -374,30 +337,25 @@ public class BombReaction : BuriedItemBase
             }
         }
 
-        
         if (explosionEffectPrefab != null)
         {
             GameObject effect = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
 
-            
             float baseRadius = 8.0f;
             float scale = explosionRadius / baseRadius;
 
             effect.transform.localScale = new Vector3(scale, scale, scale);
         }
 
-        
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySE("Bomb_01");
         }
 
-        // 画面を大きく揺らして爆発の衝撃を伝える
         if (CameraController.Instance != null)
         {
             CameraController.Instance.AddShake(1f, 0.45f);
         }
-
 
         Destroy(gameObject);
     }

@@ -8,7 +8,6 @@ public class VisualEcho : MonoBehaviour
     public float maxRadius = 5.0f;       
     public int segments = 36;
 
-    
     public Color echoColor = Color.blue;
 
     private LineRenderer lineRenderer;
@@ -23,15 +22,11 @@ public class VisualEcho : MonoBehaviour
     {
         currentRadius += expansionSpeed * Time.deltaTime;
 
-        
-        
         float alpha = 1.0f - (currentRadius / maxRadius);
 
-        
         Color currentColor = echoColor;
         currentColor.a = alpha;
 
-        
         lineRenderer.startColor = currentColor;
         lineRenderer.endColor = currentColor;
 

@@ -186,10 +186,6 @@ public class DoorBehaviour : BuriedItemBase
 
     private void SetPlayerInRange(bool inRange)
     {
-        if (isPlayerInRange != inRange)
-        {
-            Debug.Log($"[Door] {name} 入場範囲: {(inRange ? "入った" : "出た")}（露出済み: {isExposed} / 破壊済み: {IsBroken}）");
-        }
         isPlayerInRange = inRange;
 
         if (VoxelTerrain.Instance != null)
@@ -218,7 +214,6 @@ public class DoorBehaviour : BuriedItemBase
     {
         if (!CanEnter)
         {
-            Debug.Log($"[Door] {name} には入れません（露出済み: {isExposed} / 破壊済み: {IsBroken}）");
             return false;
         }
         if (VoxelTerrain.Instance == null) return false;

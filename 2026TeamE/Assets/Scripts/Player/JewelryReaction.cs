@@ -24,7 +24,6 @@ public class JewelryReaction : BuriedItemBase, ICollectible
         return (visualEchoPrefab, marker);
     }
 
-    
     public void Collect()
     {
         if (!isExposed || isGot) return;

@@ -26,7 +26,6 @@ public class SoundManager : MonoBehaviour
     [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
     [Range(0f, 1f)][SerializeField] private float defaultSESlider = 0.5f;
 
-    
     private float bgmSliderValue;
     private float seSliderValue;
 
@@ -37,7 +36,6 @@ public class SoundManager : MonoBehaviour
     private const string BGM_VOLUME_SAVE_KEY = "SavedBGMSliderValue";
     private const string SE_VOLUME_SAVE_KEY = "SavedSESliderValue";
 
-    
     void Awake()
     {
         if (Instance == null)
@@ -48,7 +46,6 @@ public class SoundManager : MonoBehaviour
             if (bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
             if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
 
-            
             bgmSliderValue = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMSlider);
             seSliderValue = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSESlider);
 
@@ -66,17 +63,11 @@ public class SoundManager : MonoBehaviour
         InitSlider();
     }
 
-    
-    
-    
     private void ApplyBGMVolume()
     {
         if (bgmSource != null) bgmSource.volume = bgmSliderValue * maxBGMVolume;
     }
 
-    
-    
-    
     private void ApplySEVolume()
     {
         float volume = seSliderValue * maxSEVolume;
@@ -108,7 +99,6 @@ public class SoundManager : MonoBehaviour
         isInitializing = false;
     }
 
-    
     public void PlayBGM(string cueName)
     {
         bgmSource.Stop();
@@ -116,13 +106,11 @@ public class SoundManager : MonoBehaviour
         bgmSource.Play();
     }
 
-    
     public void StopBGM()
     {
         bgmSource.Stop();
     }
 
-    
     public void PlaySE(string cueName)
     {
         seSource.Play(cueName);
@@ -153,13 +141,11 @@ public class SoundManager : MonoBehaviour
         currentLoopCueName = "";
     }
 
-    
     public void StopSE()
     {
         seSource.Stop();
     }
 
-    
     public void SetBGMVolume(float sliderValue)
     {
         if (isInitializing) return;
@@ -171,7 +157,6 @@ public class SoundManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    
     public void SetSEVolume(float sliderValue)
     {
         if (isInitializing) return;
@@ -189,19 +174,16 @@ public class SoundManager : MonoBehaviour
         seSource.Play(cueName);
     }
 
-    
     public float GetBGMVolume()
     {
         return bgmSource != null ? bgmSource.volume : 0f;
     }
 
-    
     public float GetSEVolume()
     {
         return seSource != null ? seSource.volume : 0f;
     }
 
-    
     public bool IsSEPlaying()
     {
         return seSource.status == CriAtomSourceBase.Status.Playing;

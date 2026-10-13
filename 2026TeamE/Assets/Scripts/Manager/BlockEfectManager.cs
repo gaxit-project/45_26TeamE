@@ -25,7 +25,6 @@ public class BlockEffectManager : MonoBehaviour
     {
         Instance = this;
 
-        
         DisableAutoEmission(dirtParticle);
         DisableAutoEmission(oreParticle);
         DisableAutoEmission(stoneParticle);
@@ -66,7 +65,7 @@ public class BlockEffectManager : MonoBehaviour
 
         // X座標を固定せず、ブロックの実際の座標からパーティクルを出す
         targetParticle.transform.position = worldPosition;
-        
+
         targetParticle.Emit(1); // パーティクルの数を減らす（元は particlesPerBlock (3) など）
     }
 }

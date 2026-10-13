@@ -6,14 +6,13 @@ using UnityEngine.EventSystems;
 
 public class PoseManager : MonoBehaviour
 {
-    
+
     [Header("ポーズメニュー")]
     [SerializeField] private GameObject pauseMenu;
 
     [Header("最初にフォーカスするボタン（コントローラー用）")]
     [SerializeField] private GameObject firstSelectedButton;
 
-    
     public bool IsPaused => (pauseMenu != null && pauseMenu.activeSelf) || (ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen);
 
     private float inputBlockEndTime = 0f;
@@ -52,7 +51,6 @@ public class PoseManager : MonoBehaviour
         }
         pauseMenu.SetActive(true); 
 
-        
         if (firstSelectedButton != null && EventSystem.current != null)
         {
             EventSystem.current.SetSelectedGameObject(null);
@@ -68,7 +66,6 @@ public class PoseManager : MonoBehaviour
         inputBlockEndTime = Time.unscaledTime + 0.1f; 
     }
 
-    
     public void ReturnToTitle()
     {
         StartCoroutine(ReturnToTitleCoroutine());
@@ -82,11 +79,9 @@ public class PoseManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.1f);
         Time.timeScale = 1f; 
 
-        
         SceneManager.LoadScene("01_Title"); 
     }
 
-    
     public void GoToResult()
     {
         StartCoroutine(GoToResultCoroutine());
@@ -96,7 +91,6 @@ public class PoseManager : MonoBehaviour
     {
         IsTransitioning = true; 
 
-        
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlaySE("つるはしで掘る1");
@@ -107,7 +101,7 @@ public class PoseManager : MonoBehaviour
         Time.timeScale = 1f; 
 
         SceneManager.LoadScene("Money Exchange"); 
-        
+
     }
 
     public void QuitGame()

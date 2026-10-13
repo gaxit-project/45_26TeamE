@@ -24,7 +24,6 @@ public static class RankingManager
 
     public static void SaveScore(int score)
     {
-        // 0点以下の場合はランキングに登録しない
         if (score <= 0)
         {
             CurrentRunId = null;
@@ -41,11 +40,9 @@ public static class RankingManager
 
         RankingData data = LoadRankingData();
         data.entries.Add(newEntry);
-        
-        // 降順にソート（スコアが高い順）
+
         data.entries.Sort((a, b) => b.score.CompareTo(a.score));
 
-        // 上位5件に絞る
         if (data.entries.Count > MAX_RANKING_COUNT)
         {
             data.entries.RemoveRange(MAX_RANKING_COUNT, data.entries.Count - MAX_RANKING_COUNT);

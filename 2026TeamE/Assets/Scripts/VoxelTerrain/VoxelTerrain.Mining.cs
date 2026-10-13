@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public partial class VoxelTerrain
 {
     public void EmitParticlesInArea(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
@@ -27,12 +26,12 @@ public partial class VoxelTerrain
                     if (!emittedForThisCell && BlockEffectManager.Instance != null)
                     {
                         Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
-                        
+
                         if (currentBlock == (byte)BlockType.Dirt) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
                         else if (currentBlock == (byte)BlockType.Ore) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Ore);
                         else if (currentBlock == (byte)BlockType.Stone) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
                         else if (currentBlock == (byte)BlockType.HardRock) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
-                        
+
                         emittedForThisCell = true;
                     }
                 }
@@ -154,7 +153,17 @@ public partial class VoxelTerrain
                 for (int x = 0; x < thicknessX; x++)
                 {
                     if (!IsInside(x, y, z)) continue;
-                    if (IsDiggable(mapData[x, y, z])) return true;
+
+                    // 配置用の IsDiggable ではなく ExecuteDig と同じ基準で見る。
+                    // Quartzite はアイテムを埋める対象からは外しているが、
+                    // ドリルでは壊せるので「掘っている最中」として扱う必要がある。
+                    byte block = mapData[x, y, z];
+                    if (block != (byte)BlockType.Air
+                        && block != (byte)BlockType.Bedrock
+                        && block != (byte)BlockType.Boundary)
+                    {
+                        return true;
+                    }
                 }
             }
         }

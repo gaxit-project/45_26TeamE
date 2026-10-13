@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 [System.Serializable]
 public class ZoneData
 {
@@ -20,7 +19,6 @@ public class ZoneData
     [Tooltip("trueにすると、このゾーンは扉・爆弾・通常アイテムを一切生成せず、中央にゴールのお宝だけを最初から取得可能な状態で配置する")]
     public bool isGoalZone = false;
 }
-
 
 public partial class VoxelTerrain : MonoBehaviour
 {
@@ -138,7 +136,6 @@ public partial class VoxelTerrain : MonoBehaviour
     [Header("硬度設定")]
     [SerializeField] private float hardnessScale = 0.5f;
 
-    
     private Chunk[] chunks;
     private HashSet<int> chunksToUpdate = new HashSet<int>();
     private List<GameObject> spawnedTreasures = new List<GameObject>();
@@ -154,13 +151,8 @@ public partial class VoxelTerrain : MonoBehaviour
     public int ChunkSizeY => chunkSizeY;
     public bool IsStageGenerated => mapData != null;
 
-    
-    
-    
-    
     public bool IsGenerating { get; private set; }
 
-    
     public event Action<int, int, byte> OnBlockChanged;
     public event Action<int, int> OnBlocksDestroyedByPlayer;
 
@@ -185,6 +177,25 @@ public partial class VoxelTerrain : MonoBehaviour
     private void OnDisable()
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// 生成中に破棄された場合でも、ローディングの待ち合わせを必ず解除する。
+    /// </summary>
+    /// <remarks>
+    /// CreateStageRoutine は try/finally で SceneInitializationGate を解除しているが、
+    /// コルーチンの途中で GameObject が破棄されると finally は実行されない。
+    /// 解除されないまま残ると、次回のロードが永久に完了待ちになり進行不能になる。
+    /// </remarks>
+    private void OnDestroy()
+    {
+        if (IsGenerating)
+        {
+            IsGenerating = false;
+            SceneInitializationGate.End();
+        }
+
+        if (Instance == this) Instance = null;
     }
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)

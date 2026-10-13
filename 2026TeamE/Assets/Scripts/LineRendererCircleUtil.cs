@@ -1,9 +1,5 @@
 ﻿using UnityEngine;
 
-
-
-
-
 public static class LineRendererCircleUtil
 {
     public static void DrawCircle(LineRenderer lineRenderer, float radius, int segments, float xOffset = 5f)

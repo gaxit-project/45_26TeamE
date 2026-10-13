@@ -92,7 +92,7 @@ public partial class VoxelTerrain
             return new System.Random(LastUsedSeed);
         }
     }
-    
+
     private Vector3Int CalculateStartPoint()
     {
         return new Vector3Int(0, heightY - startDepthFromSurface, maxStageWidthZ / 2);

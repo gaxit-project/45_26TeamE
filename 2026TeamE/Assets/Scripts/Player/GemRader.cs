@@ -24,7 +24,7 @@ public class GemRadar : MonoBehaviour
     [Tooltip("ここに入力した数値を基準にして、レベルに応じて自動で掛け算・割り算されます")]
     public float baseMaxDistance = 15f; 
     public float baseWaveAngle = 45f;   
-    
+
     [Header("距離による波の高さ（Amplitude）")]
     public float minAmplitude = 0.3f;   
     public float maxAmplitude = 2.0f;   
@@ -54,11 +54,10 @@ public class GemRadar : MonoBehaviour
         lineRenderer.positionCount = segments + 1;
         linePositions = new Vector3[segments + 1];
         lineRenderer.useWorldSpace = true;
-        
+
         lineRenderer.startWidth = 0.05f;
         lineRenderer.endWidth = 0.05f;
 
-        
         int bombLayer = LayerMask.NameToLayer("Bomb");
         if (bombLayer != -1)
         {
@@ -100,7 +99,7 @@ public class GemRadar : MonoBehaviour
 
             if (mode == RadarMode.Directional)
             {
-                
+
                 float maxInfluence = 0f;
                 float finalWave = 0f;
 
@@ -121,14 +120,13 @@ public class GemRadar : MonoBehaviour
                     float currentWaveAmplitude = Mathf.Lerp(minAmplitude, maxAmplitude, t);
 
                     float angleDiff = Mathf.Abs(Mathf.DeltaAngle(angle * Mathf.Rad2Deg, targetAngle * Mathf.Rad2Deg));
-                    
+
                     if (angleDiff < currentMaxAngle)
                     {
-                        
+
                         float falloff = 1f - (angleDiff / currentMaxAngle);
                         float influence = currentWaveAmplitude * falloff;
 
-                        
                         if (influence > maxInfluence)
                         {
                             maxInfluence = influence;

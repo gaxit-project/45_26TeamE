@@ -27,7 +27,6 @@ public class TitleManager : MonoBehaviour
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
 
-        
         if (SettingManager.Instance != null)
         {
             var buttons = SettingManager.Instance.GetComponentsInChildren<UnityEngine.UI.Button>(true);
@@ -44,7 +43,7 @@ public class TitleManager : MonoBehaviour
 
     private void ResetGameState()
     {
-        
+
         ResetManager.ResetAll();
     }
 
@@ -97,7 +96,6 @@ public class TitleManager : MonoBehaviour
         }
     }
 
-    
     private void PushToStart()
     {
         isWaitingInput = false;
@@ -116,35 +114,29 @@ public class TitleManager : MonoBehaviour
         SelectFirstButton();
     }
 
-    
     private void SelectFirstButton()
     {
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    
     public void OpenOptionPanel()
     {
         SettingManager.Instance?.OpenSettingPanel();
     }
 
-    
     public void CloseOptionPanel()
     {
         SettingManager.Instance?.CloseSettingPanel();
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    
     public void StartGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
 
-        
         SceneLoader.Instance.LoadScene("02_Main", true);
     }
 
-    
     public void QuitGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");

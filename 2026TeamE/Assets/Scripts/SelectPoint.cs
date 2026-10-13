@@ -76,7 +76,6 @@ public class SelectPoint : MonoBehaviour
     {
         if (VoxelTerrain.Instance == null) return;
 
-        // UIの表示状態を毎フレーム更新（扉の範囲内にいるかどうか）
         if (actionPromptUI != null)
         {
             bool canEnter = !isTransitioning && VoxelTerrain.Instance.CurrentDoorInRange != null;
@@ -86,7 +85,6 @@ public class SelectPoint : MonoBehaviour
             }
         }
 
-        // ボタンの入力判定
         if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
 
         if (isTransitioning)
@@ -95,7 +93,6 @@ public class SelectPoint : MonoBehaviour
             return;
         }
 
-        // 扉に入れたときの処理
         if (VoxelTerrain.Instance.TryEnterDoorInRange())
         {
             if (actionPromptUI != null) actionPromptUI.SetActive(false);
@@ -148,7 +145,6 @@ public class SelectPoint : MonoBehaviour
         if (TimerManager.Instance != null)
         {
             FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
-            Debug.Log($"[スコア] リザルトへ帰還。残り酸素（時間）: {TimerManager.Instance.TotalTime} を記録しました。");
         }
 
         SceneManager.LoadScene(resultSceneName);

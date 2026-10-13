@@ -23,7 +23,6 @@ public class UICursor : MonoBehaviour
     [Header("キャンセルボタンでフォーカスするもの")]
     [SerializeField] public GameObject cancel;
 
-
     private bool cancelPending = false;
     private int cancelDelayFrames = 0;
 
@@ -38,16 +37,14 @@ public class UICursor : MonoBehaviour
 
     void Update()
     {
-        
+
         if (!cancelPending && cancel != null)
         {
             bool cancelPressed = false;
 
-            
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 cancelPressed = true;
 
-            
             if (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame)
                 cancelPressed = true;
 
@@ -58,7 +55,6 @@ public class UICursor : MonoBehaviour
             }
         }
 
-        
         GameObject selected = EventSystem.current.currentSelectedGameObject;
 
         if (selected == null || cursor == null)
@@ -76,38 +72,34 @@ public class UICursor : MonoBehaviour
 
         Transform target = selected.transform;
 
-        
         Vector3 newPos = cursor.transform.position;
         newPos.x = Mathf.Lerp(newPos.x, target.position.x, Time.unscaledDeltaTime * scrollSpeed);
         newPos.y = Mathf.Lerp(newPos.y, target.position.y, Time.unscaledDeltaTime * scrollSpeed);
         cursor.transform.position = newPos;
 
-        
         if (autoResize && cursorRect != null)
         {
             RectTransform targetRect = lastSelectedRect;
             if (targetRect != null)
             {
-                
+
                 Vector2 targetSize = targetRect.rect.size;
-                
+
                 if (cursorRect.parent != null)
                 {
-                    
+
                     float relativeScaleX = targetRect.lossyScale.x / cursorRect.parent.lossyScale.x;
                     float relativeScaleY = targetRect.lossyScale.y / cursorRect.parent.lossyScale.y;
                     targetSize = new Vector2(targetRect.rect.width * relativeScaleX, targetRect.rect.height * relativeScaleY);
                 }
                 else
                 {
-                    
+
                     targetSize = new Vector2(targetRect.rect.width * targetRect.localScale.x, targetRect.rect.height * targetRect.localScale.y);
                 }
 
-                
                 targetSize += sizePadding;
-                
-                
+
                 cursorRect.sizeDelta = Vector2.Lerp(cursorRect.sizeDelta, targetSize, Time.unscaledDeltaTime * scrollSpeed);
             }
         }
@@ -115,7 +107,7 @@ public class UICursor : MonoBehaviour
 
     void LateUpdate()
     {
-        
+
         if (cancelPending)
         {
             cancelDelayFrames--;
@@ -126,15 +118,11 @@ public class UICursor : MonoBehaviour
                 {
                     EventSystem.current.SetSelectedGameObject(null);
                     EventSystem.current.SetSelectedGameObject(cancel);
-                    Debug.Log($"[UICursor] キャンセル入力: {cancel.name} にフォーカスを移動しました");
                 }
             }
         }
     }
 
-    
-    
-    
     public void OnCancel(InputAction.CallbackContext context)
     {
         if (context.performed && cancel != null && !cancelPending)

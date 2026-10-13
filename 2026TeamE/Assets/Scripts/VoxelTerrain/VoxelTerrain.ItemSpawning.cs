@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
 public partial class VoxelTerrain
 {
 
@@ -13,12 +12,6 @@ public partial class VoxelTerrain
         SpawnItemType.GoldLeatherBag,
     };
 
-    
-
-    
-    
-    
-    
     private IEnumerator BuildChunksRoutine(FrameBudget budget)
     {
         foreach (Transform child in transform)
@@ -54,11 +47,6 @@ public partial class VoxelTerrain
         return chunk;
     }
 
-    
-
-    
-    
-    
     private void SpawnZoneItems(System.Random rnd)
     {
         int zoneTopY = heightY;
@@ -74,7 +62,7 @@ public partial class VoxelTerrain
 
             if (zoneSettings[zoneIndex].isGoalZone)
             {
-                
+
                 SpawnGoalTreasure(zoneIndex, zoneBottomY, zoneTopY);
             }
             else
@@ -86,9 +74,6 @@ public partial class VoxelTerrain
         }
     }
 
-    
-    
-    
     private void SpawnItemsInZone(int zoneIndex, int bottomY, int topY, System.Random rnd)
     {
         List<Vector3Int> candidates = CollectDiggablePositions(bottomY, topY);
@@ -96,15 +81,13 @@ public partial class VoxelTerrain
 
         Shuffle(candidates, rnd);
 
-        
         List<SpawnItemType> treasureSequence = BuildTreasureSequence(zoneIndex, rnd);
         List<Vector3Int> treasureCoords = new List<Vector3Int>();
         List<Vector3Int> rejectedForTreasure = new List<Vector3Int>();
 
         int sequenceIndex = 0;
         int candidateIndex = 0;
-        
-        
+
         while (sequenceIndex < treasureSequence.Count && candidateIndex < candidates.Count)
         {
             Vector3Int candidate = candidates[candidateIndex++];
@@ -131,7 +114,6 @@ public partial class VoxelTerrain
             }
         }
 
-        
         int rejectedIndex = 0;
         if (sequenceIndex < treasureSequence.Count)
         {
@@ -147,19 +129,14 @@ public partial class VoxelTerrain
         }
 
         int bombCount = Mathf.Max(0, zoneSettings[zoneIndex].bombCount);
-        
-        
+
         List<Vector3Int> remainingCandidates = new List<Vector3Int>();
         for (int i = rejectedIndex; i < rejectedForTreasure.Count; i++) remainingCandidates.Add(rejectedForTreasure[i]);
         for (int i = candidateIndex; i < candidates.Count; i++) remainingCandidates.Add(candidates[i]);
-        
+
         SpawnSmartBombs(zoneIndex, bombCount, remainingCandidates, treasureCoords, rnd);
     }
 
-    
-    
-    
-    
     private List<SpawnItemType> BuildTreasureSequence(int zoneIndex, System.Random rnd)
     {
         var sequence = new List<SpawnItemType>();
@@ -173,9 +150,6 @@ public partial class VoxelTerrain
         return sequence;
     }
 
-    
-    
-    
     private List<Vector3Int> CollectDiggablePositions(int bottomY, int topY)
     {
         var positions = new List<Vector3Int>();
@@ -199,7 +173,10 @@ public partial class VoxelTerrain
         return positions;
     }
 
-    
+    /// <summary>
+    /// アイテムや扉を埋め込んでよいブロックか。
+    /// Quartzite は硬すぎるため、意図的に配置対象から外している。
+    /// </summary>
     private static bool IsDiggable(byte block)
     {
         return block == (byte)BlockType.Dirt
@@ -208,7 +185,6 @@ public partial class VoxelTerrain
             || block == (byte)BlockType.HardRock;
     }
 
-    
     private static void Shuffle(List<Vector3Int> items, System.Random rnd)
     {
         for (int i = items.Count - 1; i > 0; i--)
@@ -221,10 +197,6 @@ public partial class VoxelTerrain
         }
     }
 
-    
-    
-    
-    
     private void SpawnGoalTreasure(int zoneIndex, int bottomY, int topY)
     {
         if (goalTreasurePrefab == null) return;
@@ -289,9 +261,6 @@ public partial class VoxelTerrain
         }
     }
 
-
-
-
     private void SpawnSmartBombs(int zoneIndex, int bombCount, List<Vector3Int> candidates, List<Vector3Int> treasureCoords, System.Random rnd)
     {
         if (candidates.Count == 0 || bombCount <= 0) return;
@@ -302,7 +271,6 @@ public partial class VoxelTerrain
 
         float safeDistSq = bombSafeDistanceFromTreasure * bombSafeDistanceFromTreasure;
 
-        
         foreach (var coord in candidates)
         {
             float minTreasureDistSq = float.MaxValue;
@@ -320,7 +288,7 @@ public partial class VoxelTerrain
 
             float minDist = treasureCoords.Count == 0 ? 0 : Mathf.Sqrt(minTreasureDistSq);
             float weight = Mathf.Max(1f, 100f - (minDist * bombWeightFalloff));
-            
+
             validCandidates.Add(coord);
             weights.Add(weight);
             totalWeight += weight;
@@ -338,10 +306,9 @@ public partial class VoxelTerrain
         {
             if (validCandidates.Count == 0 || totalWeight <= 0) break;
 
-            
             float roll = (float)(rnd.NextDouble() * totalWeight);
             int selectedIndex = -1;
-            
+
             for (int w = 0; w < weights.Count; w++)
             {
                 if (roll < weights[w])
@@ -356,14 +323,13 @@ public partial class VoxelTerrain
             Vector3Int selectedCoord = validCandidates[selectedIndex];
             SpawnItemAt(SpawnItemType.Bomb, selectedCoord, zoneIndex);
             spawnedBombCoords.Add(selectedCoord);
-            
-            
+
             totalWeight -= weights[selectedIndex];
-            
+
             int lastIndex = validCandidates.Count - 1;
             validCandidates[selectedIndex] = validCandidates[lastIndex];
             weights[selectedIndex] = weights[lastIndex];
-            
+
             validCandidates.RemoveAt(lastIndex);
             weights.RemoveAt(lastIndex);
         }

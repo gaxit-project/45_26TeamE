@@ -1,11 +1,8 @@
 ﻿using UnityEngine;
 
-
 public partial class VoxelTerrain
 {
-    
-    
-    
+
     public int GetTotalHeight()
     {
         int total = 0;
@@ -16,9 +13,6 @@ public partial class VoxelTerrain
         return total;
     }
 
-    
-    
-    
     public int GetRelayID(int y)
     {
         int currentY = heightY;
@@ -37,9 +31,6 @@ public partial class VoxelTerrain
         return zoneSettings.Count - 1;
     }
 
-    
-    
-    
     public bool IsInside(int x, int y, int z)
     {
         if (x < 0 || x >= thicknessX) return false;
@@ -57,9 +48,6 @@ public partial class VoxelTerrain
         return (z >= minZ && z <= maxZ);
     }
 
-    
-    
-    
     public int GetZoneBottomY(int zoneIndex)
     {
         int currentY = heightY;

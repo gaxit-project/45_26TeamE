@@ -45,7 +45,6 @@ public class LandingImpact : MonoBehaviour
     private PlayerController player;
     private float controlEnabledTime = -1f;
 
-    // 1フレーム前の落下速度（下向きを正とする）
     private float previousFallSpeed;
     private float lastImpactTime = -999f;
 

@@ -96,7 +96,7 @@ public class DrillTip : MonoBehaviour
 
     private void LateUpdate()
     {
-        
+
         if (myCollider != null)
         {
             Vector3 worldCenter = transform.TransformPoint(initialLocalCenter);

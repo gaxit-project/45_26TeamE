@@ -11,7 +11,7 @@ public class ZoneGemUI : MonoBehaviour
     void Start()
     {
         zoneText = GetComponent<TextMeshProUGUI>();
-        
+
         GameObject p = GameObject.FindWithTag("Player");
         if (p != null) 
         {
@@ -29,7 +29,7 @@ public class ZoneGemUI : MonoBehaviour
         int py = Mathf.FloorToInt(localPos.y / VoxelTerrain.Instance.BlockSize);
 
         long maxZoneValue = VoxelTerrain.Instance.GetZoneInitialGemValue(py);
-        
+
         LastMaxZoneValue = maxZoneValue;
 
         if (maxZoneValue != lastDisplayedZoneValue)
