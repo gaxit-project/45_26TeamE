@@ -1677,7 +1677,7 @@ MonoBehaviour:
   hardRockMaterial: {fileID: 2100000, guid: 0da0cccadecc8664e9e0f15f08c865ad, type: 2}
   quartziteMaterial: {fileID: 2100000, guid: ec369b4f4ee394849b4908482b1af5e0, type: 2}
   boundaryMaterial: {fileID: 2100000, guid: 5ef98792087ef3a42b0cfec965c6d420, type: 2}
-  useDeterministicSeed: 1
+  useDeterministicSeed: 0
   seed: 2026
   chunkSizeY: 20
   chunkPrefab: {fileID: 2722640725817335705, guid: cac37e0f2bcf26541b33190f5e1e9d65, type: 3}
@@ -1692,6 +1692,7 @@ MonoBehaviour:
   GoldleatherBagPrefab: {fileID: 1077105864719006209, guid: f04b00a4b56508c428f2932430ef9b92, type: 3}
   doorPrefab: {fileID: 6655166574114585840, guid: 881e5c9afa4f9f04e9e5d9def2a40eed, type: 3}
   doorEdgeMarginZ: 8
+  doorBurialMargin: 3
   chunksPerDoor: 8
   doorBandChunks: 5
   allowDoorsInGoalZone: 1

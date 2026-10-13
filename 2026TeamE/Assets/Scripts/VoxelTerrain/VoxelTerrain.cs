@@ -120,6 +120,8 @@ public partial class VoxelTerrain : MonoBehaviour
     [SerializeField] private GameObject doorPrefab;
     [Tooltip("扉をステージ左右の端から離す余白（ブロック数）。端に寄りすぎると壁に食い込んで見えるため。")]
     [SerializeField] private int doorEdgeMarginZ = 8;
+    [Tooltip("扉の周囲に必要な土の厚み（ブロック数）。扉が空洞に面して半分露出するのを防ぎます。")]
+    [SerializeField] private int doorBurialMargin = 3;
     [Tooltip("扉を1つ置く深さの間隔（チャンク数）。15なら15チャンク掘るごとに扉が1つ現れる。")]
     [SerializeField] private int chunksPerDoor = 15;
     [Tooltip("1単位の中で扉が出る範囲を、単位の最深部から何チャンク分にするか")]

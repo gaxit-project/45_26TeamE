@@ -176,8 +176,14 @@ public partial class VoxelTerrain
     }
 
     /// <summary>
-    /// 扉を置ける座標を集める。掘れるブロックのうち、ステージ左右の端から余白を取った位置のみ。
+    /// 扉を置ける座標を集める。
+    /// ステージ左右の端から余白を取ったうえで、周囲が完全に土で埋まっている位置のみを候補にする。
     /// </summary>
+    /// <remarks>
+    /// 掘れるブロックを1つ調べるだけでは、その隣が空洞（孤立ブロック除去の穴、層の境目の崖、
+    /// 開始地点の空洞など）の場合に扉が半分露出した状態で生成されてしまう。
+    /// 奥行き（X）は、カメラから見て手前の層に穴が空いていると扉が透けて見えるため、全層を調べる。
+    /// </remarks>
     private List<Vector3Int> CollectDoorCandidates(int bottomY, int topY)
     {
         var positions = new List<Vector3Int>();
@@ -185,6 +191,9 @@ public partial class VoxelTerrain
         int minY = Mathf.Max(0, bottomY);
         int maxY = Mathf.Min(heightY - 1, topY - 1);
         int centerZ = maxStageWidthZ / 2;
+
+        // 扉は常に地形の中央の層に置き、奥行きの埋まり具合を揃える。
+        int doorX = thicknessX / 2;
 
         for (int y = minY; y <= maxY; y++)
         {
@@ -197,19 +206,40 @@ public partial class VoxelTerrain
             int maxZ = centerZ + halfWidth - doorEdgeMarginZ;
             if (minZ > maxZ) continue;
 
-            for (int x = 0; x < thicknessX; x++)
+            for (int z = minZ; z <= maxZ; z++)
             {
-                for (int z = minZ; z <= maxZ; z++)
-                {
-                    if (!IsInside(x, y, z)) continue;
-                    if (!IsDiggable(mapData[x, y, z])) continue;
+                if (!IsFullyBuried(doorX, y, z)) continue;
 
-                    positions.Add(new Vector3Int(x, y, z));
-                }
+                positions.Add(new Vector3Int(doorX, y, z));
             }
         }
 
         return positions;
+    }
+
+    /// <summary>
+    /// 指定位置の周囲が、扉を隠せるだけの土で満たされているか。
+    /// </summary>
+    private bool IsFullyBuried(int centerX, int centerY, int centerZ)
+    {
+        int margin = Mathf.Max(0, doorBurialMargin);
+
+        for (int y = centerY - margin; y <= centerY + margin; y++)
+        {
+            for (int z = centerZ - margin; z <= centerZ + margin; z++)
+            {
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    // ステージの外に面している＝崖や壁際なので、扉がはみ出して見える
+                    if (!IsInside(x, y, z)) return false;
+
+                    // 空気・岩盤・境界壁はいずれも扉を埋められない
+                    if (!IsDiggable(mapData[x, y, z])) return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private void SpawnDoorAt(Vector3Int coord)

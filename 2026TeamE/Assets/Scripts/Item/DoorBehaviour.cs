@@ -16,7 +16,10 @@ using UnityEngine;
 public class DoorBehaviour : BuriedItemBase
 {
     [Header("露出判定の厳しさ")]
-    [Tooltip("このサイズが大きいほど、より周りを広く掘らないと入場可能になりません")]
+    [Tooltip("オンにすると、扉の周囲を広く掘らないと入場できません。" +
+             "細いトンネルで辿り着いた時に入場できなくなるため、通常はオフを推奨します。")]
+    [SerializeField] private bool requireWideExposure = false;
+    [Tooltip("requireWideExposure がオンの時に使う判定範囲。大きいほど広く掘る必要があります。")]
     [SerializeField] private Vector3 exposureSize = new Vector3(1, 3, 3);
 
     [Header("見た目の切り替え")]
@@ -158,10 +161,21 @@ public class DoorBehaviour : BuriedItemBase
         return (null, null);
     }
 
+    /// <summary>
+    /// 扉が掘り出されたかを判定する。
+    /// </summary>
+    /// <remarks>
+    /// 宝箱と同じ広い判定（exposureSize）を使うと、扉を中心とした5×5ブロックすべてが
+    /// 空気である必要があり、細いトンネルで辿り着いた場合に永久に入場できなくなる。
+    /// 既定では「扉のいる場所とその上下左右が空いていれば掘り出せた」とみなす。
+    /// </remarks>
     protected override bool IsExposedCheck()
     {
         if (VoxelTerrain.Instance == null) return false;
-        return VoxelTerrain.Instance.IsJewelExposed(transform.position, exposureSize);
+
+        return requireWideExposure
+            ? VoxelTerrain.Instance.IsJewelExposed(transform.position, exposureSize)
+            : VoxelTerrain.Instance.IsJewelExposed(transform.position);
     }
 
     private void OnDisable()
