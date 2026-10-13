@@ -1693,7 +1693,7 @@ MonoBehaviour:
   doorPrefab: {fileID: 6655166574114585840, guid: 881e5c9afa4f9f04e9e5d9def2a40eed, type: 3}
   doorEdgeMarginZ: 8
   doorBurialMargin: 3
-  chunksPerDoor: 8
+  chunksPerDoor: 6
   doorBandChunks: 5
   allowDoorsInGoalZone: 1
   goalTreasurePrefab: {fileID: 1077105864719006209, guid: b4772b1639a0c7c4987021315b83b0ff, type: 3}
@@ -7693,7 +7693,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimerManager
   timerText: {fileID: 976448632}
-  totalTime: 180
+  totalTime: 120
   canvasAnimator: {fileID: 1249234868}
   PlayerAnimator: {fileID: 548082335}
   animationSpeed: 5
