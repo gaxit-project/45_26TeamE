@@ -89,16 +89,28 @@ public class SettingManager : MonoBehaviour
     }
 
     
+    /// <summary>
+    /// このモニタで実際に表示できる解像度だけを選択肢に残したもの。
+    /// </summary>
+    /// <remarks>
+    /// モニタより大きい解像度を指定すると、OS側でウィンドウが切り詰められて
+    /// アスペクト比が崩れ、カメラの映る範囲が変わって背景が欠けるなどの不具合になる。
+    /// </remarks>
+    private List<string> availableResolutionOptions = new List<string>();
+
     public void InitResolutionSettings()
     {
+        BuildAvailableResolutionOptions();
+
         resolutionDropdown.ClearOptions();
-        resolutionDropdown.AddOptions(fixedResolutionOptions);
+        resolutionDropdown.AddOptions(availableResolutionOptions);
+
         int currentResIndex = 0;
         string currentResStr = $"{Screen.width} x {Screen.height}";
 
-        for (int i = 0; i < fixedResolutionOptions.Count; i++)
+        for (int i = 0; i < availableResolutionOptions.Count; i++)
         {
-            if(fixedResolutionOptions[i] == currentResStr)
+            if (availableResolutionOptions[i] == currentResStr)
             {
                 currentResIndex = i;
                 break;
@@ -106,6 +118,39 @@ public class SettingManager : MonoBehaviour
         }
         resolutionDropdown.value = currentResIndex;
         resolutionDropdown.RefreshShownValue();
+    }
+
+    private void BuildAvailableResolutionOptions()
+    {
+        availableResolutionOptions.Clear();
+
+        int maxWidth = Display.main.systemWidth;
+        int maxHeight = Display.main.systemHeight;
+
+        foreach (string option in fixedResolutionOptions)
+        {
+            if (!TryParseResolution(option, out int width, out int height)) continue;
+            if (width > maxWidth || height > maxHeight) continue;
+
+            availableResolutionOptions.Add(option);
+        }
+
+        // モニタが小さすぎてどれも選べない場合は、一番小さいものだけ残す
+        if (availableResolutionOptions.Count == 0 && fixedResolutionOptions.Count > 0)
+        {
+            availableResolutionOptions.Add(fixedResolutionOptions[0]);
+        }
+    }
+
+    private static bool TryParseResolution(string text, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        string[] parts = text.Split('x');
+        if (parts.Length != 2) return false;
+
+        return int.TryParse(parts[0].Trim(), out width) && int.TryParse(parts[1].Trim(), out height);
     }
 
     
@@ -126,13 +171,10 @@ public class SettingManager : MonoBehaviour
     
     public void SetResolution(int index)
     {
-        string selectedText = fixedResolutionOptions[index];
-        string[] parts = selectedText.Split('x');
+        if (index < 0 || index >= availableResolutionOptions.Count) return;
 
-        if(parts.Length == 2)
+        if (TryParseResolution(availableResolutionOptions[index], out int width, out int height))
         {
-            int width = int.Parse(parts[0].Trim());
-            int height = int.Parse(parts[1].Trim());
             Screen.SetResolution(width, height, Screen.fullScreenMode);
         }
     }
