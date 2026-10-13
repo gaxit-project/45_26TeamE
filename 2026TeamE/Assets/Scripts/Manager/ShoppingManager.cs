@@ -362,6 +362,8 @@ public class ShoppingManager : MonoBehaviour
     {
         InitializeIfNeeded();
 
+        SoundManager.Instance.PlayBGM("room2");
+
         if (shopPanelRoot != null)
         {
             shopPanelRoot.SetActive(true);
@@ -441,6 +443,8 @@ public class ShoppingManager : MonoBehaviour
     /// </summary>
     public void CloseShop()
     {
+        SoundManager.Instance.PlayBGM("メインBGM");
+
         if (shopPanelRoot != null)
         {
             shopPanelRoot.SetActive(false);
