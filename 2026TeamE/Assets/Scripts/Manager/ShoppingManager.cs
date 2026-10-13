@@ -112,6 +112,12 @@ public class ShoppingManager : MonoBehaviour
 
     [SerializeField] private GameObject player;
 
+    [Tooltip("換金所でプレイヤーのバッテリーを満タンに戻す")]
+    [SerializeField] private bool refillBatteryOnClose = true;
+
+    /// <summary>バッテリーを戻す対象。player フィールドとは別に保持する。</summary>
+    private PlayerController cachedPlayerController;
+
     [Header("ボタンカラー")]
     [SerializeField] private Color normalColor = Color.white;
     [SerializeField] private Color maxLevelColor = Color.gray;
@@ -394,6 +400,9 @@ public class ShoppingManager : MonoBehaviour
         // ゲーム内時間を一時停止
         Time.timeScale = 0f;
 
+        // 換金所に着いた時点でバッテリーを満タンに戻す
+        RefillPlayerBattery();
+
         if (player == null)
         {
             player = GameObject.FindWithTag("Player");
@@ -481,6 +490,8 @@ public class ShoppingManager : MonoBehaviour
         // ゲーム内時間を再開
         Time.timeScale = 1f;
 
+        RefillPlayerBattery();
+
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
@@ -490,6 +501,54 @@ public class ShoppingManager : MonoBehaviour
         {
             SoundManager.Instance.PlaySE("つるはしで掘る3");
         }
+    }
+
+    /// <summary>
+    /// 換金所から戻るときにバッテリーを満タンに戻す。
+    /// </summary>
+    /// <remarks>
+    /// 強化画面はメインシーン内で完結しておりシーンの再読込が起きないため、
+    /// ここで明示的に戻さないとバッテリーが減ったままになる。
+    /// </remarks>
+    private void RefillPlayerBattery()
+    {
+        if (!refillBatteryOnClose) return;
+
+        PlayerController playerController = FindPlayerController();
+        if (playerController == null)
+        {
+            Debug.LogWarning("[ShoppingManager] PlayerController が見つからないため、バッテリーを戻せませんでした。");
+            return;
+        }
+
+        playerController.RefillBattery();
+    }
+
+    /// <summary>
+    /// 操作対象のプレイヤーを探す。
+    /// </summary>
+    /// <remarks>
+    /// player フィールドはショップ内の表示用モデルを指していることがあり、
+    /// PlayerController が付いているとは限らないため、こちらで別途探して保持する。
+    /// </remarks>
+    private PlayerController FindPlayerController()
+    {
+        if (cachedPlayerController != null) return cachedPlayerController;
+
+        GameObject taggedPlayer = GameObject.FindWithTag("Player");
+        if (taggedPlayer != null)
+        {
+            cachedPlayerController = taggedPlayer.GetComponent<PlayerController>()
+                ?? taggedPlayer.GetComponentInParent<PlayerController>()
+                ?? taggedPlayer.GetComponentInChildren<PlayerController>();
+        }
+
+        if (cachedPlayerController == null)
+        {
+            cachedPlayerController = Object.FindFirstObjectByType<PlayerController>();
+        }
+
+        return cachedPlayerController;
     }
 
     public void RefreshAll()

@@ -95,6 +95,14 @@ public class PlayerController : MonoBehaviour
     /// <summary>プレイヤーの操作が解禁されており、かつ行動可能な状態か。ムービー中や被弾・ポーズ中はfalse。</summary>
     public bool IsControlEnabled => CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked) && Time.timeScale > 0f && !TimelineManager.IsPlaying;
     public bool HasBattery => currentBattery > 0f;
+
+    /// <summary>
+    /// バッテリーを満タンに戻す。換金所・強化画面から戻ったときに呼ぶ。
+    /// </summary>
+    public void RefillBattery()
+    {
+        currentBattery = maxBattery;
+    }
     public bool IsDashing => Time.time < dashEndTime;
 
     private Vector2 moveInput;
@@ -185,6 +193,12 @@ public class PlayerController : MonoBehaviour
     {
         currentState = PlayerState.Normal;
         StartCoroutine(ControlEnableWatchdog());
+
+        // メインシーンに入るたびにバッテリーを満タンにする。
+        // これまではシーン再読込でSerializeFieldの初期値に戻るという副作用に頼っていたため、
+        // 読み込み方や初期値の変更で簡単に壊れる状態だった。
+        currentBattery = maxBattery;
+        Debug.Log($"[PlayerController] Start: バッテリーを {currentBattery} で初期化しました。");
 
         if (characterRenderers == null || characterRenderers.Length == 0)
         {
