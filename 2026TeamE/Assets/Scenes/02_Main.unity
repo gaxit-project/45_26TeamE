@@ -7929,7 +7929,6 @@ MonoBehaviour:
   effectKeepTime: 0.2
   forwardOffset: 1
   drillSECueName: "\u30C9\u30EA\u30EB"
-  requireTerrainContact: 1
   digShakeStrength: 0.35
   digShakeDuration: 0.12
   digRumbleStrength: 0.6
@@ -9355,6 +9354,7 @@ MonoBehaviour:
     descriptionVideo: {fileID: 32900000, guid: 254db59a828a92249b56c255d926d54f, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 4053b5f3216284a4190f8d0aba7a1529, type: 3}
     descriptionImage: {fileID: 0}
+    currentLevelText: {fileID: 19340509}
     currentLevel: 0
   - itemName: Sonar
     buyButton: {fileID: 0}
@@ -9373,6 +9373,7 @@ MonoBehaviour:
     descriptionVideo: {fileID: 32900000, guid: 25628c988e8d0bf498ee27ebf964521c, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 106594385fbc17c46b8f32fec588dedc, type: 3}
     descriptionImage: {fileID: 0}
+    currentLevelText: {fileID: 1057360235}
     currentLevel: 0
   - itemName: Rader
     buyButton: {fileID: 0}
@@ -9391,6 +9392,7 @@ MonoBehaviour:
     descriptionVideo: {fileID: 32900000, guid: bc447d13e0d6dcc4881ce5e1358d19a5, type: 3}
     descriptionSprite: {fileID: 21300000, guid: 182e176041928c648b3626353a09b418, type: 3}
     descriptionImage: {fileID: 0}
+    currentLevelText: {fileID: 1561087996}
     currentLevel: 0
   - itemName: Jet
     buyButton: {fileID: 0}
@@ -9413,6 +9415,7 @@ MonoBehaviour:
     descriptionVideo: {fileID: 32900000, guid: 9d1ba209e8df855498398b6fd1d6189b, type: 3}
     descriptionSprite: {fileID: 21300000, guid: acbc38d709fdc334ebc2b1819c334a7c, type: 3}
     descriptionImage: {fileID: 0}
+    currentLevelText: {fileID: 1649589122}
     currentLevel: 0
   descriptionText: {fileID: 0}
   videoPlayer: {fileID: 891926440}
@@ -24540,7 +24543,6 @@ MonoBehaviour:
   effectKeepTime: 0.2
   forwardOffset: 0.2
   drillSECueName: "\u30C9\u30EA\u30EB"
-  requireTerrainContact: 1
   digShakeStrength: 0.35
   digShakeDuration: 0.12
   digRumbleStrength: 0.6

@@ -37,6 +37,9 @@ public class ShoppingManager : MonoBehaviour
         [Header("表示先Image")]
         public Image descriptionImage;
 
+        [Header("現在のレベル表示")]
+        public TextMeshProUGUI currentLevelText;
+
         [HideInInspector] public int currentLevel = 1;
 
         public int CurrentPrice
@@ -268,6 +271,7 @@ public class ShoppingManager : MonoBehaviour
             videoPlayer.timeReference = VideoTimeReference.Freerun;
         }
     }
+
 
     /// <summary>
     /// 未アタッチのUIパーツ（ボタン、テキスト、星など）をShopCanvas内から自動検索して補完する
@@ -533,6 +537,14 @@ public class ShoppingManager : MonoBehaviour
         playerController.RefillBattery();
     }
 
+    private void UpdateItemLevelText(ShopItem item)
+    {
+        if (item.currentLevelText != null)
+        {
+            item.currentLevelText.text = item.currentLevel.ToString();
+        }
+    }
+
     /// <summary>
     /// 操作対象のプレイヤーを探す。
     /// </summary>
@@ -572,6 +584,7 @@ public class ShoppingManager : MonoBehaviour
         UpdateAllItemDescriptions();
         UpdateAllButtons();
         UpdateTotalMoneyText();
+
 
         if (descriptionText != null) descriptionText.text = "";
         if (videoPlayer != null) videoPlayer.Stop();
@@ -676,6 +689,12 @@ public class ShoppingManager : MonoBehaviour
                 }
             }
         }
+
+        if (item.priceText != null)
+            item.priceText.text = isMax ? "---" : $"{item.CurrentPrice:N0}";
+
+        // 現在のレベル表示を更新
+        UpdateItemLevelText(item);
 
         if (item.buyButton != null)
         {
