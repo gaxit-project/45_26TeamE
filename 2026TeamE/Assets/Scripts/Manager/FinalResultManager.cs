@@ -182,7 +182,17 @@ public class FinalResultManager : MonoBehaviour
     private IEnumerator LoadMainAfterResetRoutine()
     {
         yield return null;
-        SceneManager.LoadScene("02_Main");
+
+        // ローディング画面を挟むことで、ステージ生成中の画面を見せないようにする。
+        // SceneLoader は内部で生成完了（SceneInitializationGate）を待ってから切り替える。
+        if (SceneLoader.Instance != null)
+        {
+            SceneLoader.Instance.LoadScene("02_Main");
+        }
+        else
+        {
+            SceneManager.LoadScene("02_Main");
+        }
     }
 
     // ランキングの表示・非表示を切り替えるメソッド

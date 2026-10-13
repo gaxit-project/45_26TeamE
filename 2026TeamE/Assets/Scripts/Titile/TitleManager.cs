@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -103,7 +104,16 @@ public class TitleManager : MonoBehaviour
         pressAnyButtonText.SetActive(false);
         mainMenuAnimator.SetTrigger("SlideIn");
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        Invoke(nameof(SelectFirstButton), 0.5f);
+
+        // Invoke は Time.timeScale の影響を受けるため、0 のまま戻ってくると永久に発火せず、
+        // ボタンが1つも選択されないまま操作不能になる。実時間で待つ。
+        StartCoroutine(SelectFirstButtonAfterDelay(0.5f));
+    }
+
+    private IEnumerator SelectFirstButtonAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        SelectFirstButton();
     }
 
     

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -10,6 +11,10 @@ public class PlayerController : MonoBehaviour
     Animator animator;
 
     private bool CanMove = false;
+
+    [Header("操作解禁の保険")]
+    [Tooltip("導入演出が何らかの理由で終わらなかった場合に、強制的に操作を解禁するまでの秒数。0以下で無効。")]
+    [SerializeField] private float controlEnableTimeout = 20f;
 
     public enum PlayerState
     {
@@ -153,9 +158,33 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 導入演出が終わらず操作が解禁されないまま進行不能になるのを防ぐための保険。
+    /// 一定時間が過ぎても操作できない場合は強制的に解禁する。
+    /// </summary>
+    private IEnumerator ControlEnableWatchdog()
+    {
+        if (controlEnableTimeout <= 0f) yield break;
+
+        float elapsed = 0f;
+        while (!CanMove && elapsed < controlEnableTimeout)
+        {
+            // ロード中はtimeScaleが0になるため、実時間で計測する
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!CanMove)
+        {
+            Debug.LogWarning($"[PlayerController] {controlEnableTimeout}秒経っても操作が解禁されなかったため、強制的に解禁しました。導入演出の設定を確認してください。");
+            EnablePlayerControl();
+        }
+    }
+
     void Start()
     {
         currentState = PlayerState.Normal;
+        StartCoroutine(ControlEnableWatchdog());
 
         if (characterRenderers == null || characterRenderers.Length == 0)
         {
