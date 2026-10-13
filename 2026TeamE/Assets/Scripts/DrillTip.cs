@@ -15,7 +15,6 @@ public class DrillTip : MonoBehaviour
 
     [Header("サウンド設定")]
     [SerializeField] private string drillSECueName = "ドリル";
-    [SerializeField] private bool requireTerrainContact = true;
 
     [Header("掘削時の画面揺れ")]
     [Tooltip("揺れの強さ。0にすると揺れなし。硬いブロックほど自動的に強くなる")]
@@ -77,9 +76,28 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    void Start()
+    private void Awake()
     {
         player = GetComponentInParent<PlayerController>();
+        if (player == null)
+        {
+            // PlayerController 配下にない DrillTip（shopPlayer 等の展示用モデル）は動作を無効化
+            enabled = false;
+        }
+    }
+
+    void Start()
+    {
+        if (player == null)
+        {
+            player = GetComponentInParent<PlayerController>();
+        }
+        if (player == null)
+        {
+            enabled = false;
+            return;
+        }
+
         if (miningZone != null) miningZoneBoxCollider = miningZone.GetComponent<BoxCollider>();
 
         myCollider = GetComponent<SphereCollider>();
@@ -107,7 +125,7 @@ public class DrillTip : MonoBehaviour
 
     private void OnDisable()
     {
-        if (SoundManager.Instance != null)
+        if (player != null && SoundManager.Instance != null)
         {
             SoundManager.Instance.StopLoopSE();
         }
@@ -175,13 +193,13 @@ public class DrillTip : MonoBehaviour
 
     private void HandleDrillSound()
     {
+        if (player == null) return;
         if (SoundManager.Instance == null || string.IsNullOrEmpty(drillSECueName)) return;
 
-        bool isOperable = player != null && player.IsControlEnabled;
+        bool isOperable = player.IsControlEnabled;
         bool isDrilling = isOperable && player.IsDrilling && player.HasBattery;
-        bool shouldPlaySound = isDrilling && (requireTerrainContact ? IsContactingDiggableSurface : true);
 
-        if (shouldPlaySound)
+        if (isDrilling)
         {
             SoundManager.Instance.PlayLoopSE(drillSECueName);
         }

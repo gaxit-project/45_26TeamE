@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using CriWare;
 using UnityEngine.UI;
 
@@ -44,7 +44,25 @@ public class SoundManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (bgmSource == null) bgmSource = GetComponent<CriAtomSource>();
-            if (loopSeSource == null && seSource != null) loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
+            if (loopSeSource == null)
+            {
+                if (seSource != null)
+                {
+                    loopSeSource = seSource.gameObject.AddComponent<CriAtomSource>();
+                }
+                else
+                {
+                    loopSeSource = gameObject.AddComponent<CriAtomSource>();
+                }
+            }
+
+            if (loopSeSource != null)
+            {
+                string cueSheetName = (seSource != null && !string.IsNullOrEmpty(seSource.cueSheet)) ? seSource.cueSheet : "CueSheet_SE";
+                loopSeSource.cueSheet = cueSheetName;
+                loopSeSource.use3dPositioning = false;
+                loopSeSource.loop = true;
+            }
 
             bgmSliderValue = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMSlider);
             seSliderValue = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSESlider);
@@ -119,11 +137,29 @@ public class SoundManager : MonoBehaviour
     public void PlayLoopSE(string cueName)
     {
         if (loopSeSource == null) return;
-        if (currentLoopCueName == cueName && loopSeSource.status == CriAtomSourceBase.Status.Playing)
+
+        if (string.IsNullOrEmpty(loopSeSource.cueSheet))
+        {
+            string cueSheetName = (seSource != null && !string.IsNullOrEmpty(seSource.cueSheet)) ? seSource.cueSheet : "CueSheet_SE";
+            loopSeSource.cueSheet = cueSheetName;
+        }
+
+        loopSeSource.loop = true;
+        loopSeSource.use3dPositioning = false;
+
+        float volume = seSliderValue * maxSEVolume;
+        if (loopSeSource.volume != volume)
+        {
+            loopSeSource.volume = volume;
+        }
+
+        if (currentLoopCueName == cueName && (loopSeSource.status == CriAtomSourceBase.Status.Playing || loopSeSource.status == CriAtomSourceBase.Status.Prep))
         {
             return;
         }
+
         currentLoopCueName = cueName;
+        loopSeSource.cueName = cueName;
         loopPlayback = loopSeSource.Play(cueName);
     }
 
