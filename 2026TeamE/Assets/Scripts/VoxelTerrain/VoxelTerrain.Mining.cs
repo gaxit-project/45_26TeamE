@@ -1,10 +1,49 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// �̌@�A���쏈��
 public partial class VoxelTerrain
 {
-    public void ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
+    public void EmitParticlesInArea(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit)
+    {
+        int r = Mathf.CeilToInt(radius);
+
+        for (int y = centerY - r; y <= centerY + r; y++)
+        {
+            for (int z = centerZ - r; z <= centerZ + r; z++)
+            {
+                float distSq = (centerY - y) * (centerY - y) + (centerZ - z) * (centerZ - z);
+                if (distSq > radius * radius) continue;
+                if (y < minLimit.y || y > maxLimit.y || z < minLimit.z || z > maxLimit.z) continue;
+
+                bool emittedForThisCell = false;
+
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    if (!IsInside(x, y, z)) continue;
+                    byte currentBlock = mapData[x, y, z];
+                    if (currentBlock == (byte)BlockType.Air || currentBlock == (byte)BlockType.Bedrock || currentBlock == (byte)BlockType.Boundary) continue;
+
+                    if (!emittedForThisCell && BlockEffectManager.Instance != null)
+                    {
+                        Vector3 worldPos = transform.TransformPoint(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) * BlockSize);
+
+                        if (currentBlock == (byte)BlockType.Dirt) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Dirt);
+                        else if (currentBlock == (byte)BlockType.Ore) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Ore);
+                        else if (currentBlock == (byte)BlockType.Stone) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.Stone);
+                        else if (currentBlock == (byte)BlockType.HardRock) BlockEffectManager.Instance.PlayEffectAt(worldPos, EffectType.HardRock);
+
+                        emittedForThisCell = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 指定位置を中心として掘る。
+    /// </summary>
+    /// <returns>実際に1つ以上のブロックを壊した場合はtrue。空振りならfalse。</returns>
+    public bool ExecuteDig(int centerX, int centerY, int centerZ, float radius, Vector3 minLimit, Vector3 maxLimit, bool isPlayerDigging = true)
     {
         int r = Mathf.CeilToInt(radius);
         bool changed = false;
@@ -87,38 +126,49 @@ public partial class VoxelTerrain
                     chunksToUpdate.Add(cIndex + 1);
             }
         }
+
+        return changed;
     }
 
-    public void RemoveBedrockAroundPlayer()
+    /// <summary>
+    /// 指定したワールド座標の周囲に、掘れるブロックがあるかを調べる。
+    /// </summary>
+    /// <remarks>
+    /// 物理トリガーによる接触判定は、掘った直後の空洞やチャンクのメッシュ再生成で
+    /// 数フレーム途切れることがある。地形データを直接見ることでその影響を受けずに判定できる。
+    /// </remarks>
+    public bool HasDiggableBlockNear(Vector3 worldCenter, float radius)
     {
-        GameObject playerObj = GameObject.FindWithTag("Player");
-        if (playerObj == null) return;
+        if (mapData == null) return false;
 
-        Vector3 localPos = transform.InverseTransformPoint(playerObj.transform.position);
-        int py = Mathf.FloorToInt(localPos.y / blockSize);
-        int pz = Mathf.FloorToInt(localPos.z / blockSize);
-        int searchRange = 5;
+        Vector3 localPos = transform.InverseTransformPoint(worldCenter);
+        int centerY = Mathf.RoundToInt(localPos.y / blockSize);
+        int centerZ = Mathf.RoundToInt(localPos.z / blockSize);
+        int r = Mathf.Max(1, Mathf.CeilToInt(radius / blockSize));
 
-        for (int x = 0; x < thicknessX; x++)
+        for (int y = centerY - r; y <= centerY + r; y++)
         {
-            for (int y = py - 2; y <= py + 2; y++)
+            for (int z = centerZ - r; z <= centerZ + r; z++)
             {
-                for (int z = pz - searchRange; z <= pz + searchRange; z++)
+                for (int x = 0; x < thicknessX; x++)
                 {
                     if (!IsInside(x, y, z)) continue;
 
-                    if (mapData[x, y, z] == (byte)BlockType.Bedrock)
+                    // 配置用の IsDiggable ではなく ExecuteDig と同じ基準で見る。
+                    // Quartzite はアイテムを埋める対象からは外しているが、
+                    // ドリルでは壊せるので「掘っている最中」として扱う必要がある。
+                    byte block = mapData[x, y, z];
+                    if (block != (byte)BlockType.Air
+                        && block != (byte)BlockType.Bedrock
+                        && block != (byte)BlockType.Boundary)
                     {
-                        mapData[x, y, z] = (byte)BlockType.Air;
-                        int cIndex = y / chunkSizeY;
-                        chunksToUpdate.Add(cIndex);
-
-                        if (y % chunkSizeY == 0 && cIndex > 0) chunksToUpdate.Add(cIndex - 1);
-                        if (y % chunkSizeY == chunkSizeY - 1 && cIndex < chunks.Length - 1) chunksToUpdate.Add(cIndex + 1);
+                        return true;
                     }
                 }
             }
         }
+
+        return false;
     }
 
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)

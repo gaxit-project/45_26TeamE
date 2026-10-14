@@ -1,11 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-// ゾーン、範囲判定
 public partial class VoxelTerrain
 {
-    /// <summary>
-    /// 全ゾーンの深さ（Yブロック数）を合計して算出
-    /// </summary>
+
     public int GetTotalHeight()
     {
         int total = 0;
@@ -16,9 +13,6 @@ public partial class VoxelTerrain
         return total;
     }
 
-    /// <summary>
-    /// Y座標から現在の層のインデックスを取得
-    /// </summary>
     public int GetRelayID(int y)
     {
         int currentY = heightY;
@@ -37,9 +31,6 @@ public partial class VoxelTerrain
         return zoneSettings.Count - 1;
     }
 
-    /// <summary>
-    /// ブロックが層ごとの有効領域内にあるかチェック
-    /// </summary>
     public bool IsInside(int x, int y, int z)
     {
         if (x < 0 || x >= thicknessX) return false;
@@ -57,9 +48,6 @@ public partial class VoxelTerrain
         return (z >= minZ && z <= maxZ);
     }
 
-    /// <summary>
-    /// 指定ゾーンの最下部のY座標を取得（中継地点の設置基準）
-    /// </summary>
     public int GetZoneBottomY(int zoneIndex)
     {
         int currentY = heightY;

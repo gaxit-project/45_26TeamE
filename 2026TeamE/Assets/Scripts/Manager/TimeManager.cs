@@ -8,19 +8,43 @@ public class TimerManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI timerText;
 
     [SerializeField]private float totalTime = 120f;
+    public float TotalTime => totalTime;
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
+
+    /// <summary>Inspectorで設定された初期値。リセット時に戻す基準になる。</summary>
+    private float initialTime;
 
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
+            initialTime = totalTime;
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    /// <summary>
+    /// 制限時間を初期値まで戻す。扉に入って換金所へ移動したときに呼ぶ。
+    /// </summary>
+    public void ResetTimer()
+    {
+        totalTime = initialTime;
+        isTimerEnded = false;
+
+        nextHeartbeatTime = 0f;
+
+        if (timerText != null)
+        {
+            timerText.transform.localScale = Vector3.one;
+            timerText.color = Color.white;
+        }
+
+        DisplayTime(totalTime);
     }
 
     [Header("演出用コンポーネント")]
@@ -30,6 +54,22 @@ public class TimerManager : MonoBehaviour
     [Header("タイマー強調設定")]
     [SerializeField] private float animationSpeed = 5f;
     [SerializeField] private float maxScale = 1.3f;
+    [Tooltip("残り時間がこの秒数を切ったら警告状態に入る")]
+    [SerializeField] private float warningThreshold = 30f;
+
+    [Header("残り時間の警告（鼓動）")]
+    [Tooltip("鼓動1回あたりの振動の強さ。0にすると振動なし")]
+    [Range(0f, 1f)]
+    [SerializeField] private float heartbeatRumble = 0.35f;
+    [SerializeField] private float heartbeatDuration = 0.1f;
+    [Tooltip("警告に入った直後の鼓動の間隔（秒）")]
+    [SerializeField] private float heartbeatIntervalStart = 1.0f;
+    [Tooltip("残り0秒に近づいた時の鼓動の間隔（秒）")]
+    [SerializeField] private float heartbeatIntervalEnd = 0.35f;
+    [Tooltip("鼓動のSE（空なら鳴らさない）")]
+    [SerializeField] private string heartbeatSeName = "HeartBeat";
+
+    private float nextHeartbeatTime;
 
     private static bool firstLoad = true;
 
@@ -45,15 +85,18 @@ public class TimerManager : MonoBehaviour
         }
     }
 
-    // TimelineのSignalから呼ばれる
     public void StartTimer()
     {
-        totalTime = totalTime;
         isTimerEnded = false;
         isTimerRunning = true;
 
         timerText.transform.localScale = Vector3.one;
         timerText.color = Color.white;
+    }
+
+    public void StopTimer()
+    {
+        isTimerRunning = false;
     }
 
     private void Update()
@@ -76,9 +119,10 @@ public class TimerManager : MonoBehaviour
 
             DisplayTime(totalTime);
 
-            if (totalTime > 0 && totalTime <= 30f)
+            if (totalTime > 0 && totalTime <= warningThreshold)
             {
                 AnimateTimerText();
+                UpdateHeartbeat();
             }
             else
             {
@@ -88,12 +132,44 @@ public class TimerManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 残り時間が少ない間、一定間隔で鼓動のような振動とSEを出す。
+    /// 残り時間が減るほど間隔が短くなり、焦りが増していく。
+    /// </summary>
+    private void UpdateHeartbeat()
+    {
+        if (PlayerController.Instance != null && !PlayerController.Instance.IsControlEnabled) return;
+        if (Time.time < nextHeartbeatTime) return;
+
+        // 残り時間の割合（警告開始時が1、時間切れ間際が0）
+        float remainingRatio = Mathf.Clamp01(totalTime / Mathf.Max(0.01f, warningThreshold));
+        float interval = Mathf.Lerp(heartbeatIntervalEnd, heartbeatIntervalStart, remainingRatio);
+
+        nextHeartbeatTime = Time.time + interval;
+
+        if (heartbeatRumble > 0f && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.PlayPulse(heartbeatRumble, heartbeatRumble * 0.5f, heartbeatDuration);
+        }
+
+        if (!string.IsNullOrEmpty(heartbeatSeName))
+        {
+            SoundManager.Instance?.PlaySE(heartbeatSeName);
+        }
+    }
+
+    private int lastDisplayedSeconds = -1;
+
     private void DisplayTime(float timeToDisplay)
     {
-        int minutes = Mathf.FloorToInt(timeToDisplay / 60);
-        int seconds = Mathf.FloorToInt(timeToDisplay % 60);
+        int totalSecs = Mathf.FloorToInt(timeToDisplay);
+        if (totalSecs == lastDisplayedSeconds) return; // 値が変わっていない場合はテキストの再生成・UI更新をスキップ
 
-        timerText.text = string.Format("{0} : {1:00}", minutes, seconds);
+        lastDisplayedSeconds = totalSecs;
+        int minutes = totalSecs / 60;
+        int seconds = totalSecs % 60;
+
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
     private void AnimateTimerText()
@@ -119,7 +195,24 @@ public class TimerManager : MonoBehaviour
         if (PlayerAnimator != null)
             PlayerAnimator.SetBool("isTimeUp", true);
 
-        // 酸素切れ：演出を見せた後、タイトルへ戻して状態を一括リセットする
+        PlayerController player = FindObjectOfType<PlayerController>();
+        if (player != null)
+        {
+            player.DisablePlayerControl();
+            player.currentState = PlayerController.PlayerState.GameOver;
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null) rb.linearVelocity = Vector3.zero;
+        }
+
+        if (HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+
         StartCoroutine(ReturnToTitleAfterTimeUp());
     }
 
@@ -130,12 +223,9 @@ public class TimerManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(timeUpToTitleDelay);
 
         Time.timeScale = 1f;
-        UnityEngine.SceneManagement.SceneManager.LoadScene("01_Title");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("FinalResult");
     }
 
-    /// <summary>
-    /// 制限時間を指定秒数だけ増やす
-    /// </summary>
     public void AddTime(float seconds)
     {
         if (isTimerEnded) return;
@@ -144,9 +234,6 @@ public class TimerManager : MonoBehaviour
         isTimerRunning = true;
     }
 
-    /// <summary>
-    /// タイトルに戻った時に呼ばれる。次のプレイでイントロ演出の合図を待つ状態に戻す。
-    /// </summary>
     public static void ResetFirstLoad()
     {
         firstLoad = true;

@@ -41,6 +41,10 @@ public class KeyUIController : MonoBehaviour
         {
             canvasCamera = mainCanvas.worldCamera;
         }
+
+        // 鍵を集める仕様は「掘ると現れる扉に入る」仕様へ置き換えたため、鍵UIは表示しない。
+        // シーンからこのオブジェクトを削除しても問題ない。
+        gameObject.SetActive(false);
     }
 
     public void FlyAndUpdateKeyUI(int collectedCount, Vector3 worldPos)
@@ -66,7 +70,7 @@ public class KeyUIController : MonoBehaviour
         Image flyImage = flyIcon.AddComponent<Image>();
         flyImage.sprite = targetImage.sprite;
         flyImage.raycastTarget = false;
-        
+
         RectTransform flyRect = flyIcon.GetComponent<RectTransform>();
         flyRect.sizeDelta = targetImage.rectTransform.rect.size;
 
@@ -132,7 +136,6 @@ public class KeyUIController : MonoBehaviour
                 {
                     keyImages[i].color = unlockedColor;
 
-                    // ▼ 変更：第2引数に collectedCount を渡すようにする
                     StartCoroutine(AnimateKeyGet(keyImages[i].rectTransform, collectedCount));
                 }
             }
@@ -181,58 +184,70 @@ public class KeyUIController : MonoBehaviour
 
         target.localScale = Vector3.one;
 
-        // ② アニメーションが完了したタイミング（ちょうど約0.3秒後）でコンプリート音を鳴らす
-        if (collectedCount == 3 && SoundManager.Instance != null)
+        if (collectedCount == 3)
         {
-            SoundManager.Instance.PlaySE("A_luxurious_upgrade");
+            TextManager.Instance.ShowText("先へ進めるようになった！");
+            if(SoundManager.Instance != null)
+                SoundManager.Instance.PlaySE("A_luxurious_upgrade");
         }
     }
 
-    private Coroutine warningCoroutine; // 連打防止用の変数
-    public void ShowWarning()
-    {
-        // 既にアニメーション中なら一旦止める（連打対策）
-        if (warningCoroutine != null)
-        {
-            StopCoroutine(warningCoroutine);
-        }
-        // 新しくアニメーションを開始
-        warningCoroutine = StartCoroutine(AnimateWarning());
-    }
-    private IEnumerator AnimateWarning()
-    {
-        Color warningColor = Color.red;
-        float elapsed = 0f;
-        float duration = 0.3f;
-        while (elapsed < duration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = elapsed / duration;
+    private bool isWarningActive = false;
+    private Coroutine warningCoroutine;
 
-            // スケールを 1.0 → 1.3 → 1.0 に変化
-            float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.3f;
+    public void SetWarningActive(bool active)
+    {
+        if (isWarningActive == active) return;
+        isWarningActive = active;
+
+        if (active)
+        {
+            if (warningCoroutine != null) StopCoroutine(warningCoroutine);
+            warningCoroutine = StartCoroutine(AnimateWarningContinuous());
+        }
+        else
+        {
+            if (warningCoroutine != null)
+            {
+                StopCoroutine(warningCoroutine);
+                warningCoroutine = null;
+            }
 
             for (int i = 0; i < keyImages.Length; i++)
             {
-                // ★ まだ持っていない鍵（unlockedColor ではないもの）だけを対象にする
                 if (keyImages[i].color != unlockedColor)
                 {
-                    keyImages[i].color = warningColor; // 赤くする
-                    keyImages[i].rectTransform.localScale = Vector3.one * scale; // 大きくする
+                    keyImages[i].rectTransform.localScale = Vector3.one;
+                    keyImages[i].color = lockedColor;
                 }
             }
-            yield return null; // 1フレーム待つ
         }
-        // アニメーションが終わったら、持っていない鍵を元の「暗い色(lockedColor)」とサイズに戻す
-        for (int i = 0; i < keyImages.Length; i++)
-        {
-            if (keyImages[i].color != unlockedColor)
-            {
-                keyImages[i].rectTransform.localScale = Vector3.one;
-                keyImages[i].color = lockedColor;
-            }
-        }
+    }
 
-        warningCoroutine = null;
+    private IEnumerator AnimateWarningContinuous()
+    {
+        Color warningColor = Color.red;
+        float elapsed = 0f;
+        float cycleDuration = 0.6f;
+
+        while (true)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = (elapsed % cycleDuration) / cycleDuration;
+
+            float pingPong = Mathf.PingPong(t * 2f, 1f);
+            float scale = 1f + pingPong * 0.3f;
+            Color currentColor = Color.Lerp(lockedColor, warningColor, pingPong);
+
+            for (int i = 0; i < keyImages.Length; i++)
+            {
+                if (keyImages[i].color != unlockedColor)
+                {
+                    keyImages[i].color = currentColor;
+                    keyImages[i].rectTransform.localScale = Vector3.one * scale;
+                }
+            }
+            yield return null;
+        }
     }
 }

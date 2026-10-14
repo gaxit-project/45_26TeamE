@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CheckpointManager : MonoBehaviour
 {
@@ -7,8 +7,8 @@ public class CheckpointManager : MonoBehaviour
     private Vector3 savedLocalPosition;
     private bool hasCheckpoint = false;
 
-    private int lastCheckpointID = -1;   // 最後に保存したチェックポイント
-    private int usedCheckpointID = -1;   // リスポーンで使ったチェックポイント
+    private int lastCheckpointID = -1;   
+    private int usedCheckpointID = -1;   
 
     private void Awake()
     {
@@ -23,7 +23,6 @@ public class CheckpointManager : MonoBehaviour
         }
     }
 
-    // チェックポイント保存（ローカル座標＋ID）
     public void SaveCheckpoint(Vector3 worldPos, int checkpointID)
     {
         if (VoxelTerrain.Instance != null)
@@ -38,7 +37,6 @@ public class CheckpointManager : MonoBehaviour
         hasCheckpoint = true;
         lastCheckpointID = checkpointID;
 
-        Debug.Log($"チェックポイント保存 ID:{checkpointID}");
     }
 
     public bool HasCheckpoint() => hasCheckpoint;
@@ -52,7 +50,6 @@ public class CheckpointManager : MonoBehaviour
         return savedLocalPosition;
     }
 
-    // リスポーン時に呼ぶ
     public void MarkCheckpointAsUsed()
     {
         usedCheckpointID = lastCheckpointID;

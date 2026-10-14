@@ -9,52 +9,92 @@ public class GoalJewelry : MonoBehaviour
     public GameObject EfectPrefab;
 
     public static bool isGoalReached = false;
-    private bool isProcessed = false; // 重複実行防止用フラグ
+    private bool isProcessed = false; 
 
     void OnTriggerEnter(Collider other)
     {
-        // 重複処理を防ぐフラグチェックを追加
-        if (other.gameObject.CompareTag("Player") && !isProcessed)
+
+        bool isPlayer = other.gameObject.CompareTag("Player") || 
+                        (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("Player")) || 
+                        other.transform.root.CompareTag("Player");
+
+        if (isPlayer && !isProcessed)
         {
             isProcessed = true;
 
-            // プレイヤーのAnimatorを取得してアニメーションを実行
-            Animator playerAnim = other.GetComponent<Animator>();
+            SoundManager.Instance.StopBGM();
+            SoundManager.Instance.PlaySE("Clear");
+            isGoalReached = true;
+            PlayerPrefs.SetInt("GoalReached", 1);
+            PlayerPrefs.Save();
+            Debug.LogWarning("[GoalJewelry] ゴール判定が発火しました！ isGoalReached = true, PlayerPrefs(GoalReached) = 1 を保存しました。");
+
+            if (TimerManager.Instance != null)
+            {
+                TimerManager.Instance.StopTimer();
+                TimerManager.Instance.StopAllCoroutines();
+                FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+                Debug.LogWarning($"[GoalJewelry] タイマー停止。最終フロアの残り酸素: {TimerManager.Instance.TotalTime} を記録しました。");
+            }
+
+            if (HapticsManager.Instance != null)
+            {
+                HapticsManager.Instance.Stop();
+            }
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.StopLoopSE();
+            }
+
+            PlayerController player = other.GetComponentInParent<PlayerController>();
+            if (player != null)
+            {
+                player.DisablePlayerControl();
+                player.FaceRight();
+                player.currentState = PlayerController.PlayerState.GameClear;
+                Rigidbody rb = player.GetComponent<Rigidbody>();
+                if (rb != null) rb.linearVelocity = Vector3.zero;
+            }
+            else
+            {
+                Transform root = other.transform.root;
+                if (root != null && Mathf.Abs(Mathf.DeltaAngle(root.eulerAngles.y, 0f)) > 1f)
+                {
+                    root.rotation = Quaternion.Euler(0, 0, 0);
+                }
+            }
+
+            Animator playerAnim = other.GetComponentInParent<Animator>();
             if (playerAnim != null)
             {
                 playerAnim.SetTrigger("Clear");
             }
 
-            // シーン移動などの一連の処理を開始
             StartCoroutine(ClearSequence());
         }
     }
 
     IEnumerator ClearSequence()
     {
-        // 1. ポップ＆フラッシュエフェクトを実行
+
         yield return PickupAnimationUtil.PopAndFlash(transform);
 
-        // 2. エフェクトの生成とSE再生
-        Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        if (EfectPrefab != null)
+        {
+            Instantiate(EfectPrefab, transform.position, Quaternion.Euler(-90, -90, 0));
+        }
 
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("着水１");
+            SoundManager.Instance.PlaySE("着水音");
         }
 
-        // 3. プレイヤー検知から合計6秒経つまで待機
-        // (PopAndFlashの演出時間を差し引いた残りの時間を待機します)
-        yield return new WaitForSeconds(6.0f);
+        yield return new WaitForSeconds(8.0f);
 
-        // 4. ゴール到達処理とシーン遷移
-        isGoalReached = true;
-
-        // インスペクターで指定されたSceneNameがあればそれを使い、なければ"Result"をロード
-        string targetScene = string.IsNullOrEmpty(SceneName) ? "Result" : SceneName;
+        Debug.LogWarning("[GoalJewelry] 8秒のクリア演出が完了しました。FinalResult シーンをロードします。");
+        string targetScene = "FinalResult";
         SceneManager.LoadScene(targetScene);
 
-        // 自身を削除
         Destroy(gameObject);
     }
 }

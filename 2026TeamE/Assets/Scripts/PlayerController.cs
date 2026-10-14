@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -11,13 +12,26 @@ public class PlayerController : MonoBehaviour
 
     private bool CanMove = false;
 
-    public bool onDamaged = false;
+    [Header("操作解禁の保険")]
+    [Tooltip("導入演出が何らかの理由で終わらなかった場合に、強制的に操作を解禁するまでの秒数。0以下で無効。")]
+    [SerializeField] private float controlEnableTimeout = 20f;
+
+    public enum PlayerState
+    {
+        Normal,
+        TakingDamage,
+        GameOver,
+        GameClear
+    }
+    public PlayerState currentState = PlayerState.Normal;
+
+    [Header("ダメージ演出")]
+    [SerializeField] private Renderer[] characterRenderers;
+    [SerializeField] private float blinkInterval = 0.1f;
+    [SerializeField] private Transform dropPoint;
+    [SerializeField] private float dropForce = 5f;
 
     public GameObject sonar;
-    // --- Added: カメラ連携用の変数 ---
-    [Header("カメラ連携")]
-    [SerializeField] Animator cameraAnimator;
-    // -------------------------------
 
     [Header("プレイヤーパラメータ")]
     [SerializeField] float Speed = 5f;
@@ -34,7 +48,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] bool isGround = true;
     [SerializeField] Vector3 groundBoxExtents = new Vector3(0.35f, 0.15f, 0.35f);
     [SerializeField] Vector3 groundBoxOffset = new Vector3(0, 0.1f, 0);
-
 
     [Header("ドリルアクション")]
     [SerializeField] bool drillFlag = false;
@@ -65,7 +78,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float drillConsumption = 1f;
     [SerializeField] float SonarConsuption = 200f;
 
-
     [Header("JetPack")]
     [SerializeField] float baseJetpackForce = 15f;
     [SerializeField] float baseJetpackMaxSpeed = 6f;
@@ -76,8 +88,21 @@ public class PlayerController : MonoBehaviour
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
-    public bool IsDrilling => drillFlag;
+    public static PlayerController Instance { get; private set; }
+
+    public bool IsDrilling => IsControlEnabled && drillFlag;
+
+    /// <summary>プレイヤーの操作が解禁されており、かつ行動可能な状態か。ムービー中や被弾・ポーズ中はfalse。</summary>
+    public bool IsControlEnabled => CanMove && currentState == PlayerState.Normal && (poseManager == null || !poseManager.IsInputBlocked) && Time.timeScale > 0f && !TimelineManager.IsPlaying;
     public bool HasBattery => currentBattery > 0f;
+
+    /// <summary>
+    /// バッテリーを満タンに戻す。換金所・強化画面から戻ったときに呼ぶ。
+    /// </summary>
+    public void RefillBattery()
+    {
+        currentBattery = maxBattery;
+    }
     public bool IsDashing => Time.time < dashEndTime;
 
     private Vector2 moveInput;
@@ -90,22 +115,43 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
+        Instance = this;
         Application.targetFrameRate = 60;
     }
 
-    // 毎フレームドリル状態に応じて振動を開始/停止する
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
+    private void OnDisable()
+    {
+        drillFlag = false;
+        if (isRumbling && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+    }
+
     private void UpdateRumbleState()
     {
         if (HapticsManager.Instance == null) return;
 
         bool contacting = drillTip != null && drillTip.IsContactingDiggableSurface;
-        bool shouldRumble = drillFlag && HasBattery && contacting;
+        bool shouldRumble = IsControlEnabled && drillFlag && contacting;
 
         if (shouldRumble)
         {
             if (!isRumbling)
             {
-                // 振動強度は必要なら調整
                 HapticsManager.Instance.PlayContinuous(0.2f, 0.4f);
                 isRumbling = true;
             }
@@ -120,10 +166,52 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 導入演出が終わらず操作が解禁されないまま進行不能になるのを防ぐための保険。
+    /// 一定時間が過ぎても操作できない場合は強制的に解禁する。
+    /// </summary>
+    private IEnumerator ControlEnableWatchdog()
+    {
+        if (controlEnableTimeout <= 0f) yield break;
+
+        float elapsed = 0f;
+        while (!CanMove && elapsed < controlEnableTimeout)
+        {
+            // ロード中はtimeScaleが0になるため、実時間で計測する
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!CanMove)
+        {
+            Debug.LogWarning($"[PlayerController] {controlEnableTimeout}秒経っても操作が解禁されなかったため、強制的に解禁しました。導入演出の設定を確認してください。");
+            EnablePlayerControl();
+        }
+    }
+
     void Start()
     {
-        onDamaged = false;
-        Time.timeScale = 1f;
+        currentState = PlayerState.Normal;
+        StartCoroutine(ControlEnableWatchdog());
+
+        // メインシーンに入るたびにバッテリーを満タンにする。
+        // これまではシーン再読込でSerializeFieldの初期値に戻るという副作用に頼っていたため、
+        // 読み込み方や初期値の変更で簡単に壊れる状態だった。
+        currentBattery = maxBattery;
+
+        if (characterRenderers == null || characterRenderers.Length == 0)
+        {
+            characterRenderers = GetComponentsInChildren<Renderer>()
+                .Where(r => !(r is ParticleSystemRenderer) && r.enabled)
+                .ToArray();
+        }
+
+        bool isLoading = SceneLoader.Instance != null && SceneLoader.Instance.IsLoading;
+        if (!isLoading)
+        {
+            Time.timeScale = 1f;
+        }
+
         Speed = normalSpeed;
         rb = GetComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
@@ -137,27 +225,16 @@ public class PlayerController : MonoBehaviour
         if (jetpackEffectRight != null)
             jetpackEffectRight.Stop();
 
-        // --- Added: インスペクターで未設定の場合、メインカメラから取得を試みる ---
-        if (cameraAnimator == null)
-        {
-            Camera mainCam = Camera.main;
-            if (mainCam != null) cameraAnimator = mainCam.GetComponent<Animator>();
-        }
-        // ------------------------------------------------------------------
-
-        // DrillTip を子から取得
         drillTip = GetComponentInChildren<DrillTip>();
     }
 
     void FixedUpdate()
     {
-        if (!CanMove) return;
-        if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
-        
+        if (!IsControlEnabled) return;
+
         if (Time.time < dashEndTime)
         {
             wasDashing = true;
-            // ダッシュ中は重力を無視して一定速度を代入
             rb.linearVelocity = dashDirection * dashDistance;
         }
         else
@@ -171,7 +248,6 @@ public class PlayerController : MonoBehaviour
             Vector3 targetVelocity = moveDirection * Speed;
             rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
 
-            // JetPack
             if (!isGround && isJumpPressed)
             {
                 if (rb.linearVelocity.y < CurrentJetpackMaxSpeed)
@@ -187,14 +263,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    //ジェットパックのプロパティ
     private float CurrentJetpackForce
     {
         get
         {
             int level = UpgradeManager.GetLevel(UpgradeManager.JET);
-
-            // Lv1=15, Lv2=20, Lv3=25...
             return baseJetpackForce + (level - 1) * 5f;
         }
     }
@@ -204,8 +277,6 @@ public class PlayerController : MonoBehaviour
         get
         {
             int level = UpgradeManager.GetLevel(UpgradeManager.JET);
-
-            // Lv1=6, Lv2=8, Lv3=10...
             return baseJetpackMaxSpeed + (level - 1) * 2f;
         }
     }
@@ -220,7 +291,7 @@ public class PlayerController : MonoBehaviour
 
     private void ApplyCustomGravity()
     {
-        if (rb.linearVelocity.y < 0)
+        if (rb.linearVelocity.y < 0 && !isJumpPressed)
         {
             rb.linearVelocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.fixedDeltaTime;
         }
@@ -232,8 +303,19 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!CanMove) return;
-        if (poseManager != null && poseManager.IsPaused) return; // ポーズ中は処理をスキップ
+        if (!IsControlEnabled)
+        {
+            drillFlag = false;
+            isJumpPressed = false;
+            moveInput = Vector2.zero;
+            if (animator != null)
+            {
+                animator.SetBool("drillFlag", false);
+                animator.SetFloat("Move_X", 0f);
+            }
+            UpdateRumbleState();
+            return;
+        }
         CheckGround();
 
         float zMove = moveInput.x;
@@ -256,12 +338,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (drillFlag && HasBattery)
-        {
-            //currentBattery -= drillConsumption * Time.deltaTime;
-            if (currentBattery < 0) currentBattery = 0;
-        }
-
         if (drillFlag)
         {
             float angle = Mathf.Atan2(moveInput.y, Mathf.Abs(moveInput.x)) * Mathf.Rad2Deg;
@@ -275,7 +351,6 @@ public class PlayerController : MonoBehaviour
         UpdateAnimation();
         HandleDrillRotation();
         UpdateJetpackEffects();
-        // 持続振動の更新
         UpdateRumbleState();
     }
 
@@ -308,17 +383,11 @@ public class PlayerController : MonoBehaviour
 
         if (drillFlag)
         {
-            // 上下入力(moveInput.y)に基づいた角度を計算
-            // -1 〜 1 の入力を、指定した最大角度(例: 60度)に変換
             float targetAngle = moveInput.y * maxRotationAngle;
-
-            // X軸を中心に回転させる（上下に振る）
-            // ローカル回転を使うことで、プレイヤーが左右どちらを向いていても正しく動く
             drillPivot.localRotation = Quaternion.Euler(-targetAngle, 0, 0);
         }
         else
         {
-            // 掘っていない時は正面(0度)にゆっくり戻す、または即座に戻す
             drillPivot.localRotation = Quaternion.Slerp(drillPivot.localRotation, Quaternion.identity, Time.deltaTime * 10f);
         }
     }
@@ -335,34 +404,8 @@ public class PlayerController : MonoBehaviour
 
     private void CheckGround()
     {
-        // ブロック地形（Voxel）の角に最適化するため、四角い箱（Box）の判定を使う
         Vector3 boxCenter = transform.position + groundBoxOffset;
         isGround = Physics.CheckBox(boxCenter, groundBoxExtents, Quaternion.identity, landLayer);
-    }
-
-    private void DestractBlock()
-    {
-        if (drillFlag)
-        {
-            Vector3 drillDirection = moveInput.magnitude > 0.1f ?
-                new Vector3(0, moveInput.y, moveInput.x).normalized : transform.forward;
-
-            Ray ray = new Ray(transform.position + new Vector3(0, 2, 0), drillDirection);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, DrillDistance) && Time.time >= drillCDstarttime + DrillCD)
-            {
-                if (hit.collider.CompareTag("Block_dirt"))
-                {
-                    Block_dirt targetBlock = hit.collider.GetComponent<Block_dirt>();
-                    if (targetBlock != null)
-                    {
-                        targetBlock.TakeDamage(1);
-                        drillCDstarttime = Time.time;
-                    }
-                }
-            }
-        }
     }
 
     private void PerformDash()
@@ -373,7 +416,6 @@ public class PlayerController : MonoBehaviour
         dashDirection = moveInput.magnitude > 0.1f ?
             new Vector3(0, moveInput.y, moveInput.x).normalized : transform.forward;
 
-        // 即座に速度を代入（FixedUpdateでも継続して代入される）
         rb.linearVelocity = dashDirection * dashDistance;
 
         Ray ray = new Ray(transform.position + new Vector3(0, 2, 0), dashDirection);
@@ -402,29 +444,28 @@ public class PlayerController : MonoBehaviour
         }
         animator.SetBool("isGround", isGround);
         animator.SetBool("drillFlag", drillFlag);
-        // --- Added: カメラのアニメーターにフラグを送信 ---
-        //if (cameraAnimator != null)
-        //{
-            //cameraAnimator.SetBool("drillFlag", drillFlag);
-        //}
-        // --------------------------------------------
     }
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if(onDamaged) return;
+        if (!IsControlEnabled)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
         moveInput = context.ReadValue<Vector2>();
     }
 
     public void OnDrill(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (onDamaged) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
-
         if (context.performed)
         {
+            if (!IsControlEnabled)
+            {
+                drillFlag = false;
+                return;
+            }
+
             drillFlag = true;
 
             if (Time.time >= lastDashTime + dashCooldown)
@@ -441,18 +482,28 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if(onDamaged) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
-
         if (context.performed)
         {
+            if (!IsControlEnabled)
+            {
+                isJumpPressed = false;
+                return;
+            }
+
             isJumpPressed = true;
+
             if (isGround)
             {
-                
                 rb.AddForce(transform.up * jumpPower, ForceMode.Impulse);
                 isGround = false;
+            }
+            else
+            {
+                // 空中でジェットパックを作動させた瞬間、落下中なら速度をリセットして即座に浮上できるようにする
+                if (rb.linearVelocity.y < 0)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+                }
             }
         }
         else if (context.canceled)
@@ -468,9 +519,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnSonar(InputAction.CallbackContext context)
     {
-        if (!CanMove) return;
-        if (onDamaged) return;
-        if (poseManager != null && poseManager.IsInputBlocked) return;
+        if (!IsControlEnabled) return;
 
         if (context.performed)
         {
@@ -488,22 +537,17 @@ public class PlayerController : MonoBehaviour
                 Instantiate(sonar, transform.position, Quaternion.identity);
                 currentBattery -= SonarConsuption;
             }
-            
         }
     }
 
     private void OnDrawGizmos()
     {
-        // 着地判定（CheckBox）の形をシーンビューに表示する
-        // 地面についている時は緑、浮いている時は赤にする
         Gizmos.color = isGround ? new Color(0, 1, 0, 0.3f) : new Color(1, 0, 0, 0.3f);
         Vector3 boxCenter = transform.position + groundBoxOffset;
-        Vector3 size = groundBoxExtents * 2f; // extentsを2倍にしてSizeにする
-        
-        // 半透明の箱を描画
+        Vector3 size = groundBoxExtents * 2f;
+
         Gizmos.DrawCube(boxCenter, size);
-        
-        // はっきりとした枠線を描画
+
         Gizmos.color = isGround ? Color.green : Color.red;
         Gizmos.DrawWireCube(boxCenter, size);
     }
@@ -511,6 +555,54 @@ public class PlayerController : MonoBehaviour
     public void EnablePlayerControl()
     {
         CanMove = true;
+        if (TextManager.Instance != null)
+        {
+            TextManager.Instance.ShowText("お宝を掘り当てて下へ進もう！");
+        }
+    }
+
+    public void DisablePlayerControl()
+    {
+        CanMove = false;
+        drillFlag = false;
+        isJumpPressed = false;
+        moveInput = Vector2.zero;
+        if (animator != null)
+        {
+            animator.SetBool("drillFlag", false);
+            animator.SetFloat("Move_X", 0f);
+        }
+        if (isRumbling && HapticsManager.Instance != null)
+        {
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
+        }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+    }
+
+    /// <summary>
+    /// プレイヤーの向きを右向き（Y軸0度）にする。
+    /// ダンスアニメーションなどの右向き前提演出で使用。
+    /// </summary>
+    public void FaceRight()
+    {
+        if (Mathf.Abs(Mathf.DeltaAngle(transform.rotation.eulerAngles.y, 0f)) > 1f)
+        {
+            transform.rotation = Quaternion.Euler(0, 0, 0);
+            FlipLightX();
+        }
+
+        if (miningZoneRoot != null)
+        {
+            miningZoneRoot.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+        if (drillPivot != null)
+        {
+            drillPivot.localRotation = Quaternion.identity;
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -531,17 +623,113 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // アニメーションイベント用
     public void DamageAnim()
     {
-        if(onDamaged == false)
+    }
+
+    public void TakeDamageWithMoney(Sprite dropIcon = null)
+    {
+        if (currentState == PlayerState.Normal)
         {
-            onDamaged = true;
-            animator.SetTrigger("Damage");
+            StartCoroutine(DamageRoutine(dropIcon));
         }
-        if(onDamaged == true)
+    }
+
+    private System.Collections.IEnumerator DamageRoutine(Sprite dropIcon)
+    {
+        currentState = PlayerState.TakingDamage;
+
+        // 被弾時にすべての入力状態をリセットし、直立（待機）状態に戻す
+        drillFlag = false;
+        isJumpPressed = false;
+        moveInput = Vector2.zero;
+        if (isRumbling && HapticsManager.Instance != null)
         {
-            animator.SetTrigger("Damage");
-            onDamaged = false;
+            HapticsManager.Instance.Stop();
+            isRumbling = false;
         }
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+        UpdateAnimation();
+
+        animator.SetTrigger("Damage");
+
+        // 速度をゼロにして慣性で滑るのを防ぐ
+        rb.linearVelocity = Vector3.zero;
+
+        if (dropIcon != null)
+        {
+            int dropCount = 3; // 演出用に適当な数を散らす
+            for (int i = 0; i < dropCount; i++)
+            {
+                DropVisualItem(dropIcon);
+            }
+        }
+
+        float duration = 1.0f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            SetRenderersEnabled(false);
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+
+            SetRenderersEnabled(true);
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
+        SetRenderersEnabled(true); // 確実に表示状態に戻す
+        animator.Play("Walk Tree"); // 入力はリセットされているので、Walk Tree内の「待機アニメーション」が再生されます
+        currentState = PlayerState.Normal;
+    }
+
+    private void SetRenderersEnabled(bool enabled)
+    {
+        if (characterRenderers == null) return;
+        foreach (var r in characterRenderers)
+        {
+            if (r != null) r.enabled = enabled;
+        }
+    }
+
+    private void DropVisualItem(Sprite icon)
+    {
+        if (icon == null) return;
+
+        // 物理計算用の親オブジェクト（コライダーなしで床をすり抜けさせる＝引っかからない）
+        GameObject physicsObj = new GameObject("DroppedItemPhysics");
+        Vector3 spawnPos = dropPoint != null ? dropPoint.position : transform.position + Vector3.up;
+        physicsObj.transform.position = spawnPos;
+
+        Rigidbody rb = physicsObj.AddComponent<Rigidbody>();
+        // X座標の固定と、Y,Z回転の固定（X軸周りのみ回転＝画面上でクルクル回る）
+        rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+
+        Vector3 randomDirection = new Vector3(0f, 1.0f, Random.Range(-1.0f, 1.0f)).normalized;
+        rb.AddForce(randomDirection * dropForce, ForceMode.Impulse);
+        rb.AddTorque(new Vector3(Random.Range(-15f, 15f), 0f, 0f), ForceMode.Impulse);
+
+        GameObject visualObj = new GameObject("Visual");
+        visualObj.transform.SetParent(physicsObj.transform);
+        visualObj.transform.localPosition = Vector3.zero;
+
+        SpriteRenderer sr = visualObj.AddComponent<SpriteRenderer>();
+        sr.sprite = icon;
+
+        // カメラの方を向かせる（1回だけ設定し、あとは親の回転に任せる）
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            // カメラのforwardと同じ方向を向かせる（SpriteRendererは-Zが表面なので、これでカメラと正対する）
+            visualObj.transform.rotation = Quaternion.LookRotation(mainCam.transform.forward, mainCam.transform.up);
+        }
+
+        // 2秒後に自動的に消滅（フェイク演出なので拾えない）
+        Destroy(physicsObj, 2.0f);
     }
 }

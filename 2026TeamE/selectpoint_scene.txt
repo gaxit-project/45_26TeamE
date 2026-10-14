@@ -1,0 +1,25 @@
+﻿
+  Assets\Scenes\02_Main.unity:752:  serializedVersion: 6
+  Assets\Scenes\02_Main.unity:753:  m_Component:
+  Assets\Scenes\02_Main.unity:754:  - component: {fileID: 116572836}
+  Assets\Scenes\02_Main.unity:755:  - component: {fileID: 116572837}
+  Assets\Scenes\02_Main.unity:756:  m_Layer: 5
+> Assets\Scenes\02_Main.unity:757:  m_Name: SelectPointUI
+  Assets\Scenes\02_Main.unity:758:  m_TagString: SelectPanel
+  Assets\Scenes\02_Main.unity:759:  m_Icon: {fileID: 0}
+  Assets\Scenes\02_Main.unity:760:  m_NavMeshLayer: 0
+  Assets\Scenes\02_Main.unity:761:  m_StaticEditorFlags: 0
+  Assets\Scenes\02_Main.unity:762:  m_IsActive: 1
+  Assets\Scenes\02_Main.unity:1632:  m_GameObject: {fileID: 221685961}
+  Assets\Scenes\02_Main.unity:1633:  m_Enabled: 1
+  Assets\Scenes\02_Main.unity:1634:  m_EditorHideFlags: 0
+  Assets\Scenes\02_Main.unity:1635:  m_Script: {fileID: 11500000, guid: c099c1f832b1f7a4cace20ba2bde464c, type: 3}
+  Assets\Scenes\02_Main.unity:1636:  m_Name: 
+> Assets\Scenes\02_Main.unity:1637:  m_EditorClassIdentifier: Assembly-CSharp::SelectPoint
+  Assets\Scenes\02_Main.unity:1638:  enterDoorAction:
+  Assets\Scenes\02_Main.unity:1639:    m_Name: Enter Door
+  Assets\Scenes\02_Main.unity:1640:    m_Type: 0
+  Assets\Scenes\02_Main.unity:1641:    m_ExpectedControlType: 
+  Assets\Scenes\02_Main.unity:1642:    m_Id: fb692c70-d38e-4b5f-822e-a4cd523f841b
+
+

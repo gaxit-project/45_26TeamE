@@ -4,6 +4,7 @@ public class DrillTip : MonoBehaviour
 {
     [SerializeField] float baseDrillInterval = 0.2f;
     [SerializeField] float baseDrillRadius = 1.5f;
+    [SerializeField] float miningPowerCoefficient = 1.5f; // 採掘力係数
     [SerializeField] Transform miningZone;
 
     [Header("エフェクト")]
@@ -14,13 +15,44 @@ public class DrillTip : MonoBehaviour
 
     [Header("サウンド設定")]
     [SerializeField] private string drillSECueName = "ドリル";
-    [SerializeField] private bool requireTerrainContact = true;
+
+    [Header("掘削時の画面揺れ")]
+    [Tooltip("揺れの強さ。0にすると揺れなし。硬いブロックほど自動的に強くなる")]
+    [SerializeField] private float digShakeStrength = 0.35f;
+    [Tooltip("揺れが収まるまでの時間（秒）")]
+    [SerializeField] private float digShakeDuration = 0.12f;
+
+    [Header("掘削時の振動")]
+    [Tooltip("ブロックを砕いた瞬間に重ねる振動の強さ。0にすると振動なし")]
+    [Range(0f, 1f)]
+    [SerializeField] private float digRumbleStrength = 0.6f;
+    [Tooltip("その振動が続く時間（秒）")]
+    [SerializeField] private float digRumbleDuration = 0.08f;
+
+    [Header("ブロック破壊音（空なら鳴らさない）")]
+    [Tooltip("土など柔らかいブロックを砕いた時のSE")]
+    [SerializeField] private string softBreakSeName = "SoftBreak";
+    [Tooltip("石や硬岩など硬いブロックを砕いた時のSE。専用の音が無ければ柔らかい方と同じで構わない")]
+    [SerializeField] private string hardBreakSeName = "SoftBreak";
+    [Tooltip("この硬さ以上で硬いブロック用のSEに切り替える")]
+    [SerializeField] private float hardBreakHardnessThreshold = 4f;
+    [Tooltip("破壊音を鳴らす最小間隔（秒）。連続で掘った時に音が重なりすぎるのを防ぐ")]
+    [SerializeField] private float breakSeMinInterval = 0.08f;
+
+    private float lastBreakSeTime = -999f;
 
     private float lastDrillTime;
+    private float lastGrindParticleTime;
+    private bool wasDrilling;
     private PlayerController player;
 
     private float lastDirtTouchTime = -100f;
+    private readonly Vector3[] cachedCheckOffsets = new Vector3[4];
     [SerializeField] private float contactTimeout = 0.5f;
+
+    private SphereCollider myCollider;
+    private BoxCollider miningZoneBoxCollider;
+    private Vector3 initialLocalCenter;
 
     public bool IsContactingDiggableSurface => (Time.time - lastDirtTouchTime) <= contactTimeout;
 
@@ -30,7 +62,7 @@ public class DrillTip : MonoBehaviour
         {
             int drillLevel = UpgradeManager.GetLevel(UpgradeManager.DRILL);
             float bonusRadius = (drillLevel - 1) * 0.2f;
-            return baseDrillRadius + bonusRadius;
+            return (baseDrillRadius + bonusRadius) * miningPowerCoefficient;
         }
     }
 
@@ -44,9 +76,35 @@ public class DrillTip : MonoBehaviour
         }
     }
 
-    void Start()
+    private void Awake()
     {
         player = GetComponentInParent<PlayerController>();
+        if (player == null)
+        {
+            // PlayerController 配下にない DrillTip（shopPlayer 等の展示用モデル）は動作を無効化
+            enabled = false;
+        }
+    }
+
+    void Start()
+    {
+        if (player == null)
+        {
+            player = GetComponentInParent<PlayerController>();
+        }
+        if (player == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        if (miningZone != null) miningZoneBoxCollider = miningZone.GetComponent<BoxCollider>();
+
+        myCollider = GetComponent<SphereCollider>();
+        if (myCollider != null)
+        {
+            initialLocalCenter = myCollider.center;
+        }
 
         if (dirtEffect != null)
         {
@@ -54,19 +112,94 @@ public class DrillTip : MonoBehaviour
         }
     }
 
+    private void LateUpdate()
+    {
+
+        if (myCollider != null)
+        {
+            Vector3 worldCenter = transform.TransformPoint(initialLocalCenter);
+            worldCenter.x = 0f;
+            myCollider.center = transform.InverseTransformPoint(worldCenter);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (player != null && SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopLoopSE();
+        }
+    }
+
     private void Update()
     {
+        HandleDrillStart();
+        RefreshTerrainContact();
         HandleDrillSound();
+    }
+
+    /// <summary>
+    /// ドリルの周囲に掘れるブロックがあれば、地形に接触しているものとして扱う。
+    /// </summary>
+    /// <remarks>
+    /// 接触判定を OnTriggerStay だけに頼ると、掘った直後にできる空洞や
+    /// チャンクのメッシュ再生成でトリガーが数フレーム途切れ、
+    /// Contact Timeout を超えた時点で掘削音のループが止まってしまう。
+    /// 地形データを直接見ることで、掘り続けている間は音が途切れないようにする。
+    /// </remarks>
+    private void RefreshTerrainContact()
+    {
+        if (player == null || !player.IsControlEnabled || !player.IsDrilling) return;
+
+        VoxelTerrain terrain = VoxelTerrain.Instance;
+        if (terrain == null) return;
+
+        // 地形はX方向に薄く、掘削は常にx=0の面で行われる
+        Vector3 checkPosition = transform.position;
+        checkPosition.x = 0f;
+
+        if (terrain.HasDiggableBlockNear(checkPosition, CurrentDrillRadius))
+        {
+            lastDirtTouchTime = Time.time;
+        }
+    }
+
+    /// <summary>
+    /// 掘り始めた瞬間にクールダウンを入れ直す。
+    /// </summary>
+    /// <remarks>
+    /// クールダウンは「最後に掘った時刻 + 硬さに応じた待ち時間」で判定している。
+    /// ボタンを離して時間が経つと待ち時間を消化済みの状態になるため、
+    /// これが無いと押し直した1フレーム目で即座に掘れてしまい、
+    /// 単押しの連打でどんな硬いブロックも一瞬で壊せてしまう。
+    /// </remarks>
+    private void HandleDrillStart()
+    {
+        if (player == null || !player.IsControlEnabled)
+        {
+            wasDrilling = false;
+            return;
+        }
+
+        bool isDrilling = player.IsDrilling;
+
+        if (isDrilling && !wasDrilling)
+        {
+            lastDrillTime = Time.time;
+        }
+
+        wasDrilling = isDrilling;
     }
 
     private void HandleDrillSound()
     {
-        if (SoundManager.Instance == null || player == null || string.IsNullOrEmpty(drillSECueName)) return;
+        if (player == null) return;
+        if (SoundManager.Instance == null || string.IsNullOrEmpty(drillSECueName)) return;
 
-        bool isDrilling = player.IsDrilling && player.HasBattery;
-        bool shouldPlaySound = requireTerrainContact ? (isDrilling && IsContactingDiggableSurface) : isDrilling;
+        bool isOperable = player.IsControlEnabled;
+        bool isDrilling = isOperable && player.IsDrilling && player.HasBattery;
 
-        if (shouldPlaySound)
+        if (isDrilling)
         {
             SoundManager.Instance.PlayLoopSE(drillSECueName);
         }
@@ -78,29 +211,28 @@ public class DrillTip : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (player == null || !player.IsDrilling) return;
+        if (player == null || !player.IsControlEnabled || !player.IsDrilling) return;
         if (other.CompareTag("VoxelTerrain") || other.CompareTag("Block_dirt"))
         {
             lastDirtTouchTime = Time.time;
         }
         if (other.CompareTag("VoxelTerrain"))
         {
-            VoxelTerrain terrain = other.GetComponentInParent<VoxelTerrain>();
+            VoxelTerrain terrain = VoxelTerrain.Instance;
             if (terrain != null)
             {
                 float s = terrain.BlockSize;
                 float maxHardness = 0f;
 
-                Vector3[] checkOffsets = {
-                    transform.forward * 0.7f,
-                    transform.forward * 0.5f + transform.right * 0.3f,
-                    transform.forward * 0.5f - transform.right * 0.3f,
-                    transform.forward * 0.5f + transform.up * 0.3f
-                };
+                cachedCheckOffsets[0] = transform.forward * 0.7f;
+                cachedCheckOffsets[1] = transform.forward * 0.5f + transform.right * 0.3f;
+                cachedCheckOffsets[2] = transform.forward * 0.5f - transform.right * 0.3f;
+                cachedCheckOffsets[3] = transform.forward * 0.5f + transform.up * 0.3f;
 
-                foreach (Vector3 offset in checkOffsets)
+                foreach (Vector3 offset in cachedCheckOffsets)
                 {
                     Vector3 checkPos = transform.position + offset;
+                    checkPos.x = 0f; 
                     Vector3 lp = terrain.transform.InverseTransformPoint(checkPos);
                     int tx = Mathf.FloorToInt(lp.x / s);
                     int ty = Mathf.FloorToInt(lp.y / s);
@@ -108,12 +240,6 @@ public class DrillTip : MonoBehaviour
 
                     float h = terrain.GetHardnessAtPosition(tx, ty, tz);
                     if (h > maxHardness) maxHardness = h;
-
-                    if (IsBedrock(terrain, tx, ty, tz))
-                    {
-                        terrain.OnPlayerReachRelayPoint(ty);
-                        return;
-                    }
                 }
 
                 float hardness = maxHardness;
@@ -126,24 +252,107 @@ public class DrillTip : MonoBehaviour
 
                 float currentInterval = CurrentDrillInterval * hardness;
 
-                if (!player.IsDashing && Time.time < lastDrillTime + currentInterval) return;
-
-                Vector3 digLocal = terrain.transform.InverseTransformPoint(transform.position);
+                Vector3 digPos = transform.position;
+                digPos.x = 0f; 
+                Vector3 digLocal = terrain.transform.InverseTransformPoint(digPos);
                 int dx = Mathf.FloorToInt(digLocal.x / s);
                 int dy = Mathf.FloorToInt(digLocal.y / s);
                 int dz = Mathf.FloorToInt(digLocal.z / s);
 
-                BoxCollider box = miningZone.GetComponent<BoxCollider>();
+                BoxCollider box = miningZoneBoxCollider;
                 Vector3 minL = terrain.transform.InverseTransformPoint(box.bounds.min) / s;
                 Vector3 maxL = terrain.transform.InverseTransformPoint(box.bounds.max) / s;
 
                 float currentRadius = player.IsDashing ? CurrentDrillRadius : CurrentDrillRadius * 0.8f;
 
-                terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+                if (!player.IsDashing && Time.time < lastDrillTime + currentInterval)
+                {
+                    // クールダウン中（削っている最中）でも、一定間隔でパーティクルを出す
+                    if (Time.time > lastGrindParticleTime + 0.1f)
+                    {
+                        lastGrindParticleTime = Time.time;
+                        terrain.EmitParticlesInArea(dx, dy, dz, currentRadius / s, minL, maxL);
+                    }
+                    return;
+                }
+
+                bool destroyedAnyBlock = terrain.ExecuteDig(dx, dy, dz, currentRadius / s, minL, maxL);
+
+                // 実際にブロックを壊した時だけ画面を揺らす。
+                // 掘る対象が無い場所でドリルを回し続けても揺れないようにするため。
+                if (destroyedAnyBlock)
+                {
+                    if (CameraController.Instance != null)
+                    {
+                        CameraController.Instance.AddShake(CalculateDigShakeStrength(hardness), digShakeDuration);
+                    }
+
+                    // 火花が散っているように、掘った瞬間だけライトを強める
+                    if (LightController.Instance != null)
+                    {
+                        LightController.Instance.Flash();
+                    }
+
+                    // 砕いた手応えとして、常時振動の上から短く強いパルスを重ねる
+                    if (HapticsManager.Instance != null && digRumbleStrength > 0f)
+                    {
+                        float rumble = CalculateDigRumbleStrength(hardness);
+                        HapticsManager.Instance.PlayPulse(rumble, rumble * 0.6f, digRumbleDuration);
+                    }
+
+                    PlayBreakSound(hardness);
+                }
+
                 lastDirtTouchTime = Time.time;
                 lastDrillTime = Time.time;
             }
         }
+    }
+
+    /// <summary>
+    /// 掘削時の画面揺れの強さを求める。
+    /// 硬さの生の値（土1〜珪岩20以上）をそのまま掛けると一瞬で上限に張り付いてしまうため、
+    /// 0〜1に正規化してから控えめに上乗せする。
+    /// </summary>
+    /// <summary>
+    /// ブロックの硬さを0〜1に正規化する。
+    /// 硬さの生の値（土1〜珪岩20以上）をそのまま演出の強さに掛けると
+    /// 一瞬で上限に張り付いてしまうため、扱いやすい範囲に直してから使う。
+    /// </summary>
+    private static float NormalizeHardness(float hardness)
+    {
+        const float softHardness = 1f;   // 土
+        const float hardHardness = 10f;  // 硬岩
+
+        return Mathf.InverseLerp(softHardness, hardHardness, hardness);
+    }
+
+    /// <summary>掘削時の画面揺れの強さ。土でも必ず揺れ、硬いブロックでは最大2倍になる。</summary>
+    private float CalculateDigShakeStrength(float hardness)
+    {
+        return digShakeStrength * Mathf.Lerp(1f, 2f, NormalizeHardness(hardness));
+    }
+
+    /// <summary>掘削時の振動の強さ。硬いブロックほど強く響かせる。</summary>
+    private float CalculateDigRumbleStrength(float hardness)
+    {
+        return Mathf.Clamp01(digRumbleStrength * Mathf.Lerp(0.7f, 1f, NormalizeHardness(hardness)));
+    }
+
+    /// <summary>
+    /// ブロックを砕いた時の破壊音を鳴らす。
+    /// 掘削は短い間隔で連続するため、音が重なりすぎないよう最小間隔を設けている。
+    /// </summary>
+    private void PlayBreakSound(float hardness)
+    {
+        if (SoundManager.Instance == null) return;
+        if (Time.time < lastBreakSeTime + breakSeMinInterval) return;
+
+        string seName = hardness >= hardBreakHardnessThreshold ? hardBreakSeName : softBreakSeName;
+        if (string.IsNullOrEmpty(seName)) return;
+
+        lastBreakSeTime = Time.time;
+        SoundManager.Instance.PlaySE(seName);
     }
 
     private void OnDrawGizmos()
@@ -168,8 +377,5 @@ public class DrillTip : MonoBehaviour
             prev = next;
         }
     }
-    private bool IsBedrock(VoxelTerrain terrain, int x, int y, int z)
-    {
-        return terrain.IsRelayZoneBottom(y);
-    }
+
 }

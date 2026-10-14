@@ -1,0 +1,286 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// 地中に埋まっている「扉」に関する処理。
+/// 扉は掘り進めるうちにランダムな位置から現れ、入るとお金の両替・強化画面へ移行する。
+/// 戻ってきたときは入った扉の位置から再開し、その扉は壊れて二度と入れない。
+/// </summary>
+public partial class VoxelTerrain
+{
+    /// <summary>扉から戻ってきたとき、プレイヤーの周囲を掘り抜く半径（ワールド単位）。</summary>
+    private const float DoorReturnClearRadius = 4.0f;
+
+    /// <summary>扉から戻ってきたときの復帰位置。地形のローカル座標で保持する。</summary>
+    private Vector3 doorReturnLocalPosition;
+
+    /// <summary>復帰待ちの扉があるか。</summary>
+    public bool HasPendingDoorReturn { get; private set; }
+
+    /// <summary>
+    /// いまプレイヤーが重なっている扉。
+    /// 壊れた扉の上に復帰することがあるため、1つだけでなく重なっている分すべてを保持する。
+    /// </summary>
+    private readonly List<DoorBehaviour> doorsInRange = new List<DoorBehaviour>();
+
+    /// <summary>いまプレイヤーが入場できる扉。入れる扉が無ければ null。</summary>
+    public DoorBehaviour CurrentDoorInRange
+    {
+        get
+        {
+            RemoveDestroyedDoors();
+
+            foreach (DoorBehaviour door in doorsInRange)
+            {
+                if (door.CanEnter) return door;
+            }
+            return null;
+        }
+    }
+
+    /// <summary>プレイヤーが入場範囲に入っている扉として登録する。</summary>
+    public void SetDoorInRange(DoorBehaviour door)
+    {
+        if (door == null || doorsInRange.Contains(door)) return;
+        doorsInRange.Add(door);
+    }
+
+    /// <summary>登録されている扉を解除する。</summary>
+    public void ClearDoorInRange(DoorBehaviour door)
+    {
+        doorsInRange.Remove(door);
+    }
+
+    private void RemoveDestroyedDoors()
+    {
+        for (int i = doorsInRange.Count - 1; i >= 0; i--)
+        {
+            if (doorsInRange[i] == null) doorsInRange.RemoveAt(i);
+        }
+    }
+
+    /// <summary>
+    /// いま範囲内にある扉に入る。ボタン入力を受けた側（SelectPoint）から呼ぶ。
+    /// 復帰位置の記録までを行い、画面の切り替えは呼び出し側に任せる。
+    /// </summary>
+    /// <returns>入場できた場合はtrue。呼び出し側はtrueならリザルトへ遷移させる。</returns>
+    public bool TryEnterDoorInRange()
+    {
+        RemoveDestroyedDoors();
+
+        if (doorsInRange.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (DoorBehaviour door in doorsInRange)
+        {
+            if (door.TryEnter()) return true;
+        }
+
+        return false;
+    }
+
+    // --- 生成 -------------------------------------------------------------
+
+    /// <summary>
+    /// 扉を深さ方向に等間隔で配置する。
+    /// 地表から数えて <see cref="chunksPerDoor"/> チャンク（既定15）ずつを1単位とし、
+    /// 各単位の最深部 <see cref="doorBandChunks"/> チャンクの中に扉を1つだけ置く。
+    /// これで「一定の深さまで掘るごとに扉が1つ現れる」ペースになる。
+    /// </summary>
+    /// <remarks>
+    /// チャンク番号について：Unityの Chunk_N は地面（最下部）が 0 で、地表に向かうほど大きくなる。
+    /// 扉の配置は「掘り進めた量」で決めたいので、この処理の中では
+    /// 地表から数えた 0 始まりのチャンク番号（地表が 0）で計算し、ログでは両方を出す。
+    /// </remarks>
+    private void SpawnDoors(System.Random rnd)
+    {
+        if (doorPrefab == null)
+        {
+            Debug.LogWarning("[VoxelTerrain] doorPrefab が未設定のため、扉が生成されません。");
+            return;
+        }
+
+        int unitChunks = Mathf.Max(1, chunksPerDoor);
+        int bandChunks = Mathf.Clamp(doorBandChunks, 1, unitChunks);
+
+        int totalChunks = heightY / chunkSizeY;
+        int unitCount = Mathf.CeilToInt((float)totalChunks / unitChunks);
+        int placedCount = 0;
+
+        for (int unit = 0; unit < unitCount; unit++)
+        {
+            // 地表から数えたチャンク範囲（0始まり・終端は含まない）。
+            int unitStartChunk = unit * unitChunks;
+            int unitEndChunk = Mathf.Min(unitStartChunk + unitChunks, totalChunks);
+            if (unitEndChunk <= unitStartChunk) continue;
+
+            // 単位の最深部 bandChunks チャンクが扉の出る帯。
+            // 末尾の単位がチャンク数に満たない場合も、その単位の一番深いところに寄せる。
+            int bandStartChunk = Mathf.Max(unitStartChunk, unitEndChunk - bandChunks);
+
+            // y座標は上に行くほど大きいので、浅いチャンクの方が大きいyになる。
+            int bandTopY = heightY - bandStartChunk * chunkSizeY;
+            int bandBottomY = heightY - unitEndChunk * chunkSizeY;
+
+            if (TrySpawnDoorInBand(unit, bandStartChunk, unitEndChunk, bandBottomY, bandTopY, rnd)) placedCount++;
+        }
+
+    }
+
+    /// <summary>
+    /// 指定した深さの帯の中に扉を1つだけ配置する。
+    /// </summary>
+    /// <returns>配置できた場合はtrue。</returns>
+    private bool TrySpawnDoorInBand(int unit, int bandStartChunk, int bandEndChunk, int bottomY, int topY, System.Random rnd)
+    {
+        List<Vector3Int> candidates = CollectDoorCandidates(bottomY, topY);
+        if (candidates.Count == 0)
+        {
+            // ゴールゾーンを除外した結果なら想定どおり。それ以外は設定を見直す必要がある。
+            bool excludedByGoalZone = !allowDoorsInGoalZone && IsEntirelyGoalZone(bottomY, topY);
+            if (!excludedByGoalZone)
+            {
+                Debug.LogWarning($"[VoxelTerrain] 単位{unit}（地表から{bandStartChunk + 1}～{bandEndChunk}チャンク目）に扉を置ける場所がありません。");
+            }
+            return false;
+        }
+
+        SpawnDoorAt(candidates[rnd.Next(candidates.Count)]);
+        return true;
+    }
+
+    /// <summary>指定した深さの帯がすべてゴールゾーンに含まれるか。</summary>
+    private bool IsEntirelyGoalZone(int bottomY, int topY)
+    {
+        int minY = Mathf.Max(0, bottomY);
+        int maxY = Mathf.Min(heightY - 1, topY - 1);
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            if (!zoneSettings[GetRelayID(y)].isGoalZone) return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 扉を置ける座標を集める。
+    /// ステージ左右の端から余白を取ったうえで、周囲が完全に土で埋まっている位置のみを候補にする。
+    /// </summary>
+    /// <remarks>
+    /// 掘れるブロックを1つ調べるだけでは、その隣が空洞（孤立ブロック除去の穴、層の境目の崖、
+    /// 開始地点の空洞など）の場合に扉が半分露出した状態で生成されてしまう。
+    /// 奥行き（X）は、カメラから見て手前の層に穴が空いていると扉が透けて見えるため、全層を調べる。
+    /// </remarks>
+    private List<Vector3Int> CollectDoorCandidates(int bottomY, int topY)
+    {
+        var positions = new List<Vector3Int>();
+
+        int minY = Mathf.Max(0, bottomY);
+        int maxY = Mathf.Min(heightY - 1, topY - 1);
+        int centerZ = maxStageWidthZ / 2;
+
+        // 扉は常に地形の中央の層に置き、奥行きの埋まり具合を揃える。
+        int doorX = thicknessX / 2;
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            int zoneIndex = GetRelayID(y);
+            if (!allowDoorsInGoalZone && zoneSettings[zoneIndex].isGoalZone) continue;
+
+            // 端に寄りすぎると壁に食い込んで見えるため、左右から余白分だけ内側に寄せる。
+            int halfWidth = zoneSettings[zoneIndex].widthZ / 2;
+            int minZ = centerZ - halfWidth + doorEdgeMarginZ;
+            int maxZ = centerZ + halfWidth - doorEdgeMarginZ;
+            if (minZ > maxZ) continue;
+
+            for (int z = minZ; z <= maxZ; z++)
+            {
+                if (!IsFullyBuried(doorX, y, z)) continue;
+
+                positions.Add(new Vector3Int(doorX, y, z));
+            }
+        }
+
+        return positions;
+    }
+
+    /// <summary>
+    /// 指定位置の周囲が、扉を隠せるだけの土で満たされているか。
+    /// </summary>
+    private bool IsFullyBuried(int centerX, int centerY, int centerZ)
+    {
+        int margin = Mathf.Max(0, doorBurialMargin);
+
+        for (int y = centerY - margin; y <= centerY + margin; y++)
+        {
+            for (int z = centerZ - margin; z <= centerZ + margin; z++)
+            {
+                for (int x = 0; x < thicknessX; x++)
+                {
+                    // ステージの外に面している＝崖や壁際なので、扉がはみ出して見える
+                    if (!IsInside(x, y, z)) return false;
+
+                    // 空気・岩盤・境界壁はいずれも扉を埋められない
+                    if (!IsDiggable(mapData[x, y, z])) return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void SpawnDoorAt(Vector3Int coord)
+    {
+        Vector3 pos = transform.position + new Vector3(
+            coord.x * blockSize,
+            coord.y * blockSize + (blockSize / 2f),
+            coord.z * blockSize + (blockSize / 2f)
+        );
+
+        // 向きはプレハブに設定されたものをそのまま使う。
+        // 宝箱と違い扉は正面を向かせたいので、ここで回転を足さない。
+        GameObject door = Instantiate(doorPrefab, pos, doorPrefab.transform.rotation, transform);
+        door.name = $"Door_Y{coord.y}_Z{coord.z}";
+    }
+
+    // --- 入場と復帰 -------------------------------------------------------
+
+    /// <summary>
+    /// 扉に入ったことを記録する。メインシーンに戻ってきたときの復帰位置になる。
+    /// 画面の切り替えはUI側（SelectPoint）が行う。
+    /// </summary>
+    public void MarkDoorEntered(Vector3 doorWorldPosition)
+    {
+        doorReturnLocalPosition = transform.InverseTransformPoint(doorWorldPosition);
+        HasPendingDoorReturn = true;
+
+    }
+
+    /// <summary>
+    /// メインシーンに戻ってきたとき、入った扉の位置までプレイヤーを戻す。
+    /// 扉は壊れているので、同じ扉で再び画面移行することはない。
+    /// </summary>
+    private void RestorePlayerAtDoor()
+    {
+        if (!HasPendingDoorReturn) return;
+        HasPendingDoorReturn = false;
+
+        GameObject player = GameObject.FindWithTag("Player");
+        if (player == null) return;
+
+        Vector3 worldPos = transform.TransformPoint(doorReturnLocalPosition);
+
+        // 復帰直後に地形へ埋まらないよう、先に周囲を掘り抜いておく。
+        ClearBlocksAroundPoint(worldPos, DoorReturnClearRadius);
+        player.transform.position = worldPos;
+
+        // カメラを追いつかせるのではなく、最初からプレイヤーに合わせておく。
+        if (CameraController.Instance != null)
+        {
+            CameraController.Instance.SnapToPlayer();
+        }
+
+    }
+}

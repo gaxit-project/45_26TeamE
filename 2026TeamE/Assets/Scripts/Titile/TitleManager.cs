@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -16,6 +17,8 @@ public class TitleManager : MonoBehaviour
     [SerializeField] private GameObject optionFirstSelected;
 
     private bool isWaitingInput = true;
+    private UnityEngine.InputSystem.Controls.ButtonControl[] cachedGamepadButtons;
+    private Gamepad cachedGamepad;
 
     public void Start()
     {
@@ -24,7 +27,6 @@ public class TitleManager : MonoBehaviour
         SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
         pressAnyButtonText.SetActive(true);
 
-        // 再読み込み時に生き残ったSettingManager内のCloseButtonの参照先を新しいTitleManagerに繋ぎ直す
         if (SettingManager.Instance != null)
         {
             var buttons = SettingManager.Instance.GetComponentsInChildren<UnityEngine.UI.Button>(true);
@@ -32,7 +34,7 @@ public class TitleManager : MonoBehaviour
             {
                 if (btn.gameObject.name == "CloseButton")
                 {
-                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.RemoveListener(CloseOptionPanel);
                     btn.onClick.AddListener(CloseOptionPanel);
                 }
             }
@@ -41,7 +43,7 @@ public class TitleManager : MonoBehaviour
 
     private void ResetGameState()
     {
-        // ゲーム全体の進行状態の一括リセットはResetManagerに集約
+
         ResetManager.ResetAll();
     }
 
@@ -54,75 +56,90 @@ public class TitleManager : MonoBehaviour
 
         bool keyboardPressed = Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame;
 
-        bool gamepadPressed = false;
-        if (Gamepad.current != null)
-        {
-            foreach(var control in Gamepad.current.allControls)
-            {
-                if (control is UnityEngine.InputSystem.Controls.ButtonControl button && button.wasPressedThisFrame)
-                {
-                    gamepadPressed = true;
-                    break;
-                }
-            }
-        }
+        bool gamepadPressed = CheckGamepadPressed();
 
-        if(keyboardPressed || gamepadPressed)
+        if (keyboardPressed || gamepadPressed)
         {
             PushToStart();
         }
     }
 
-    // 入力待ち状態で、現在選択されているUI要素がない場合に最初のボタンを選択する
+    private bool CheckGamepadPressed()
+    {
+        Gamepad pad = Gamepad.current;
+        if (pad == null) return false;
+
+        if (cachedGamepad != pad)
+        {
+            cachedGamepad = pad;
+            cachedGamepadButtons = pad.allControls.OfType<UnityEngine.InputSystem.Controls.ButtonControl>().ToArray();
+        }
+
+        if (cachedGamepadButtons != null)
+        {
+            for (int i = 0; i < cachedGamepadButtons.Length; i++)
+            {
+                if (cachedGamepadButtons[i].wasPressedThisFrame) return true;
+            }
+        }
+        return false;
+    }
+
     private void LateUpdate()
     {
-        if(EventSystem.current.currentSelectedGameObject == null && !isWaitingInput)
+        if (isWaitingInput || EventSystem.current == null) return;
+        if (SettingManager.Instance != null && SettingManager.Instance.IsOpen) return;
+
+        if (EventSystem.current.currentSelectedGameObject == null)
         {
             EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         }
     }
 
-    // スタート画面のアニメーションを開始するメソッド
     private void PushToStart()
     {
         isWaitingInput = false;
         pressAnyButtonText.SetActive(false);
         mainMenuAnimator.SetTrigger("SlideIn");
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        Invoke(nameof(SelectFirstButton), 0.5f);
+
+        // Invoke は Time.timeScale の影響を受けるため、0 のまま戻ってくると永久に発火せず、
+        // ボタンが1つも選択されないまま操作不能になる。実時間で待つ。
+        StartCoroutine(SelectFirstButtonAfterDelay(0.5f));
     }
 
-    // 最初のボタンを選択するメソッド
+    private IEnumerator SelectFirstButtonAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        SelectFirstButton();
+    }
+
     private void SelectFirstButton()
     {
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // オプションパネルを開くメソッド
     public void OpenOptionPanel()
     {
         SettingManager.Instance?.OpenSettingPanel();
     }
 
-    // オプションパネルを閉じるメソッド
     public void CloseOptionPanel()
     {
         SettingManager.Instance?.CloseSettingPanel();
         EventSystem.current.SetSelectedGameObject(firstSelectedButton);
     }
 
-    // ゲーム開始のメソッド
     public void StartGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        SceneLoader.Instance.LoadScene("02_Main");
+
+        SceneLoader.Instance.LoadScene("02_Main", true);
     }
 
-    // ゲーム終了のメソッド
     public void QuitGame()
     {
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
-        //UnityEditor.EditorApplication.isPlaying = false;
         Application.Quit();
     }
 }

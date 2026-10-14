@@ -3,172 +3,150 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using System.Collections;
 
+/// <summary>
+/// 扉への入場操作と、リザルトシーンへの遷移コンポーネント。
+/// メインシーンのUI側に1つだけ置いておけばよい。
+/// </summary>
+/// <remarks>
+/// 以前は層ごとの中継地点と鍵の所持数を判定するクラスだったが、
+/// 「掘っていると現れる扉にYボタンで入る」仕様へ変更した。
+/// 入力の受付を扉ごとに持たせると扉の数だけ InputAction が有効になってしまうため、
+/// 受付はここに一本化し、どの扉が範囲内かは VoxelTerrain が持つ。
+/// 地形側は入場の記録だけを行う。
+/// </remarks>
 public class SelectPoint : MonoBehaviour
 {
-    [Header("選択パネルのタグ名")]
-    [SerializeField] private string panelTag = "SelectPanel";
-    [SerializeField] private GameObject selectPanel;
-    [SerializeField] private GameObject firstSelectButton;
+    /// <summary>メインシーンに存在する唯一のインスタンス。シーンを抜けると null になる。</summary>
+    public static SelectPoint Instance { get; private set; }
 
-    [Header("シーン移動用のボタン設定")]
-    [SerializeField] private InputAction jumpSceneAction;
+    [Header("扉に入るボタン")]
+    [Tooltip("扉に入るための入力（Yボタンなど）")]
+    [SerializeField] private InputAction enterDoorAction;
 
-    [Header("UIの表示位置調整")]
-    [SerializeField] private Vector3 uiOffset = new Vector3(-2.0f, 2.0f, 0);
-    private void Start()
+    [Header("遷移先")]
+    [SerializeField] private string resultSceneName = "Money Exchange";
+
+    [Header("演出")]
+    [Tooltip("遷移直前に鳴らすSE名。空なら鳴らしません。")]
+    [SerializeField] private string transitionSeName = "つるはしで掘る1";
+    [Tooltip("SEを聞かせるための待ち時間（秒・実時間）")]
+    [SerializeField] private float transitionDelay = 0.1f;
+
+    [Header("UI")]
+    [Tooltip("扉の前にいるときに表示する案内UI（これまで使っていたSelectPointUIなど）")]
+    [SerializeField] private GameObject actionPromptUI;
+
+    private bool isTransitioning;
+
+    private void Awake()
     {
-        FindPanelInScene();
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     private void OnEnable()
     {
+        enterDoorAction?.Enable();
         SceneManager.sceneLoaded += OnSceneLoaded;
-        if (jumpSceneAction != null) jumpSceneAction.Enable();
     }
 
     private void OnDisable()
     {
+        enterDoorAction?.Disable();
         SceneManager.sceneLoaded -= OnSceneLoaded;
-        if (jumpSceneAction != null) jumpSceneAction.Disable();
+    }
+
+    /// <summary>
+    /// このコンポーネントは VoxelTerrain と一緒にシーンをまたいで生き残るため、
+    /// メインシーンに戻るたびに遷移中フラグを戻さないと2つ目以降の扉に入れなくなる。
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == "02_Main")
+        {
+            isTransitioning = false;
+        }
     }
 
     private void Update()
     {
         if (VoxelTerrain.Instance == null) return;
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+
+        if (actionPromptUI != null)
         {
-            // プレイヤーの足元のY座標を取得
-            Vector3 localPos = VoxelTerrain.Instance.transform.InverseTransformPoint(player.transform.position);
-            float s = VoxelTerrain.Instance.BlockSize;
-            int py = Mathf.FloorToInt(localPos.y / s);
-            // ★変更点：新しい岩盤判定メソッドを直接使う
-            bool isTouchingBedrock = VoxelTerrain.Instance.IsRelayZoneBottom(py) || VoxelTerrain.Instance.IsRelayZoneBottom(py - 1);
-            if (isTouchingBedrock)
+            bool canEnter = !isTransitioning && VoxelTerrain.Instance.CurrentDoorInRange != null;
+            if (actionPromptUI.activeSelf != canEnter)
             {
-                // 岩盤にいる間、UIが出ていなければ出す
-                if (selectPanel != null && !selectPanel.activeSelf)
-                {
-                    // チェックポイント保存などの処理
-                    VoxelTerrain.Instance.OnPlayerReachRelayPoint(py);
-                    ShowButton(); // UI表示
-                }
-                if (jumpSceneAction != null && jumpSceneAction.WasPressedThisFrame())
-                {
-                    // プレイヤーのいる深さから、今のゾーンのIDを取得
-                    int currentID = VoxelTerrain.Instance.GetRelayID(py);
-                    // 鍵が3つ集まっているか（クリアしているか）確認
-                    bool hasKeys = VoxelTerrain.Instance.IsZoneCleared(currentID);
-                    if (hasKeys)
-                    {
-                        // 鍵が足りていればリザルトへ！
-                        GoToResult();
-                    }
-                    else
-                    {
-                        // 鍵が足りない場合は、さっき作った警告アニメーションを呼ぶ
-                        if (KeyUIController.Instance != null)
-                        {
-                            KeyUIController.Instance.ShowWarning();
-                        }
-                        SoundManager.Instance.PlaySE("つるはしで掘る3");
-                    }
-                }
-                if (selectPanel != null && selectPanel.activeSelf && Camera.main != null)
-                {
-                    Vector3 worldPos = player.transform.position + uiOffset;
+                actionPromptUI.SetActive(canEnter);
+            }
+        }
 
-                    // 3D空間の座標を、カメラから見た画面上の2D座標に変換
-                    Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPos);
+        if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
 
-                    // UIパネルの位置を更新（※画面の裏側にいる時のバグを防ぐため、zが0以上の時だけ移動）
-                    if (screenPos.z > 0)
-                    {
-                        selectPanel.transform.position = screenPos;
-                    }
-                }
+        if (isTransitioning)
+        {
+            Debug.LogWarning("[SelectPoint] 遷移中フラグが立っているため入力を無視しました。前回の遷移後にフラグが戻っていない可能性があります。");
+            return;
+        }
+
+        if (VoxelTerrain.Instance.TryEnterDoorInRange())
+        {
+            if (actionPromptUI != null) actionPromptUI.SetActive(false);
+
+            // メインシーン内にショップUIが存在する場合はその場で開く
+            ShoppingManager shop = ShoppingManager.Instance;
+            if (shop == null)
+            {
+                shop = Object.FindFirstObjectByType<ShoppingManager>(FindObjectsInactive.Include);
+            }
+
+            if (shop != null)
+            {
+                shop.OpenShop();
             }
             else
             {
-                // 岩盤から離れたらUIを隠す
-                if (selectPanel != null && selectPanel.activeSelf)
-                {
-                    selectPanel.SetActive(false);
-                }
+                // ショップUIが未配置の場合はフォールバックとして旧シーン遷移を行う
+                GoToResult();
             }
-            
         }
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        FindPanelInScene();
-    }
-
-    private void FindPanelInScene()
-    {
-        // シーン内の指定したタグ（SelectPanel）を持つオブジェクトを検索
-        GameObject foundPanel = GameObject.FindWithTag(panelTag);
-        if (foundPanel != null)
-        {
-            selectPanel = foundPanel;
-
-            // 最初に選択するボタンとして、子要素にある「GoResult」を自動設定
-            if (firstSelectButton == null)
-            {
-                Transform btnTransform = selectPanel.transform.Find("GoResult");
-                if (btnTransform != null)
-                {
-                    firstSelectButton = btnTransform.gameObject;
-                }
-            }
-
-            selectPanel.SetActive(false);
-        }
-    }
-
-    public void ShowButton()
-    {
-        if (selectPanel == null) FindPanelInScene();
-
-        if (selectPanel != null)
-        {
-            
-            selectPanel.SetActive(true);
-            //ボタンを選べる必要はないのでコメントアウト
-            /*
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-            if (firstSelectButton != null)
-            {
-                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectButton);
-            }
-            */
-        }
-        else
-        {
-            Debug.LogError($"新しいシーンでタグ '{panelTag}' が設定されたオブジェクトが見つかりませんでした。");
-        }
-    }
-
+    /// <summary>リザルト（お金の両替・強化）シーンへ移行する。</summary>
     public void GoToResult()
     {
-        StartCoroutine(GoToResultCoroutine());
+        if (isTransitioning) return;
+        isTransitioning = true;
+
+        StartCoroutine(GoToResultRoutine());
     }
 
-    private IEnumerator GoToResultCoroutine()
+    private IEnumerator GoToResultRoutine()
     {
-
-        // BGMを止める（リザルト画面での重複再生を防ぐため）
         if (SoundManager.Instance != null)
         {
-            SoundManager.Instance.PlaySE("つるはしで掘る1");
+            if (!string.IsNullOrEmpty(transitionSeName))
+            {
+                SoundManager.Instance.PlaySE(transitionSeName);
+            }
+            SoundManager.Instance.StopLoopSE();
             SoundManager.Instance.StopBGM();
         }
 
-        yield return new WaitForSecondsRealtime(0.1f);
-        Time.timeScale = 1f; // 時間の進行を元に戻す
+        yield return new WaitForSecondsRealtime(transitionDelay);
 
-        SceneManager.LoadScene("Result"); // リザルトシーンを読み込む
+        // ロード中にtimeScaleを0にしている場合があるため、遷移前に必ず戻す。
+        Time.timeScale = 1f;
 
+        if (TimerManager.Instance != null)
+        {
+            FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+        }
+
+        SceneManager.LoadScene(resultSceneName);
     }
 }

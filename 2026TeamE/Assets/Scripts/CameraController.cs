@@ -2,22 +2,101 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [Header("�ǐՑΏ�")]
+    public static CameraController Instance { get; private set; }
+
+    [Header("追跡対象")]
     public Transform player;
 
-    [Header("�ݒ�")]
-    public float smoothTime = 1.0f; // �����܂ł̖ڈ����ԁi�傫���قǁu�̂�т�v�j
-    public Vector3 offset = new Vector3(0, 0, -2f); // �v���C���[�̏�����O(Z�}�C�i�X)�ɔz�u����ꍇ
+    [Header("設定")]
+    public float smoothTime = 1.0f;
+    public Vector3 offset = new Vector3(0, 0, -2f);
+
+    [Header("画面揺れ")]
+    [Tooltip("揺れの最大幅（ワールド単位）。0にすると揺れなし")]
+    [SerializeField] private float maxShakeAmount = 0.25f;
+
+    [Header("先読み（進行方向を少し多く映す）")]
+    [Tooltip("進行方向にカメラを寄せる最大距離。0にすると先読みなし")]
+    [SerializeField] private float lookAheadDistance = 2.0f;
+    [Tooltip("この速度で移動している時に先読みが最大になる")]
+    [SerializeField] private float lookAheadMaxSpeed = 8f;
+    [Tooltip("先読みの寄り・戻りにかける時間。大きいほどゆっくり追従する")]
+    [SerializeField] private float lookAheadSmoothTime = 0.4f;
 
     private Vector3 currentVelocity = Vector3.zero;
+
+    // 先読みで今どれだけ寄っているか。急に飛ばないよう滑らかに補間する
+    private Vector3 currentLookAhead = Vector3.zero;
+    private Vector3 lookAheadVelocity = Vector3.zero;
+    private Vector3 previousPlayerPosition;
+
+    private float shakeRemainingTime;
+    private float shakeTotalDuration;
+    private float shakeStrength;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    /// <summary>
+    /// 画面を揺らす。掘削や爆発など、衝撃を伝えたい場面から呼ぶ。
+    /// </summary>
+    /// <param name="strength">揺れの強さ（0〜1想定）</param>
+    /// <param name="duration">揺れが収まるまでの時間（秒）</param>
+    public void AddShake(float strength, float duration)
+    {
+        if (strength <= 0f || duration <= 0f) return;
+
+        strength = Mathf.Clamp01(strength);
+
+        // まだ揺れている最中なら、強い方・長い方を採用する。
+        // 弱い揺れで上書きされず、かつ掘り続けている間は揺れが途切れない。
+        if (shakeRemainingTime > 0f)
+        {
+            strength = Mathf.Max(strength, shakeStrength);
+            duration = Mathf.Max(duration, shakeRemainingTime);
+        }
+
+        shakeStrength = strength;
+        shakeTotalDuration = duration;
+        shakeRemainingTime = duration;
+    }
+
+    private void Start()
+    {
+        if (player != null) previousPlayerPosition = player.position;
+    }
+
+    /// <summary>
+    /// 補間を挟まずに、カメラをプレイヤーの位置へ即座に合わせる。
+    /// 扉から戻ってきた時やチェックポイント復帰時など、
+    /// プレイヤーを瞬間移動させた直後に呼ぶ。呼ばないとカメラが遠くから追いかけてくる。
+    /// </summary>
+    public void SnapToPlayer()
+    {
+        if (player == null)
+        {
+            GameObject found = GameObject.FindWithTag("Player");
+            if (found != null) player = found.transform;
+        }
+        if (player == null) return;
+
+        // 追従と先読みの慣性を捨てる。残っていると直後に流れてしまう。
+        currentVelocity = Vector3.zero;
+        currentLookAhead = Vector3.zero;
+        lookAheadVelocity = Vector3.zero;
+        previousPlayerPosition = player.position;
+
+        transform.position = player.position + offset;
+    }
 
     void LateUpdate()
     {
         if (player == null) return;
 
-        Vector3 targetPosition = player.position + offset;
+        Vector3 targetPosition = player.position + offset + UpdateLookAhead();
 
-        // 1. �S�̓I�Ɂu�̂�т�v�Ǐ]������
         Vector3 nextPosition = Vector3.SmoothDamp(
             transform.position,
             targetPosition,
@@ -25,10 +104,70 @@ public class CameraController : MonoBehaviour
             smoothTime
         );
 
-        // 2. Y�������́u�̂�т�v�𖳎����āA�ڕW�n�_�ɑ����ɍ��킹��
         nextPosition.y = targetPosition.y;
 
-        transform.position = nextPosition;
+        transform.position = nextPosition + CalculateShakeOffset();
     }
 
+    /// <summary>
+    /// プレイヤーの移動方向にカメラを少し寄せ、進行方向を広く映すためのオフセットを求める。
+    /// 速く動いているほど大きく寄り、止まると中央に戻る。
+    /// </summary>
+    private Vector3 UpdateLookAhead()
+    {
+        if (lookAheadDistance <= 0f)
+        {
+            previousPlayerPosition = player.position;
+            return Vector3.zero;
+        }
+
+        // Rigidbodyの速度ではなく実際の移動量から求めることで、
+        // 壁に押し付けて動けていない時に先読みが働くのを防ぐ
+        Vector3 movement = player.position - previousPlayerPosition;
+        previousPlayerPosition = player.position;
+
+        Vector3 targetLookAhead = Vector3.zero;
+
+        if (Time.deltaTime > 0f)
+        {
+            Vector3 velocity = movement / Time.deltaTime;
+
+            // 画面はYZ平面なので、奥行きにあたるXは先読みしない
+            velocity.x = 0f;
+
+            float speedRatio = Mathf.Clamp01(velocity.magnitude / Mathf.Max(0.01f, lookAheadMaxSpeed));
+            targetLookAhead = velocity.normalized * (lookAheadDistance * speedRatio);
+        }
+
+        currentLookAhead = Vector3.SmoothDamp(
+            currentLookAhead,
+            targetLookAhead,
+            ref lookAheadVelocity,
+            lookAheadSmoothTime
+        );
+
+        return currentLookAhead;
+    }
+
+    /// <summary>
+    /// このフレームの揺れ幅を求める。時間が経つほど揺れが収まっていく。
+    /// </summary>
+    private Vector3 CalculateShakeOffset()
+    {
+        if (Time.timeScale == 0f) return Vector3.zero;
+        if (shakeRemainingTime <= 0f || shakeTotalDuration <= 0f) return Vector3.zero;
+
+        shakeRemainingTime = Mathf.Max(0f, shakeRemainingTime - Time.deltaTime);
+
+        // 残り時間の割合をそのまま減衰に使う（1→0）
+        float decay = shakeRemainingTime / shakeTotalDuration;
+        float amount = maxShakeAmount * shakeStrength * decay;
+
+        // 画面はYZ平面なので、その2軸だけを揺らす
+        return new Vector3(
+            0f,
+            Random.Range(-amount, amount),
+            Random.Range(-amount, amount)
+        );
+    }
 }

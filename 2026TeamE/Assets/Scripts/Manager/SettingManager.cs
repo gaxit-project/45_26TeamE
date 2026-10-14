@@ -17,6 +17,7 @@ public class SettingManager : MonoBehaviour
 
     [Header("UI Panels")]
     [SerializeField] private GameObject settingCanvas;
+    public bool IsOpen => settingCanvas != null && settingCanvas.activeSelf;
 
     [Header("Dropdowns")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
@@ -61,7 +62,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 設定パネルを開くメソッド
     public void OpenSettingPanel()
     {
         settingCanvas.SetActive(true);
@@ -77,7 +77,6 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 設定パネルを閉じるメソッド
     public void CloseSettingPanel(bool playSound = true)
     {
         settingCanvas.SetActive(false);
@@ -87,17 +86,28 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    // 解像度の選択肢を初期化するメソッド
+    /// <summary>
+    /// このモニタで実際に表示できる解像度だけを選択肢に残したもの。
+    /// </summary>
+    /// <remarks>
+    /// モニタより大きい解像度を指定すると、OS側でウィンドウが切り詰められて
+    /// アスペクト比が崩れ、カメラの映る範囲が変わって背景が欠けるなどの不具合になる。
+    /// </remarks>
+    private List<string> availableResolutionOptions = new List<string>();
+
     public void InitResolutionSettings()
     {
+        BuildAvailableResolutionOptions();
+
         resolutionDropdown.ClearOptions();
-        resolutionDropdown.AddOptions(fixedResolutionOptions);
+        resolutionDropdown.AddOptions(availableResolutionOptions);
+
         int currentResIndex = 0;
         string currentResStr = $"{Screen.width} x {Screen.height}";
 
-        for (int i = 0; i < fixedResolutionOptions.Count; i++)
+        for (int i = 0; i < availableResolutionOptions.Count; i++)
         {
-            if(fixedResolutionOptions[i] == currentResStr)
+            if (availableResolutionOptions[i] == currentResStr)
             {
                 currentResIndex = i;
                 break;
@@ -107,14 +117,46 @@ public class SettingManager : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
     }
 
-    // フレームレートの選択肢を初期化するメソッド
+    private void BuildAvailableResolutionOptions()
+    {
+        availableResolutionOptions.Clear();
+
+        int maxWidth = Display.main.systemWidth;
+        int maxHeight = Display.main.systemHeight;
+
+        foreach (string option in fixedResolutionOptions)
+        {
+            if (!TryParseResolution(option, out int width, out int height)) continue;
+            if (width > maxWidth || height > maxHeight) continue;
+
+            availableResolutionOptions.Add(option);
+        }
+
+        // モニタが小さすぎてどれも選べない場合は、一番小さいものだけ残す
+        if (availableResolutionOptions.Count == 0 && fixedResolutionOptions.Count > 0)
+        {
+            availableResolutionOptions.Add(fixedResolutionOptions[0]);
+        }
+    }
+
+    private static bool TryParseResolution(string text, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        string[] parts = text.Split('x');
+        if (parts.Length != 2) return false;
+
+        return int.TryParse(parts[0].Trim(), out width) && int.TryParse(parts[1].Trim(), out height);
+    }
+
     public void InitFrameRateSettings()
     {
         framerateDropdown.ClearOptions();
-        
+
         List<string> labels = fpsOptions.Select(x => x.Label).ToList();
         framerateDropdown.AddOptions(labels);
-        
+
         int currentFPS = Application.targetFrameRate;
         int currentIndex = fpsOptions.FindIndex(x => x.Value == currentFPS);
 
@@ -122,21 +164,16 @@ public class SettingManager : MonoBehaviour
         framerateDropdown.RefreshShownValue();
     }
 
-    // 解像度を変更するメソッド
     public void SetResolution(int index)
     {
-        string selectedText = fixedResolutionOptions[index];
-        string[] parts = selectedText.Split('x');
+        if (index < 0 || index >= availableResolutionOptions.Count) return;
 
-        if(parts.Length == 2)
+        if (TryParseResolution(availableResolutionOptions[index], out int width, out int height))
         {
-            int width = int.Parse(parts[0].Trim());
-            int height = int.Parse(parts[1].Trim());
             Screen.SetResolution(width, height, Screen.fullScreenMode);
         }
     }
 
-    // フレームレートを変更するメソッド
     public void SetFrameRate(int index)
     {
         if(index < 0 || index >= fpsOptions.Count)
@@ -150,7 +187,6 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    // 画面モードを変更するメソッド
     public void SetScreenMode(int index)
     {
         Screen.fullScreenMode = (index == 0) ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;

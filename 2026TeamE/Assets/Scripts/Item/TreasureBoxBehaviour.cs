@@ -26,6 +26,8 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
     public Vector3 exposureSize = new Vector3(1, 3, 3);
 
     private bool isGot = false;
+    public bool IsGot => isGot;
+    private bool isDestroyingByBomb = false;
     private SpriteRenderer spriteRenderer;
 
     protected override void Awake()
@@ -47,10 +49,12 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
 
     public void Collect()
     {
-        if (!isExposed || isGot) return;
+        if (!isExposed || isGot || isDestroyingByBomb) return;
         isGot = true;
 
         if (currentMarker != null) Destroy(currentMarker);
+
+        FinalResultManager.AddCollectedTreasureBox();
 
         StartCoroutine(OpenRoutine());
     }
@@ -74,18 +78,17 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         }
         transform.position = initialPos;
 
-        // 1. スプライトを開いた状態に変更
         if (spriteRenderer != null && openSprite != null)
         {
             spriteRenderer.sprite = openSprite;
             spriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 1f);
         }
 
-        // 2. 中身のアイテムを生成し、一時的にコライダーを無効化
         GameObject spawnedItem = null;
         if (contentPrefab != null)
         {
             spawnedItem = Instantiate(contentPrefab, transform.position, transform.rotation);
+            spawnedItem.SetActive(true);
             spawnedItem.transform.position = new Vector3(5.0f, transform.position.y, transform.position.z);
 
             var keyObj = spawnedItem.GetComponent<KeyBehaviour>();
@@ -101,7 +104,6 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             }
         }
 
-        // 3. アニメーション
         float duration = 0.5f;
         float elapsed = 0f;
 
@@ -130,7 +132,6 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
             yield return null;
         }
 
-        // 4. アニメーション完了後
         if (spawnedItem != null)
         {
             spawnedItem.transform.position = itemStartPos;
@@ -157,17 +158,32 @@ public class TreasureBoxBehaviour : BuriedItemBase, ICollectible
         Destroy(gameObject);
     }
 
-    private void OnDestroy()
+    public void DestroyByBomb()
     {
-        if (isGot || !gameObject.scene.isLoaded) return;
-
-        // 鍵が入っている宝箱が未獲得のまま破壊された場合、VoxelTerrainにリスポーン処理を依頼
-        if (contentPrefab != null && contentPrefab.GetComponent<KeyBehaviour>() != null)
-        {
-            if (VoxelTerrain.Instance != null)
-            {
-                VoxelTerrain.Instance.RespawnKeyTreasureBox(transform.position, zoneIndex);
-            }
-        }
+        if (isGot || isDestroyingByBomb) return;
+        isDestroyingByBomb = true;
+        StartCoroutine(DestroyByBombRoutine());
     }
+
+    private IEnumerator DestroyByBombRoutine()
+    {
+        float duration = 1.0f;
+        float elapsed = 0f;
+
+        Color originalColor = spriteRenderer != null ? spriteRenderer.color : Color.white;
+
+        while (elapsed < duration)
+        {
+            if (spriteRenderer != null)
+            {
+                float pingPong = Mathf.PingPong(elapsed * 15f, 1f); 
+                spriteRenderer.color = Color.Lerp(originalColor, Color.red, pingPong);
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
 }

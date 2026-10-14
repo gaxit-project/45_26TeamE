@@ -1,6 +1,5 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-// 補助機能、メッシュ更新
 public partial class VoxelTerrain
 {
     public void UpdateChunkMesh(int index)
@@ -50,9 +49,9 @@ public partial class VoxelTerrain
         {
             BlockType.Dirt => 1.0f,
             BlockType.Ore => 6.0f,
-            BlockType.Stone => 10.0f,
-            BlockType.HardRock => 20.0f,
-            BlockType.Quartzite => 40.0f,
+            BlockType.Stone => 5.0f,
+            BlockType.HardRock => 10.0f,
+            BlockType.Quartzite => 20.0f,
             _ => 1.0f
         };
 

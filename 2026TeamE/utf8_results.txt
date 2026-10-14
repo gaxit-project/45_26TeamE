@@ -1,0 +1,114 @@
+﻿
+Assets\Scripts\anySceneButton.cs:60:                SceneManager.LoadScene(targetScene);
+Assets\Scripts\GoTitle.cs:12:        SceneManager.LoadScene(sceneName);
+Assets\Scripts\SelectPoint.cs:24:    [SerializeField] private InputAction enterDoorAction;
+Assets\Scripts\SelectPoint.cs:49:        enterDoorAction?.Enable();
+Assets\Scripts\SelectPoint.cs:55:        enterDoorAction?.Disable();
+Assets\Scripts\SelectPoint.cs:73:        if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
+Assets\Scripts\SelectPoint.cs:88:        if (VoxelTerrain.Instance.TryEnterDoorInRange())
+Assets\Scripts\SelectPoint.cs:126:        SceneManager.LoadScene(resultSceneName);
+Assets\Scripts\Item\DoorBehaviour.cs:16:public class DoorBehaviour : BuriedItemBase
+Assets\Scripts\Item\DoorBehaviour.cs:88:        var lightObject = new GameObject("DoorHintLight");
+Assets\Scripts\Item\DoorBehaviour.cs:170:            Debug.Log($"[Door] {name} 入場範囲: {(inRange ? "入った" : "出た")}（露出済み: {
+isExposed} / 破壊済み: {IsBroken}）");
+Assets\Scripts\Item\DoorBehaviour.cs:176:            if (inRange) VoxelTerrain.Instance.SetDoorInRange(this);
+Assets\Scripts\Item\DoorBehaviour.cs:177:            else VoxelTerrain.Instance.ClearDoorInRange(this);
+Assets\Scripts\Item\DoorBehaviour.cs:200:            Debug.Log($"[Door] {name} には入れません（露出済み: {isExposed} / 破壊済み: {IsBro
+ken}）");
+Assets\Scripts\Item\DoorBehaviour.cs:212:        VoxelTerrain.Instance.MarkDoorEntered(transform.position);
+Assets\Scripts\Manager\CanvasManager.cs:9:        UnityEngine.SceneManagement.SceneManager.LoadScene("01_Title");
+Assets\Scripts\Manager\DebugItemManager.cs:92:        VoxelTerrain.Instance.MarkDoorEntered(player.transform.position);
+Assets\Scripts\Manager\DebugItemManager.cs:101:        SceneManager.LoadScene("Result");
+Assets\Scripts\Manager\FinalResultManager.cs:149:        SceneManager.LoadScene(nextSceneName);
+Assets\Scripts\Manager\FinalResultManager.cs:180:        SceneManager.LoadScene("02_Main");
+Assets\Scripts\Manager\Money Exchange.cs:20:            Debug.Log($"換金完了！ 現在の所持金: {mm.GetMoney()}");
+Assets\Scripts\Manager\MoneyManager.cs:10:    [SerializeField, Header("換金予定の資金")]
+Assets\Scripts\Manager\PoseManager.cs:79:        SceneManager.LoadScene("01_Title"); 
+Assets\Scripts\Manager\PoseManager.cs:102:        SceneManager.LoadScene("Result"); 
+Assets\Scripts\Manager\ResultManager.cs:244:            btn.interactable = false;
+Assets\Scripts\Manager\ShoppingManager.cs:194:            item.buyButton.interactable = true;
+Assets\Scripts\Manager\TimeManager.cs:197:        UnityEngine.SceneManagement.SceneManager.LoadScene("FinalResult");
+Assets\Scripts\Player\BombReaction.cs:15:    [Header("爆風による換金予定金の減少額")]
+Assets\Scripts\Player\BombReaction.cs:351:                            Debug.Log($"[BombReaction] プレイヤーが爆発に巻き込まれました！ 換金予
+定のお金が {actualPenalty} 減りました。");
+Assets\Scripts\Player\BombReaction.cs:355:                            Debug.Log("[BombReaction] プレイヤーが爆発に巻き込まれましたが、換金予定
+のお金はすでに0です。");
+Assets\Scripts\Player\GoalJewelry.cs:79:        SceneManager.LoadScene(targetScene);
+Assets\Scripts\Titile\SceneLoader.cs:101:            AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:119:    [Tooltip("地中にランダムに埋め込まれる扉のプレハブ。DoorBehaviourが付いている必要があります。")]
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:120:    [SerializeField] private GameObject doorPrefab;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:122:    [SerializeField] private int doorEdgeMarginZ = 8;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:124:    [SerializeField] private int chunksPerDoor = 15;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:126:    [SerializeField] private int doorBandChunks = 3;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:128:    [SerializeField] private bool allowDoorsInGoalZone = false;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:225:            if (HasPendingDoorReturn)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.cs:227:                RestorePlayerAtDoor();
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:12:    private const float DoorReturnClearRadius = 4.0f;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:15:    private Vector3 doorReturnLocalPosition;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:18:    public bool HasPendingDoorReturn { get; private set; }
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:24:    private readonly List<DoorBehaviour> doorsInRange = new List<D
+oorBehaviour>();
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:27:    public DoorBehaviour CurrentDoorInRange
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:31:            RemoveDestroyedDoors();
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:33:            foreach (DoorBehaviour door in doorsInRange)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:35:                if (door.CanEnter) return door;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:42:    public void SetDoorInRange(DoorBehaviour door)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:44:        if (door == null || doorsInRange.Contains(door)) return;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:45:        doorsInRange.Add(door);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:49:    public void ClearDoorInRange(DoorBehaviour door)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:51:        doorsInRange.Remove(door);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:54:    private void RemoveDestroyedDoors()
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:56:        for (int i = doorsInRange.Count - 1; i >= 0; i--)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:58:            if (doorsInRange[i] == null) doorsInRange.RemoveAt(i);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:67:    public bool TryEnterDoorInRange()
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:69:        RemoveDestroyedDoors();
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:71:        if (doorsInRange.Count == 0)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:77:        foreach (DoorBehaviour door in doorsInRange)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:79:            if (door.TryEnter()) return true;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:82:        Debug.Log($"[VoxelTerrain] 範囲内の扉 {doorsInRange.Count} 個はいず
+れも入場できる状態ではありません。");
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:90:    /// 地表から数えて <see cref="chunksPerDoor"/> チャンク（既定15）ずつを1単位とし、
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:91:    /// 各単位の最深部 <see cref="doorBandChunks"/> チャンクの中に扉を1つだけ置く。
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:99:    private void SpawnDoors(System.Random rnd)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:101:        if (doorPrefab == null)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:103:            Debug.LogWarning("[VoxelTerrain] doorPrefab が未設定のため、扉
+が生成されません。");
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:107:        int unitChunks = Mathf.Max(1, chunksPerDoor);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:108:        int bandChunks = Mathf.Clamp(doorBandChunks, 1, unitChunk
+s);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:129:            if (TrySpawnDoorInBand(unit, bandStartChunk, unitEndC
+hunk, bandBottomY, bandTopY, rnd)) placedCount++;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:139:    private bool TrySpawnDoorInBand(int unit, int bandStartChunk,
+ int bandEndChunk, int bottomY, int topY, System.Random rnd)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:143:        List<Vector3Int> candidates = CollectDoorCandidates(botto
+mY, topY);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:146:            if (!allowDoorsInGoalZone && IsEntirelyGoalZone(botto
+mY, topY))
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:148:                Debug.Log($"[VoxelTerrain] {bandLabel} はゴールゾーンのため
+扉を配置しませんでした。配置したい場合は allowDoorsInGoalZone をオンにしてください。");
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:158:        SpawnDoorAt(coord);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:181:    private List<Vector3Int> CollectDoorCandidates(int bottomY, i
+nt topY)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:192:            if (!allowDoorsInGoalZone && zoneSettings[zoneIndex].
+isGoalZone) continue;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:196:            int minZ = centerZ - halfWidth + doorEdgeMarginZ;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:197:            int maxZ = centerZ + halfWidth - doorEdgeMarginZ;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:215:    private void SpawnDoorAt(Vector3Int coord)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:225:        GameObject door = Instantiate(doorPrefab, pos, doorPrefab
+.transform.rotation, transform);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:226:        door.name = $"Door_Y{coord.y}_Z{coord.z}";
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:235:    public void MarkDoorEntered(Vector3 doorWorldPosition)
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:237:        doorReturnLocalPosition = transform.InverseTransformPoint
+(doorWorldPosition);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:238:        HasPendingDoorReturn = true;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:240:        Debug.Log($"[VoxelTerrain] 扉に入りました。復帰位置を記録: {doorReturnLo
+calPosition}");
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:247:    private void RestorePlayerAtDoor()
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:249:        if (!HasPendingDoorReturn) return;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:250:        HasPendingDoorReturn = false;
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:255:        Vector3 worldPos = transform.TransformPoint(doorReturnLoc
+alPosition);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Doors.cs:258:        ClearBlocksAroundPoint(worldPos, DoorReturnClearRadius);
+Assets\Scripts\VoxelTerrain\VoxelTerrain.Generation.cs:45:            SpawnDoors(rnd);
+
+

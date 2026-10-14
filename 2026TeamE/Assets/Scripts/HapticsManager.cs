@@ -1,12 +1,24 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// ゲームパッドの振動を一元管理する。
+/// </summary>
+/// <remarks>
+/// 振動を「下地」と「パルス」の2層で扱う。
+/// 下地は掘削中のような継続的な振動、パルスはブロックを砕いた瞬間のような一時的な衝撃を表す。
+/// パルスが終わっても下地は残るため、パルスによって継続中の振動が途切れることがない。
+/// </remarks>
 public class HapticsManager : MonoBehaviour
 {
     public static HapticsManager Instance { get; private set; }
 
-    private Coroutine pulseCoroutine;
+    private float baseLow;
+    private float baseHigh;
+
+    private float pulseLow;
+    private float pulseHigh;
+    private float pulseRemainingTime;
 
     void Awake()
     {
@@ -21,36 +33,158 @@ public class HapticsManager : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+        Stop();
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        Stop();
+    }
+
+    /// <summary>
+    /// 現在の状態でゲームパッドの振動が許可されているか。
+    /// キャラクターの操作が不可能な状態（ムービー中、ポーズ中、被弾中など）では一切の振動を禁止する。
+    /// </summary>
+    public bool IsVibrationAllowed
+    {
+        get
+        {
+            if (Time.timeScale == 0f) return false;
+
+            if (TimelineManager.IsPlaying) return false;
+
+            if (PlayerController.Instance != null)
+            {
+                return PlayerController.Instance.IsControlEnabled;
+            }
+
+            // プレイヤーが存在しないシーン（タイトルやリザルトなど）でもゲームパッド振動は起こさない
+            return false;
+        }
+    }
+
+    void Update()
+    {
+        if (!IsVibrationAllowed)
+        {
+            if (baseLow > 0f || baseHigh > 0f || pulseLow > 0f || pulseHigh > 0f || pulseRemainingTime > 0f)
+            {
+                Stop();
+            }
+            else
+            {
+                ApplyMotorSpeeds();
+            }
+            return;
+        }
+
+        // 常にモーター出力を更新（ポーズ/解除の切り替えに即座に対応するため）
+        ApplyMotorSpeeds();
+
+        if (pulseRemainingTime <= 0f) return;
+
+        // ポーズやミーティングで時間が止まっていても振動が固まらないよう、実時間で減らす
+        pulseRemainingTime -= Time.unscaledDeltaTime;
+
+        if (pulseRemainingTime <= 0f)
+        {
+            pulseRemainingTime = 0f;
+            pulseLow = 0f;
+            pulseHigh = 0f;
+            ApplyMotorSpeeds();
+        }
+    }
+
+    /// <summary>
+    /// 継続的な振動を設定する。次に <see cref="Stop"/> が呼ばれるまで鳴り続ける。
+    /// </summary>
     public void PlayContinuous(float low, float high)
     {
+        if (!IsVibrationAllowed)
+        {
+            Stop();
+            return;
+        }
+
+        baseLow = low;
+        baseHigh = high;
+        ApplyMotorSpeeds();
+    }
+
+    /// <summary>
+    /// 継続的な振動の上に、一時的な振動を重ねる。
+    /// 終了後は下地の振動に戻るため、掘削中に呼んでも常時振動は途切れない。
+    /// </summary>
+    public void PlayPulse(float low, float high, float duration)
+    {
+        if (!IsVibrationAllowed) return;
+        if (duration <= 0f) return;
+
+        // 重なった場合は強い方・長い方を優先し、弱いパルスで上書きしない
+        if (pulseRemainingTime > 0f)
+        {
+            low = Mathf.Max(low, pulseLow);
+            high = Mathf.Max(high, pulseHigh);
+            duration = Mathf.Max(duration, pulseRemainingTime);
+        }
+
+        pulseLow = low;
+        pulseHigh = high;
+        pulseRemainingTime = duration;
+
+        ApplyMotorSpeeds();
+    }
+
+    /// <summary>
+    /// 下地もパルスも含めて、すべての振動を止める。
+    /// </summary>
+    public void Stop()
+    {
+        baseLow = 0f;
+        baseHigh = 0f;
+        pulseLow = 0f;
+        pulseHigh = 0f;
+        pulseRemainingTime = 0f;
+
+        ApplyMotorSpeeds();
+    }
+
+    private float lastSentLow = -1f;
+    private float lastSentHigh = -1f;
+
+    /// <summary>下地とパルスの強いほうを実際のモーター出力として反映する。</summary>
+    private void ApplyMotorSpeeds()
+    {
+        float low = Mathf.Clamp01(Mathf.Max(baseLow, pulseLow));
+        float high = Mathf.Clamp01(Mathf.Max(baseHigh, pulseHigh));
+
+        if (!IsVibrationAllowed)
+        {
+            low = 0f;
+            high = 0f;
+        }
+
+        if (Mathf.Approximately(low, lastSentLow) && Mathf.Approximately(high, lastSentHigh))
+        {
+            return;
+        }
+
+        lastSentLow = low;
+        lastSentHigh = high;
+
         foreach (var pad in Gamepad.all)
         {
             pad?.SetMotorSpeeds(low, high);
         }
     }
 
-    public void PlayPulse(float low, float high, float duration)
-    {
-        if (pulseCoroutine != null) StopCoroutine(pulseCoroutine);
-        pulseCoroutine = StartCoroutine(PulseRoutine(low, high, duration));
-    }
-
-    private IEnumerator PulseRoutine(float low, float high, float duration)
-    {
-        PlayContinuous(low, high);
-        yield return new WaitForSeconds(duration);
-        Stop();
-        pulseCoroutine = null;
-    }
-
-    public void Stop()
-    {
-        foreach (var pad in Gamepad.all)
-        {
-            pad?.SetMotorSpeeds(0f, 0f);
-        }
-    }
-
-    void OnDisable() => Stop();
     void OnApplicationQuit() => Stop();
 }

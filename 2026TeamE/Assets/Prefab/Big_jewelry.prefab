@@ -113,7 +113,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.000001, y: 4.05, z: 30}
+  m_Size: {x: 3, y: 3, z: 30}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &4569835451768528063
 Rigidbody:
@@ -155,4 +155,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoalJewelry
   SceneName: 
-  EfectPrefab: {fileID: 0}
+  EfectPrefab: {fileID: 2770810700285028621, guid: d28d0f30c53084441a8fe1dfc7838249, type: 3}

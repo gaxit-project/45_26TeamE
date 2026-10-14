@@ -8,19 +8,31 @@ public class MoneyUIInitializer : MonoBehaviour
 
     private MoneyManager mm;
 
-    void Awake()
+    void Start()
     {
-        mm = MoneyManager.Instance;
+        // AwakeだとMoneyManagerの初期化より先に呼ばれてnullになる可能性があるため、Startでも取得を試みる
+        if (mm == null)
+        {
+            mm = MoneyManager.Instance;
+            if (mm != null)
+            {
+                mm.OnMoneyOnHandChanged += UpdateOnHandText;
+                mm.OnTargetAmountOnPartChanged += UpdateTargetPartText;
+
+                UpdateOnHandText(mm.GetMoneyOnHand());
+                UpdateTargetPartText(mm.GetTargetAmountOnPart());
+            }
+        }
     }
 
     void OnEnable()
     {
+        if (mm == null) mm = MoneyManager.Instance;
         if (mm == null) return;
 
         mm.OnMoneyOnHandChanged += UpdateOnHandText;
         mm.OnTargetAmountOnPartChanged += UpdateTargetPartText;
 
-        // 現在の値で初期表示
         UpdateOnHandText(mm.GetMoneyOnHand());
         UpdateTargetPartText(mm.GetTargetAmountOnPart());
     }
