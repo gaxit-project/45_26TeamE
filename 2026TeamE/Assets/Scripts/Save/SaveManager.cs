@@ -7,11 +7,11 @@ public static class SaveManager
     private const string SettingsFileName = "settings.json";
     private const string RankingFileName = "ranking.json";
 
-    private static SettingData settings;
+    private static SettingsData settings;
     private static RankingData ranking;
 
     // 設定データ。nullの時はファイルから読み込む。
-    public static SettingData Settings
+    public static SettingsData Settings
     {
         get
         {
@@ -30,22 +30,22 @@ public static class SaveManager
         }
     }
 
-    public static void SaveSettings => Write(settingsFileName, Settings);
-    public static void SaveRanking => Write(rankingFileName, Ranking);
+    public static void SaveSettings() => Write(SettingsFileName, Settings);
+    public static void SaveRanking() => Write(RankingFileName, Ranking);
 
 
     // ーーーーーーーーーーーーーーーーー読み込みーーーーーーーーーーーーーー
     
-    private static SettingData LoadSettings()
+    private static SettingsData LoadSettings()
     {
         SettingsData data = Read<SettingsData>(SettingsFileName);
         if(data == null)
         {
             data = new SettingsData
             {
-                frameRate = PlayerPrefs.GetInt("SavedFPS", SettingsData.DefaultFrameRate);
-                bgmVolume = PlayerPrefs.GetFloat("SavedBGMVolume", SettingsData.DefaultVolume);
-                seVolume = PlayerPrefs.GetFloat("SavedSEVolume", SettingsData.DefaultVolume);
+                frameRate = PlayerPrefs.GetInt("SavedFPS", SettingsData.DefaultFrameRate),
+                bgmVolume = PlayerPrefs.GetFloat("SavedBGMSliderValue", SettingsData.DefaultVolume),
+                seVolume = PlayerPrefs.GetFloat("SavedSESliderValue", SettingsData.DefaultVolume),
             };
             Write(SettingsFileName, data);
         }
@@ -58,7 +58,7 @@ public static class SaveManager
         RankingData data = Read<RankingData>(RankingFileName);
         if(data == null)
         {
-            string oldJson = PlayerPrefs.GetString("LoadRankingData", "");
+            string oldJson = PlayerPrefs.GetString("LocalRankingData", "");
             data = string.IsNullOrEmpty(oldJson) ? new RankingData() : JsonUtility.FromJson<RankingData>(oldJson);
             Write(RankingFileName, data);
         }
@@ -68,7 +68,7 @@ public static class SaveManager
 
     // ーーーーーーーーーーーーーーーーーファイル操作ーーーーーーーーーーーーーー
 
-    private static string GetPath(string fileName) => Path.Combine(Application.persistentDAtaPath, fileName);
+    private static string GetPath(string fileName) => Path.Combine(Application.persistentDataPath, fileName);
 
     // ファイルからデータを読み込む。無い、壊れている場合はnullを返す。
     private static T Read<T>(string fileName) where T : class
@@ -84,7 +84,7 @@ public static class SaveManager
         {
             Debug.LogError($"[SaveManager] {fileName}の読み込みに失敗しました。{e.Message}");
             File.Copy(path, path + ".broken", true);
-            return null
+            return null;
         }
     }
 

@@ -15,17 +15,7 @@ public static class UpgradeManager
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void ResetUpgrades()
     {
-
         currentLevels.Clear();
-
-        PlayerPrefs.DeleteKey($"Upgrade_{DRILL}");
-        PlayerPrefs.DeleteKey($"Upgrade_{SONAR}");
-        PlayerPrefs.DeleteKey($"Upgrade_{ENGINE}");
-        PlayerPrefs.DeleteKey($"Upgrade_{LIGHT}");
-        PlayerPrefs.DeleteKey($"Upgrade_{RADER}");
-        PlayerPrefs.DeleteKey($"Upgrade_{JET}");
-        PlayerPrefs.Save();
-
     }
 
     public static int GetLevel(string itemName)
@@ -41,8 +31,5 @@ public static class UpgradeManager
     {
         int nextLevel = GetLevel(itemName) + 1;
         currentLevels[itemName] = nextLevel;
-
-        PlayerPrefs.SetInt($"Upgrade_{itemName}", nextLevel);
-        PlayerPrefs.Save();
     }
 }

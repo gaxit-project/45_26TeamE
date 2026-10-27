@@ -22,12 +22,10 @@ public class FinalResultManager : MonoBehaviour
         TriggeredBombs = 0;
         OxygenRemainingPerFloor.Clear();
         GoalJewelry.isGoalReached = false;
-        PlayerPrefs.SetInt("GoalReached", 0);
-        PlayerPrefs.Save();
     }
     // ------------------------------------------------
 
-    [Header("UI蜿ら・")]
+    [Header("UI参照")]
     [SerializeField] private TextMeshProUGUI totalEarnedText; 
     [SerializeField] private GameObject firstSelectedButton;
 
@@ -79,12 +77,8 @@ public class FinalResultManager : MonoBehaviour
         int boxScore = CollectedTreasureBoxes * pointsPerTreasureBox;
         int bombScore = TriggeredBombs * pointsPerBomb;
         int oxygenScore = Mathf.FloorToInt(totalOxygen * pointsPerOxygenSecond);
-        int isCleared = (GoalJewelry.isGoalReached || PlayerPrefs.GetInt("GoalReached", 0) == 1) ? 1 : 0;
+        int isCleared = GoalJewelry.isGoalReached ? 1 : 0;
         int clearScore = isCleared * pointsForClear;
-        Debug.LogWarning($"[FinalResultManager] Start() 実行 - GoalJewelry.isGoalReached: {GoalJewelry.isGoalReached}, PlayerPrefs(\"GoalReached\"): {PlayerPrefs.GetInt("GoalReached", 0)}, 最終クリア判定(isCleared): {isCleared}, クリアボーナス(clearScore): {clearScore}");
-
-        if (clearCountText == null) Debug.LogError("[FinalResultManager] エラー: clearCountText (jewelrynum) の参照が Inspector で外れています！");
-        if (clearSubtotalText == null) Debug.LogError("[FinalResultManager] エラー: clearSubtotalText (jewelrytotal) の参照が Inspector で外れています！");
 
         if (boxCountText != null) boxCountText.text = CollectedTreasureBoxes.ToString("N0");
         if (boxSubtotalText != null) boxSubtotalText.text = boxScore.ToString("N0");

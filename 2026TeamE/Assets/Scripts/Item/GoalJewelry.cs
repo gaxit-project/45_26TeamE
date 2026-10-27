@@ -25,16 +25,12 @@ public class GoalJewelry : MonoBehaviour
             SoundManager.Instance.StopBGM();
             SoundManager.Instance.PlaySE("Clear");
             isGoalReached = true;
-            PlayerPrefs.SetInt("GoalReached", 1);
-            PlayerPrefs.Save();
-            Debug.LogWarning("[GoalJewelry] ゴール判定が発火しました！ isGoalReached = true, PlayerPrefs(GoalReached) = 1 を保存しました。");
 
             if (TimerManager.Instance != null)
             {
                 TimerManager.Instance.StopTimer();
                 TimerManager.Instance.StopAllCoroutines();
                 FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
-                Debug.LogWarning($"[GoalJewelry] タイマー停止。最終フロアの残り酸素: {TimerManager.Instance.TotalTime} を記録しました。");
             }
 
             if (HapticsManager.Instance != null)

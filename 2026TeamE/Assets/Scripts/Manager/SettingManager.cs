@@ -161,7 +161,7 @@ public class SettingManager : MonoBehaviour
         int currentIndex = fpsOptions.FindIndex(x => x.Value == Application.targetFrameRate);
         if(currentIndex < 0)
         {
-            currentIndex = fpsOptions.FindIndex(x => x.Value == SettingData.DefaultFrameRate);
+            currentIndex = fpsOptions.FindIndex(x => x.Value == SettingsData.DefaultFrameRate);
         }
 
         framerateDropdown.SetValueWithoutNotify(Mathf.Max(currentIndex, 0));
@@ -185,7 +185,7 @@ public class SettingManager : MonoBehaviour
 
     private int LoadFrameRate(){
         int saved = SaveManager.Settings.frameRate;
-        return fpsOptions.Exists(x => x.Value == saved) ? saved : SettingData.DefaultFrameRate;
+        return fpsOptions.Exists(x => x.Value == saved) ? saved : SettingsData.DefaultFrameRate;
     }
 
     public void SetFrameRate(int index)
