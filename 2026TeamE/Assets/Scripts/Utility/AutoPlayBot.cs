@@ -24,7 +24,10 @@ using UnityEngine.SceneManagement;
 ///   1. まだ使っていない扉があれば、そこへ向かい、入れる範囲に入ったら Y ボタンを押す
 ///   2. 宝石レーダー（GemRadar）のギザギザが出ていれば、その向きへ掘り進む
 ///   3. まだ行っていないマスへ向かう
+///   3'. 人のプレイから学んだ「人の流れ」（HumanModel）があれば、その深さ・位置で人が進みがちな向きへ進む
 ///   4. ランダムに動く（変な操作でしか出ないバグを拾うため、少しだけ残す）
+/// HumanModel があるときは、ドリル・ジェットパック・ソナーの押し方、向きを変える間隔、
+/// レーダーに従う割合、扉に入るかどうかも、人の癖に合わせる。
 /// 進む先が掘れないブロック（岩盤・外周の壁）なら、どの理由で向かっていても引き返す。
 ///
 /// ステージを数ブロック四方のマスに区切って訪れたマスを記録し、まだ行っていないマスへ優先して向かう。
@@ -65,6 +68,28 @@ public sealed class AutoPlayBot : MonoBehaviour
     [SerializeField] private float waypointGiveUpSeconds = 12f;
     [Tooltip("飛ばすときに進める道しるべの数")]
     [SerializeField, Min(1)] private int routeSkipPoints = 6;
+
+    /// <summary>どのバージョンで記録した人のプレイを使うか。</summary>
+    public enum RecordVersionFilter
+    {
+        [InspectorName("すべて使う")] All,
+        [InspectorName("指定したバージョン以上だけ")] AtLeast,
+        [InspectorName("今と同じ X.Y（機能バージョン）だけ")] SameMinor,
+    }
+
+    [Header("人の記録のバージョン")]
+    [Tooltip("ゲームの中身（地形の作り方・操作感など）を変えたら、それより前の記録は人の動きとずれるので外す")]
+    [SerializeField] private RecordVersionFilter recordVersionFilter = RecordVersionFilter.AtLeast;
+    [Tooltip("「指定したバージョン以上だけ」のときの下限。名前付きで記録するようになったのは 2.9.0 から")]
+    [SerializeField] private string minRecordVersion = "2.9.0";
+
+    [Header("人の流れ・操作の癖")]
+    [Tooltip("人のプレイ記録（Logs/Routes）から学んだ流れと操作の癖を使う")]
+    [SerializeField] private bool useHumanModel = true;
+    [Tooltip("学ぶのに必要な記録の行数（0.25秒で1行。400行＝人のプレイ約100秒分）")]
+    [SerializeField, Min(1)] private int minModelSamples = 400;
+    [Tooltip("向きを選び直すとき、人の流れに従う確率（お手本ルート・扉・レーダーで決まらなかったとき）")]
+    [SerializeField, Range(0f, 1f)] private float flowChance = 0.7f;
 
     [Header("扉")]
     [Tooltip("まだ使っていない扉のうち、この距離以内で最も近いものへ向かう")]
@@ -172,8 +197,18 @@ public sealed class AutoPlayBot : MonoBehaviour
     private int doorPresses;
 
     // どの理由で進む向きを決めたかの回数（停止時にログへ出す）
-    private enum Steer { Door, Radar, Explore, Random, Reverse, Route }
-    private readonly int[] steerCounts = new int[6];
+    private enum Steer { Door, Radar, Explore, Random, Reverse, Route, Flow }
+    private readonly int[] steerCounts = new int[7];
+
+    // 人の流れ・操作の癖
+    private HumanModel model;
+    private bool chaseDoorsThisRun = true;
+
+    // Botの操作の癖（人と比べるため、HumanModel と同じ数え方で数える）
+    private float botPlaySeconds, botDrillSeconds, botUpSeconds, botJumpUpSeconds, botOtherSeconds, botJumpOtherSeconds;
+    private float botRadarSeconds, botRadarFollowSeconds, botSegmentSeconds, botDirStart;
+    private int botSonarTaps, botSegments, botLastDir = -1, botRuns, botDoorRuns;
+    private bool botDoorThisRun, botWasShopOpen;
 
     // 人のルート
     private List<HumanRoute> routes = new List<HumanRoute>();
@@ -195,7 +230,10 @@ public sealed class AutoPlayBot : MonoBehaviour
     private float nextBlockedLogTime;
     private int blockedCount;
 
+    // テスター版（TESTER_BUILD）では自動プレイを起動しない。F9 も -autoplay も効かず、人のプレイだけを記録する
+#if !TESTER_BUILD
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+#endif
     private static void Bootstrap()
     {
         // 常駐させて F9 を見張る。自動プレイしていない間は何もしない
@@ -253,9 +291,18 @@ public sealed class AutoPlayBot : MonoBehaviour
         blockedCount = 0;
         Array.Clear(steerCounts, 0, steerCounts.Length);
         coverageBook = new AutoPlayCoverageBook();
-        routes = useHumanRoutes ? HumanRoute.LoadAll() : new List<HumanRoute>();
+        List<HumanRoute> all = HumanRoute.LoadAll();
+        List<HumanRoute> records = all.FindAll(IsUsableRecord);
+        routes = useHumanRoutes ? records : new List<HumanRoute>();
         pendingRoute = activeRoute = null;
-        GameLogger.Event("RoutesLoaded", $"count={routes.Count} folder={HumanRoute.Folder}");
+        var players = new HashSet<string>();
+        foreach (HumanRoute r in records) players.Add(string.IsNullOrEmpty(r.Player) ? "unknown" : r.Player);
+        GameLogger.Event("RoutesLoaded",
+            $"count={records.Count} excluded={all.Count - records.Count} filter={recordVersionFilter}:{minRecordVersion} players={string.Join("/", players)} folder={HumanRoute.Folder}");
+
+        model = useHumanModel ? HumanModel.Build(records, minModelSamples) : null;
+        GameLogger.Event("HumanModel", model != null ? model.Summary() : $"none records={records.Count} need={minModelSamples}samples");
+        ResetBotHabits();
         trackedTerrain = null;
         runCoverage = null;
         hasCell = hasTarget = false;
@@ -286,9 +333,10 @@ public sealed class AutoPlayBot : MonoBehaviour
         // 地形のシードを予約したまま止めると、次に人が遊ぶ地形まで同じになってしまうので取り消す
         if (pendingRoute != null && VoxelTerrain.ForceUseSeed) VoxelTerrain.ForceUseSeed = false;
         pendingRoute = null;
+        GameLogger.Event("BotHabits", BotHabitsSummary());
         GameLogger.Event("AutoPlayStop",
             $"stuck={stuckCount} abandonedTargets={abandonedCount} doorPresses={doorPresses} blocked={blockedCount} " +
-            $"steer=door:{steerCounts[(int)Steer.Door]},radar:{steerCounts[(int)Steer.Radar]},explore:{steerCounts[(int)Steer.Explore]},random:{steerCounts[(int)Steer.Random]},reverse:{steerCounts[(int)Steer.Reverse]},route:{steerCounts[(int)Steer.Route]}");
+            $"steer=door:{steerCounts[(int)Steer.Door]},radar:{steerCounts[(int)Steer.Radar]},explore:{steerCounts[(int)Steer.Explore]},random:{steerCounts[(int)Steer.Random]},reverse:{steerCounts[(int)Steer.Reverse]},route:{steerCounts[(int)Steer.Route]},flow:{steerCounts[(int)Steer.Flow]}");
         Debug.Log("[AutoPlayBot] 自動プレイを停止しました。");
     }
 
@@ -322,6 +370,10 @@ public sealed class AutoPlayBot : MonoBehaviour
         PrepareRouteSeed();
         TrackCoverage(player);
 
+        bool shopOpen = ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen;
+        if (shopOpen && !botWasShopOpen && runCoverage != null) botDoorThisRun = true;
+        botWasShopOpen = shopOpen;
+
         if (inControl) UpdateGameplayInput(player);
         else UpdateMenuInput();
 
@@ -347,14 +399,20 @@ public sealed class AutoPlayBot : MonoBehaviour
         }
         else
         {
-            nextSegmentTime = Time.unscaledTime + Range(minSegmentSeconds, maxSegmentSeconds);
-            tapSonar = Chance(sonarChance);
+            // 人の癖があれば、人が同じ向きを続ける長さ・ソナーを使う頻度に合わせる
+            float segment = model != null
+                ? Mathf.Clamp(model.MeanSegmentSeconds * Range(0.6f, 1.4f), 0.25f, 4f)
+                : Range(minSegmentSeconds, maxSegmentSeconds);
+            nextSegmentTime = Time.unscaledTime + segment;
+            tapSonar = model != null ? Chance(1f - Mathf.Exp(-model.SonarPerMinute / 60f * segment)) : Chance(sonarChance);
             ChooseSteering(player);
+            ApplyHumanHabits();
             steerCounts[(int)currentSteer]++;
         }
 
         // 向きを選び直すタイミングに関係なく、毎フレーム進む先を確かめる
         AvoidUndiggable(player);
+        RecordBotHabits();
     }
 
     /// <summary>進む向きを、扉 → レーダー → 未探索のマス → ランダム の順で決める。</summary>
@@ -366,7 +424,7 @@ public sealed class AutoPlayBot : MonoBehaviour
             return;
         }
 
-        if (TrySteerToDoor(player))
+        if (chaseDoorsThisRun && TrySteerToDoor(player))
         {
             currentSteer = Steer.Door;
             return;
@@ -375,6 +433,14 @@ public sealed class AutoPlayBot : MonoBehaviour
         if (Time.unscaledTime >= radarSuppressedUntil && TrySteerByRadar())
         {
             currentSteer = Steer.Radar;
+            return;
+        }
+
+        if (model != null && Chance(flowChance))
+        {
+            Vector3 p = player.transform.position;
+            stick = model.SampleDirection(new Vector2(p.z, p.y), random);
+            currentSteer = Steer.Flow;
             return;
         }
 
@@ -529,6 +595,86 @@ public sealed class AutoPlayBot : MonoBehaviour
             string shot = TakeScreenshot("nocontrol");
             GameLogger.Event("NoControl", $"for={noControlTime:F1}s timeScale={Time.timeScale} screenshot={shot}");
         }
+    }
+
+    /// <summary>記録のバージョンが、インスペクターで指定した条件に合うか。</summary>
+    private bool IsUsableRecord(HumanRoute route)
+    {
+        if (recordVersionFilter == RecordVersionFilter.All) return true;
+        if (!HumanRoute.TryParseVersion(route.Version, out Version recorded)) return false;
+
+        if (recordVersionFilter == RecordVersionFilter.SameMinor)
+        {
+            return HumanRoute.TryParseVersion(Application.version, out Version current)
+                && recorded.Major == current.Major && recorded.Minor == current.Minor;
+        }
+
+        // 下限が読めない書き方なら、絞り込まずに全部使う
+        return !HumanRoute.TryParseVersion(minRecordVersion, out Version min) || recorded >= min;
+    }
+
+    // ーーーーーーーーーーーーーーーーー人の操作の癖ーーーーーーーーーーーーーー
+
+    /// <summary>
+    /// 選んだ向きに対して、ドリル・ジェットパックの押し方を人の癖に合わせる。
+    /// 扉・お手本ルート・引き返しは目的地へ確実に掘り進む必要があるので変えない。
+    /// </summary>
+    private void ApplyHumanHabits()
+    {
+        if (model == null) return;
+        if (currentSteer != Steer.Flow && currentSteer != Steer.Radar && currentSteer != Steer.Explore && currentSteer != Steer.Random) return;
+
+        holdDrill = Chance(model.DrillRate);
+        holdJump = stick.y > 0.3f ? Chance(model.JumpRateUp) : Chance(model.JumpRateOther);
+    }
+
+    private void ResetBotHabits()
+    {
+        botPlaySeconds = botDrillSeconds = botUpSeconds = botJumpUpSeconds = botOtherSeconds = botJumpOtherSeconds = 0f;
+        botRadarSeconds = botRadarFollowSeconds = botSegmentSeconds = 0f;
+        botSonarTaps = botSegments = botRuns = botDoorRuns = 0;
+        botLastDir = -1;
+        botDoorThisRun = botWasShopOpen = false;
+    }
+
+    /// <summary>Botが実際にどう操作したかを、人の記録と同じ項目で数える（ダッシュボードで人と比べる）。</summary>
+    private void RecordBotHabits()
+    {
+        float dt = Time.unscaledDeltaTime;
+        botPlaySeconds += dt;
+        if (holdDrill) botDrillSeconds += dt;
+        if (stick.y > 0.3f) { botUpSeconds += dt; if (holdJump) botJumpUpSeconds += dt; }
+        else { botOtherSeconds += dt; if (holdJump) botJumpOtherSeconds += dt; }
+        if (tapSonar) botSonarTaps++;
+
+        if (radar == null || !radar.isActiveAndEnabled) radar = FindAnyObjectByType<GemRadar>();
+        if (radar != null && radar.HasSignal)
+        {
+            botRadarSeconds += dt;
+            if (stick.sqrMagnitude > 0.09f && Vector2.Dot(stick.normalized, radar.SignalDirection) > 0.7f) botRadarFollowSeconds += dt;
+        }
+
+        int dir = HumanModel.Quantize(stick);
+        if (dir != botLastDir)
+        {
+            if (botLastDir >= 0)
+            {
+                botSegments++;
+                botSegmentSeconds += Time.unscaledTime - botDirStart;
+            }
+            botLastDir = dir;
+            botDirStart = Time.unscaledTime;
+        }
+    }
+
+    private string BotHabitsSummary()
+    {
+        float Ratio(float a, float b) => b > 0f ? a / b : 0f;
+        return string.Format(CultureInfo.InvariantCulture,
+            "runs={0} seconds={1:F0} drill={2:F2} jumpUp={3:F2} jumpOther={4:F2} sonarPerMin={5:F1} segment={6:F2} radarFollow={7:F2} doorRuns={8:F2}",
+            botRuns, botPlaySeconds, Ratio(botDrillSeconds, botPlaySeconds), Ratio(botJumpUpSeconds, botUpSeconds), Ratio(botJumpOtherSeconds, botOtherSeconds),
+            botPlaySeconds > 0f ? botSonarTaps / botPlaySeconds * 60f : 0f, botSegments > 0 ? botSegmentSeconds / botSegments : 0f,
+            Ratio(botRadarFollowSeconds, botRadarSeconds), botRuns > 0 ? botDoorRuns / (float)botRuns : 0f);
     }
 
     // ーーーーーーーーーーーーーーーーー人のルートーーーーーーーーーーーーーー
@@ -833,7 +979,8 @@ public sealed class AutoPlayBot : MonoBehaviour
             if (radar == null) return false;
         }
 
-        if (!radar.HasSignal || !Chance(radarChance)) return false;
+        // 人の癖があれば「人がギザギザに従う割合」で従う
+        if (!radar.HasSignal || !Chance(model != null ? model.RadarFollowRate : radarChance)) return false;
 
         stick = radar.SignalDirection;
         holdDrill = Chance(radarDrillChance);
@@ -864,6 +1011,11 @@ public sealed class AutoPlayBot : MonoBehaviour
             runCoverage = AutoPlayCoverage.Create(terrain, coverageCellBlocks);
             GameLogger.Event("CoverageStart", $"seed={runSeed} cells={runCoverage.InsideCount} grid={runCoverage.Rows}x{runCoverage.Cols}");
             StartRoute();
+
+            // 人が扉に入らないプレイが多ければ、Botもそのプレイでは扉を目指さない
+            chaseDoorsThisRun = model == null || Chance(model.DoorRunRate);
+            botRuns++;
+            botDoorThisRun = false;
         }
 
         if (player == null) return;
@@ -905,6 +1057,7 @@ public sealed class AutoPlayBot : MonoBehaviour
         if (runCoverage == null) return;
 
         GameLogger.Event("RunCoverage", $"seed={runSeed} {runCoverage.Summary()}");
+        if (botDoorThisRun) botDoorRuns++;
         coverageBook.Add(runSeed, runCoverage);
 
         if (activeRoute != null)

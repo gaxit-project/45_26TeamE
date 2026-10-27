@@ -44,7 +44,10 @@ public sealed class DebugStatsOverlay : MonoBehaviour
     private Texture2D background;
     private int styledHeight;
 
+    // テスター版（TESTER_BUILD）では表示しない（遊ぶ人の邪魔になるため）
+#if !TESTER_BUILD
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+#endif
     private static void Bootstrap()
     {
         var go = new GameObject("[DebugStatsOverlay]");

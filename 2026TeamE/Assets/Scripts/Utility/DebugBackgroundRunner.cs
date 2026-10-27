@@ -28,7 +28,10 @@ public static class DebugBackgroundRunner
     /// <summary>フォーカスが外れている間もゲームを動かしているか。</summary>
     public static bool IsActive => Application.runInBackground;
 
+    // テスター版（TESTER_BUILD）では製品版と同じく、フォーカスが外れたら止まるようにする
+#if !TESTER_BUILD
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
     private static void Enable()
     {
         // エディターでは Player Settings の値と共有されている可能性があるため、終了時に元へ戻す

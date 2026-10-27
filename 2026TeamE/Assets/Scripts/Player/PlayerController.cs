@@ -105,6 +105,16 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsDashing => Time.time < dashEndTime;
 
+    // 人の操作を記録して自動プレイのお手本にするため（HumanRouteRecorder）に、入力の状態を読み取り専用で公開する
+    /// <summary>いまのスティック（移動）入力。</summary>
+    public Vector2 MoveInput => moveInput;
+    /// <summary>ドリルのボタンを押しているか。</summary>
+    public bool IsDrillHeld => drillFlag;
+    /// <summary>ジャンプ（ジェットパック）のボタンを押しているか。</summary>
+    public bool IsJumpHeld => isJumpPressed;
+    /// <summary>このシーンでソナーを使った回数。</summary>
+    public int SonarUseCount { get; private set; }
+
     private Vector2 moveInput;
     private Vector3 moveDirection;
     private bool isJumpPressed;
@@ -536,6 +546,7 @@ public class PlayerController : MonoBehaviour
             {
                 Instantiate(sonar, transform.position, Quaternion.identity);
                 currentBattery -= SonarConsuption;
+                SonarUseCount++;
                 GameLogger.Event("Sonar", $"battery={currentBattery:F0}");
             }
         }

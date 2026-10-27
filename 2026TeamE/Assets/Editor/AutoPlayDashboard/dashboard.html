@@ -29,6 +29,8 @@
   --scene-main: #eb6834;
   --scene-result: #1baf7a;
   --select: #0b0b0b;
+  --human: #2a78d6;
+  --bot: #eb6834;
   --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark) {
@@ -52,6 +54,8 @@
     --scene-result: #199e70;
     --good-ink: #0ca30c;
     --select: #f0efec;
+    --human: #3987e5;
+    --bot: #d95926;
     --shadow: none;
   }
 }
@@ -75,6 +79,8 @@
   --scene-result: #199e70;
   --good-ink: #0ca30c;
   --select: #f0efec;
+  --human: #3987e5;
+  --bot: #d95926;
   --shadow: none;
 }
 
@@ -224,6 +230,18 @@ tbody tr:hover { background: var(--surface-2); }
 tbody tr.sel { background: rgba(250, 178, 25, .2); }
 td.t, td:nth-child(2), th { white-space: nowrap; }
 
+/* 人とBotの比較 */
+.habits { display: grid; gap: 10px; }
+.habit { display: grid; grid-template-columns: minmax(150px, 1.2fr) minmax(160px, 2fr) auto; gap: 4px 14px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--grid); }
+.habit:last-child { border-bottom: 0; }
+.habit .name { font-size: 13px; }
+.habit .bars { display: grid; gap: 3px; }
+.habit .bar { display: grid; grid-template-columns: 34px 1fr 56px; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.habit .track { height: 10px; background: var(--surface-2); border-radius: 0 4px 4px 0; }
+.habit .fill { height: 100%; border-radius: 0 4px 4px 0; min-width: 2px; }
+.habit .val { text-align: right; color: var(--ink); }
+@media (max-width: 640px) { .habit { grid-template-columns: 1fr; } }
+
 /* 推移 */
 .trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .trend-grid svg { width: 100%; display: block; }
@@ -343,6 +361,17 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; backgr
     <div class="legend" id="timelineLegend"></div>
   </section>
 
+  <section class="panel" id="habitPanel" hidden>
+    <div class="panel-head">
+      <div class="grow">
+        <h2>人とBotの操作の比較</h2>
+        <p class="sub" id="habitSub"></p>
+      </div>
+    </div>
+    <div class="legend" style="margin:0 0 10px"><span><span class="sw" style="background:var(--human)"></span>人（お手本の平均）</span><span><span class="sw" style="background:var(--bot)"></span>Bot（このセッション）</span></div>
+    <div class="habits" id="habits"></div>
+  </section>
+
   <section class="panel">
     <div class="panel-head">
       <div class="grow">
@@ -387,6 +416,8 @@ const EVENT_JA = {
   StageSeed: "地形のシード", RouteSaved: "人のプレイをお手本として保存", RoutesLoaded: "お手本ルートの読み込み",
   RouteStart: "お手本ルートをなぞり始めた", RouteSkip: "お手本ルートの先へ飛ばした",
   RouteFinished: "お手本ルートを最後までなぞった", RouteResult: "お手本ルートの結果",
+  HumanModel: "人の流れ・操作の癖を学習", BotHabits: "Botの操作の癖",
+  TesterName: "テスターの名前を設定", RecordsExported: "記録を書き出した",
   BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
 };
 const KIND_JA = { LOG: "ログ", WARN: "警告", ERROR: "エラー", EXCEPTION: "例外", ASSERT: "アサート", SESSION: "記録" };
@@ -397,9 +428,9 @@ const ITEM_JA = { Jewelry: "宝石", BigJewelry: "大きな宝石", LeatherBag: 
 // 一覧の絞り込み用のグループ
 const GROUPS = [
   { id: "problem", label: "問題", test: e => e.severity >= 1 },
-  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved"].includes(e.name) },
+  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved", "HumanModel", "BotHabits"].includes(e.name) },
   { id: "item", label: "アイテム・お金", test: e => e.kind === "EVENT" && ["ItemCollected", "MoneyChanged", "TimeAdded", "Sonar"].includes(e.name) },
-  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip"].includes(e.name) },
+  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip", "TesterName", "RecordsExported"].includes(e.name) },
   { id: "log", label: "通常ログ", test: e => e.kind === "LOG" },
 ];
 
@@ -448,8 +479,9 @@ function fmtPos(pos) {
   return `横 ${pos.z.toFixed(1)} / 深さ ${depthOf(pos.y).toFixed(1)}`;
 }
 function sessionLabel(name) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})(\d{2})$/.exec(name);
-  return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : name;
+  // テスターから取り込んだログは、フォルダ名の後ろに名前が付いている
+  const m = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})(\d{2})(?:_(.+))?$/.exec(name);
+  return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}${m[7] ? `（${m[7]}）` : ""}` : name;
 }
 function parseVec(s) {
   const m = /\(\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\s*\)/.exec(s || "");
@@ -814,6 +846,51 @@ function renderAll() {
   renderEvents(s);
   renderDetail();
   renderTrend();
+  renderHabits(s);
+}
+
+// ── 人とBotの操作の比較
+
+const HABITS = [
+  { key: "drill", label: "ドリルを押している割合", pct: true },
+  { key: "jumpUp", label: "上へ進むときにジェットパックを使う割合", pct: true },
+  { key: "jumpOther", label: "それ以外でジェットパックを使う割合", pct: true },
+  { key: "radarFollow", label: "レーダーのギザギザの向きへ進む割合", pct: true },
+  { key: "doorRuns", label: "扉に入ったプレイの割合", pct: true },
+  { key: "sonarPerMin", label: "ソナーを使う回数（1分あたり）", unit: "回" },
+  { key: "segment", label: "同じ向きを続ける長さ", unit: "秒" },
+];
+
+function habitValues(e) {
+  const out = {};
+  if (!e) return out;
+  for (const m of e.detail.matchAll(/(\w+)=([-\d.]+)/g)) out[m[1]] = +m[2];
+  return out;
+}
+
+function renderHabits(s) {
+  const last = name => s.entries.filter(e => e.kind === "EVENT" && e.name === name && !/^none/.test(e.detail)).pop();
+  const humanEv = last("HumanModel"), botEv = last("BotHabits");
+  $("habitPanel").hidden = !humanEv && !botEv;
+  if (!humanEv && !botEv) return;
+
+  const human = habitValues(humanEv), bot = habitValues(botEv);
+  $("habitSub").textContent = (humanEv ? `人のプレイ ${human.runs}回分から学んだ癖と、` : "人の記録はまだありません。") +
+    (botEv ? `このセッションでBotが実際に操作した癖（${bot.runs ?? 0}プレイ）を比べています。差が小さいほど人に近い動きです。` : "Botの集計は自動プレイを止めたときに記録されます。");
+
+  const fmt = (v, h) => v == null ? "-" : h.pct ? Math.round(v * 100) + "%" : (+v).toFixed(1) + h.unit;
+  $("habits").innerHTML = HABITS.map(h => {
+    const a = human[h.key], b = bot[h.key];
+    const max = Math.max(h.pct ? 1 : 0, a ?? 0, b ?? 0) || 1;
+    let verdict = "";
+    if (a != null && b != null) {
+      const near = h.pct ? Math.abs(a - b) <= 0.1 : Math.abs(a - b) <= Math.max(0.2, a * 0.25);
+      verdict = near ? `<span class="badge st-good">${shapeIcon("circle", 10)}人に近い</span>`
+        : `<span class="badge st-warning">${shapeIcon("square", 10)}人より${b > a ? "多い" : "少ない"}</span>`;
+    }
+    const bar = (who, v, color) => `<div class="bar"><span>${who}</span><div class="track"><div class="fill" style="width:${v == null ? 0 : Math.max(1, v / max * 100)}%;background:var(${color})"></div></div><span class="val num">${fmt(v, h)}</span></div>`;
+    return `<div class="habit"><div class="name">${h.label}</div><div class="bars">${bar("人", a, "--human")}${bar("Bot", b, "--bot")}</div><div>${verdict}</div></div>`;
+  }).join("");
 }
 
 function statusBadge(type) {
@@ -946,7 +1023,7 @@ function entryText(e) {
       if (g(/blocked=(\d+)/) != null) text += `・掘れないブロックで引き返し ${g(/blocked=(\d+)/)}回`;
       const steer = g(/steer=(\S+)/);
       if (steer) {
-        const names = { route: "お手本ルート", door: "扉", radar: "レーダー", explore: "未探索", random: "ランダム", reverse: "引き返し" };
+        const names = { route: "お手本ルート", flow: "人の流れ", door: "扉", radar: "レーダー", explore: "未探索", random: "ランダム", reverse: "引き返し" };
         const pairs = steer.split(",").map(kv => kv.split(":")).filter(kv => kv.length === 2);
         const total = pairs.reduce((a, kv) => a + +kv[1], 0) || 1;
         pairs.sort((a, b) => b[1] - a[1]);
@@ -959,9 +1036,19 @@ function entryText(e) {
       const name = { Bedrock: "岩盤", Boundary: "外周の壁" }[g(/block=(\w+)/)] || g(/block=(\w+)/);
       return `${name}に当たったので逆向きに掘り進む`;
     }
+    case "HumanModel":
+      if (/^none/.test(d)) return `学べる記録がまだ足りない（記録 ${g(/records=(\d+)/)}本）`;
+      return `人のプレイ ${g(/runs=(\d+)/)}回分（${g(/samples=(\d+)/)}行）から学習`;
+    case "BotHabits": return `${g(/runs=(\d+)/)}プレイ・${g(/seconds=(\d+)/)}秒分の操作を集計`;
     case "StageSeed": return `シード ${g(/seed=(-?\d+)/)}`;
-    case "RouteSaved": return `${g(/route=(\S+)/)}（道しるべ ${g(/points=(\d+)/)}個）`;
-    case "RoutesLoaded": return `${g(/count=(\d+)/)}本`;
+    case "RouteSaved": return `${g(/player=(\S+)/) ? g(/player=(\S+)/) + " さんのプレイ・" : ""}記録 ${g(/points=(\d+)/)}行${g(/doors=(\d+)/) ? `・扉 ${g(/doors=(\d+)/)}回` : ""}`;
+    case "RoutesLoaded": {
+      const players = g(/players=(\S+)/);
+      const excluded = +(g(/excluded=(\d+)/) || 0);
+      return `${g(/count=(\d+)/)}本を使用${excluded ? `（古いバージョンの ${excluded}本は除外）` : ""}${players ? `・${players.split("/").join("、")}` : ""}`;
+    }
+    case "TesterName": return g(/name=(\S+)/);
+    case "RecordsExported": return `プレイの記録 ${g(/routes=(\d+)/)}件・ログ ${g(/sessions=(\d+)/)}回分を ${g(/file=(\S+)/)} に`;
     case "RouteStart": return `${g(/route=(\S+)/)}（${g(/sameSeed=(\w+)/) === "True" ? "人と同じ地形" : "人とは違う地形"}・道しるべ ${g(/points=(\d+)/)}個）`;
     case "RouteSkip": return `${{ stuck: "詰まったので", blocked: "掘れないブロックがあったので", timeout: "進めなかったので" }[g(/reason=(\w+)/)] || ""}先へ（${g(/index=(\S+)/)}）`;
     case "RouteFinished": return `寄り道 ${g(/detours=(\d+)/)}回・飛ばし ${g(/skips=(\d+)/)}回`;
