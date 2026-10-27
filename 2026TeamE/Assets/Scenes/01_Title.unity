@@ -205,6 +205,7 @@ GameObject:
   - component: {fileID: 36019705}
   - component: {fileID: 36019707}
   - component: {fileID: 36019706}
+  - component: {fileID: 36019708}
   m_Layer: 5
   m_Name: VersionText
   m_TagString: Untagged
@@ -251,7 +252,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Ver.2.0.0
+  m_text: Ver.x.x.x
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}
   m_sharedMaterial: {fileID: -5337730745417588167, guid: ac1c67b679b6f04409f14e5ed2bea32d, type: 2}
@@ -331,6 +332,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 36019704}
   m_CullTransparentMesh: 1
+--- !u!114 &36019708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 36019704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97368d73cb104e13baf2313779e20ff4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VersionText
+  format: Ver.{0}
 --- !u!1 &105838579
 GameObject:
   m_ObjectHideFlags: 0
