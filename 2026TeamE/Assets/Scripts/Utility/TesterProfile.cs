@@ -145,13 +145,15 @@ public sealed class TesterPanel : MonoBehaviour
         if (SceneManager.GetActiveScene().name != TitleScene) return;
 
         // タイトル画面の左下に、名前と書き出しボタンを小さく出す
-        var area = new Rect(16 * s, Screen.height - 120 * s, 620 * s, 104 * s);
+        // 名前が長いとボタンと重なるので、名前・ボタン・説明を縦に並べる
+        var area = new Rect(16 * s, Screen.height - 196 * s, 620 * s, 180 * s);
         GUI.Box(area, GUIContent.none, boxStyle);
         GUILayout.BeginArea(new Rect(area.x + 12 * s, area.y + 8 * s, area.width - 24 * s, area.height - 16 * s));
-        GUILayout.BeginHorizontal();
         GUILayout.Label($"テスター: {TesterProfile.Name}", labelStyle);
-        if (GUILayout.Button("名前を変える", buttonStyle, GUILayout.Width(170 * s))) OpenPrompt();
-        if (GUILayout.Button("記録を書き出す", buttonStyle, GUILayout.Width(200 * s))) Export();
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("名前を変える", buttonStyle, GUILayout.Width(200 * s), GUILayout.Height(48 * s))) OpenPrompt();
+        if (GUILayout.Button("記録を書き出す", buttonStyle, GUILayout.Width(240 * s), GUILayout.Height(48 * s))) Export();
+        GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Label(Time.unscaledTime < messageUntil ? message : "遊んだ記録は自動で保存されます。終わったら「記録を書き出す」で開発チームに送ってください。", smallStyle);
         GUILayout.EndArea();
