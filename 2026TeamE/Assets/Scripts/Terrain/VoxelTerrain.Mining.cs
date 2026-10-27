@@ -171,6 +171,29 @@ public partial class VoxelTerrain
         return false;
     }
 
+    /// <summary>
+    /// 指定したワールド座標にあるブロックの種類。地表より上なら null（空中）。
+    /// 各層の幅の外側（ステージの外）は、外周の壁（Boundary）として返す。
+    /// </summary>
+    public BlockType? GetBlockAt(Vector3 worldPos)
+    {
+        if (mapData == null) return null;
+
+        Vector3 localPos = transform.InverseTransformPoint(worldPos);
+        int y = Mathf.RoundToInt(localPos.y / blockSize);
+        int z = Mathf.RoundToInt(localPos.z / blockSize);
+
+        if (y >= heightY) return null;
+        if (!IsInside(0, y, z)) return BlockType.Boundary;
+        return (BlockType)mapData[0, y, z];
+    }
+
+    /// <summary>ドリルで壊せないブロック（岩盤・外周の壁）か。ExecuteDig と同じ基準。</summary>
+    public static bool IsUndiggable(BlockType? block)
+    {
+        return block == BlockType.Bedrock || block == BlockType.Boundary;
+    }
+
     public void ClearBlocksAroundPoint(Vector3 worldCenter, float radius)
     {
         Vector3 localPos = transform.InverseTransformPoint(worldCenter);

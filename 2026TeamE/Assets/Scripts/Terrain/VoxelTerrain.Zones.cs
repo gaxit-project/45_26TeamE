@@ -2,6 +2,11 @@
 
 public partial class VoxelTerrain
 {
+    /// <summary>ステージ全体の高さ（ブロック数）。ステージ生成前は 0。</summary>
+    public int HeightY => heightY;
+
+    /// <summary>ステージ全体の横幅（Z方向のブロック数）。各層の幅は IsInside で判定する。</summary>
+    public int StageWidthZ => maxStageWidthZ;
 
     public int GetTotalHeight()
     {

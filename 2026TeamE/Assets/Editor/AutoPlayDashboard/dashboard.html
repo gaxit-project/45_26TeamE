@@ -1,0 +1,1458 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自動プレイ ダッシュボード</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --surface-2: #f3f2ee;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --line: #2a78d6;
+  --line-soft: rgba(42, 120, 214, 0.55);
+  --visited: #b7d3f6;
+  --unvisited: #ebeae4;
+  --abandoned: #c3c2b7;
+  --critical: #d03b3b;
+  --serious: #ec835a;
+  --warning: #fab219;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --scene-title: #2a78d6;
+  --scene-main: #eb6834;
+  --scene-result: #1baf7a;
+  --select: #0b0b0b;
+  --shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --surface-2: #232321;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --line: #3987e5;
+    --line-soft: rgba(57, 135, 229, 0.6);
+    --visited: #1c5cab;
+    --unvisited: #2c2c2a;
+    --abandoned: #52514e;
+    --scene-title: #3987e5;
+    --scene-main: #d95926;
+    --scene-result: #199e70;
+    --good-ink: #0ca30c;
+    --select: #f0efec;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --line: #3987e5;
+  --line-soft: rgba(57, 135, 229, 0.6);
+  --visited: #1c5cab;
+  --unvisited: #2c2c2a;
+  --abandoned: #52514e;
+  --scene-title: #3987e5;
+  --scene-main: #d95926;
+  --scene-result: #199e70;
+  --good-ink: #0ca30c;
+  --select: #f0efec;
+  --shadow: none;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.num { font-variant-numeric: tabular-nums; }
+button, select, input { font: inherit; color: inherit; }
+
+header.top {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--grid);
+}
+header.top h1 { font-size: 18px; margin: 0; letter-spacing: .02em; }
+header.top .meta { color: var(--ink-2); font-size: 13px; }
+header.top .spacer { flex: 1; }
+.control { display: flex; align-items: center; gap: 8px; }
+.control label { color: var(--ink-2); font-size: 13px; }
+select, .btn {
+  height: 34px; padding: 0 12px;
+  border: 1px solid var(--axis); border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.btn:hover, select:hover { border-color: var(--ink-2); }
+.btn.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid var(--axis); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; height: 30px; padding: 0 10px; background: transparent; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--axis); }
+.seg button.on { background: var(--ink); color: var(--surface); }
+
+main { padding: 20px 24px 48px; display: grid; gap: 20px; max-width: 1680px; margin: 0 auto; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--grid);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  min-width: 0;
+}
+.panel h2 { font-size: 15px; margin: 0 0 4px; }
+.panel .sub { color: var(--ink-2); font-size: 12.5px; margin: 0 0 12px; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px 16px; }
+.panel-head .grow { flex: 1; min-width: 200px; }
+
+/* 要約 */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile {
+  border: 1px solid var(--grid); border-radius: 10px; padding: 12px 14px;
+  background: var(--surface);
+  display: grid; gap: 2px; align-content: start;
+  cursor: default;
+}
+.tile[data-jump] { cursor: pointer; }
+.tile[data-jump]:hover { border-color: var(--ink-2); }
+.tile .label { color: var(--ink-2); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+.tile .value { font-size: 28px; font-weight: 700; line-height: 1.2; }
+.tile .value small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+.tile .note { color: var(--muted); font-size: 12px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px;
+  border: 1px solid currentColor; white-space: nowrap;
+}
+.st-critical { color: var(--critical); }
+.st-serious { color: var(--serious); }
+.st-warning { color: #a87400; }
+.st-good { color: var(--good-ink); }
+:root[data-theme="dark"] .st-warning { color: var(--warning); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .st-warning { color: var(--warning); } }
+
+/* 要確認リスト */
+.issues { display: grid; gap: 8px; }
+.issue {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center;
+  padding: 10px 12px; border: 1px solid var(--grid); border-radius: 10px;
+  cursor: pointer; background: var(--surface);
+}
+.issue:hover { border-color: var(--ink-2); }
+.issue.sel { border-color: var(--select); box-shadow: inset 0 0 0 1px var(--select); }
+.issue .title { font-weight: 600; overflow-wrap: anywhere; }
+.issue .where { color: var(--ink-2); font-size: 12.5px; grid-column: 2 / 4; }
+.issue .count { font-weight: 700; font-size: 15px; }
+.empty { color: var(--ink-2); padding: 18px 4px; }
+
+/* レイアウト */
+.row-2 { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr); gap: 20px; }
+@media (max-width: 1100px) { .row-2 { grid-template-columns: 1fr; } }
+
+/* マップ */
+.map-wrap { position: relative; width: 100%; }
+.map-wrap canvas, .map-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-wrap svg { overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+.marker { cursor: pointer; }
+.marker .ring { fill: none; stroke: var(--select); stroke-width: 2; opacity: 0; }
+.marker.sel .ring { opacity: 1; }
+
+/* 詳細 */
+.detail { display: grid; gap: 12px; align-content: start; }
+.detail dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.detail dt { color: var(--ink-2); font-size: 12.5px; }
+.detail dd { margin: 0; overflow-wrap: anywhere; }
+.detail img { width: 100%; border-radius: 8px; border: 1px solid var(--grid); cursor: zoom-in; display: block; }
+.loglines {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12px;
+  background: var(--surface-2); border-radius: 8px; padding: 8px 10px;
+  max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.loglines div { padding: 1px 0; }
+.loglines .hl { background: rgba(250, 178, 25, .28); border-radius: 3px; }
+.loglines .k { color: var(--ink-2); }
+.stack { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--ink-2); white-space: pre-wrap; background: var(--surface-2); padding: 8px 10px; border-radius: 8px; max-height: 220px; overflow: auto; }
+
+/* 時系列 */
+.timeline svg { display: block; width: 100%; }
+.tl-axis text, .tl-label { fill: var(--muted); font-size: 11px; }
+.tl-title { fill: var(--ink-2); font-size: 12px; font-weight: 600; }
+
+/* イベント表 */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--axis); background: var(--surface); cursor: pointer; font-size: 13px;
+}
+.chip.on { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.table-wrap { max-height: 460px; overflow: auto; border: 1px solid var(--grid); border-radius: 10px; margin-top: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { position: sticky; top: 0; background: var(--surface-2); color: var(--ink-2); font-weight: 600; font-size: 12.5px; z-index: 1; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.sel { background: rgba(250, 178, 25, .2); }
+td.t, td:nth-child(2), th { white-space: nowrap; }
+
+/* 推移 */
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.trend-grid svg { width: 100%; display: block; }
+
+/* 読み込み画面 */
+.loader { max-width: 640px; margin: 80px auto; text-align: center; display: grid; gap: 16px; }
+.drop {
+  border: 2px dashed var(--axis); border-radius: 14px; padding: 36px 20px; background: var(--surface);
+}
+.drop.over { border-color: var(--line); }
+.hint { color: var(--ink-2); font-size: 13px; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+
+#tip {
+  position: fixed; z-index: 50; pointer-events: none;
+  background: var(--ink); color: var(--surface);
+  padding: 8px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.5;
+  max-width: 340px; display: none; box-shadow: 0 4px 16px rgba(0,0,0,.2);
+}
+#tip b { font-weight: 700; }
+#zoom {
+  position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.8);
+  display: none; align-items: center; justify-content: center; cursor: zoom-out; padding: 24px;
+}
+#zoom img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+
+@media (max-width: 640px) {
+  header.top, main { padding-left: 16px; padding-right: 16px; }
+}
+</style>
+</head>
+<body>
+<div id="tip"></div>
+<div id="zoom"><img alt="スクリーンショット拡大"></div>
+
+<header class="top" id="header" hidden>
+  <h1>自動プレイ ダッシュボード</h1>
+  <div class="control">
+    <label for="sessionSelect">セッション</label>
+    <select id="sessionSelect"></select>
+  </div>
+  <div class="meta" id="sessionMeta"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="pickAgain" type="button">別のフォルダを開く</button>
+  <button class="btn" id="themeBtn" type="button" title="表示の明るさを切り替え">表示: 自動</button>
+</header>
+
+<section class="loader" id="loader" hidden>
+  <h1 style="margin:0;font-size:22px">自動プレイ ダッシュボード</h1>
+  <div class="drop" id="drop">
+    <p style="margin:0 0 12px;font-weight:600">ログフォルダを選んでください</p>
+    <button class="btn on" id="pickBtn" type="button">フォルダを選ぶ</button>
+    <input type="file" id="picker" webkitdirectory multiple hidden>
+    <p class="hint" style="margin:14px 0 0">「Logs」フォルダ（全セッション）か、日時の付いたフォルダ（1回分）を選べます。</p>
+  </div>
+  <p class="hint">ログの場所: <code>%USERPROFILE%\AppData\LocalLow\GameCreateProject\CycloneDiver\Logs</code><br>
+  Unity からは メニューの「Tools ＞ 自動プレイ ＞ ダッシュボードを開く」で、選ばずにすぐ開けます。</p>
+  <p class="hint" id="loadError" style="color:var(--critical)"></p>
+</section>
+
+<main id="app" hidden>
+  <section class="panel">
+    <div class="panel-head">
+      <div class="grow">
+        <h2>まとめ</h2>
+        <p class="sub" id="summarySub"></p>
+      </div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <div class="row-2">
+    <section class="panel">
+      <div class="panel-head">
+        <div class="grow">
+          <h2>要確認リスト</h2>
+          <p class="sub">重大なものから順に並べています。クリックするとマップと詳細に表示します。</p>
+        </div>
+      </div>
+      <div class="issues" id="issues"></div>
+    </section>
+
+    <section class="panel detail" id="detail">
+      <div>
+        <h2>詳細</h2>
+        <p class="sub">要確認リスト・マップの印・グラフ・イベント一覧をクリックすると、ここに表示します。</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="grow">
+        <h2>マップ（どこで起きたか）</h2>
+        <p class="sub" id="mapSub">横がステージの左右、縦が深さです。線はプレイヤーが通った道のりです。</p>
+      </div>
+      <div class="seg" id="mapMode">
+        <button type="button" data-mode="visited" class="on">通った範囲</button>
+        <button type="button" data-mode="stage">ステージ全体</button>
+      </div>
+    </div>
+    <div class="map-wrap" id="mapWrap">
+      <canvas id="mapCanvas"></canvas>
+      <svg id="mapSvg" role="img" aria-label="プレイヤーの道のりと問題が起きた場所の地図"></svg>
+    </div>
+    <div class="legend" id="mapLegend"></div>
+  </section>
+
+  <section class="panel timeline">
+    <div class="panel-head">
+      <div class="grow">
+        <h2>時間の流れ</h2>
+        <p class="sub">上から「どの画面にいたか」「FPS」「深さ」です。縦線は問題が起きた時刻です。グラフ上をなぞると、その時刻の位置がマップに出ます。</p>
+      </div>
+    </div>
+    <div id="timeline"></div>
+    <div class="legend" id="timelineLegend"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div class="grow">
+        <h2>イベント一覧</h2>
+        <p class="sub" id="eventsSub"></p>
+      </div>
+      <div class="chips" id="eventChips"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>経過時間</th><th>画面</th><th>種類</th><th>内容</th><th>場所（横 / 深さ）</th></tr></thead>
+        <tbody id="eventRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" id="trendPanel" hidden>
+    <h2>セッションごとの推移</h2>
+    <p class="sub">修正の前後で問題が減ったかを見るためのグラフです。濃い棒が今選んでいるセッションです。</p>
+    <div class="trend-grid" id="trend"></div>
+  </section>
+</main>
+
+<script src="dashboard_data.js" onerror="void 0"></script>
+<script>
+"use strict";
+
+// ───────────────────────── 日本語の表記 ─────────────────────────
+
+const EVENT_JA = {
+  Stuck: "詰まり", StuckResolved: "詰まり解消",
+  NoControl: "操作できない状態", NoControlResolved: "操作できない状態が解消",
+  DoorEnter: "扉に入った", GameClear: "クリア", TimeUp: "時間切れ", TimeAdded: "残り時間の増減",
+  ItemCollected: "アイテム取得", MoneyChanged: "所持金の変化", Damage: "被弾", Sonar: "ソナー使用",
+  ControlEnabled: "操作開始", Upgrade: "強化", Saved: "セーブ",
+  Pause: "ポーズ", Resume: "ポーズ解除", ReturnToTitle: "タイトルへ戻る",
+  SettingChanged: "設定変更", SceneLoaded: "画面の読み込み",
+  AutoPlayStart: "自動プレイ開始", AutoPlayStop: "自動プレイ停止",
+  CoverageStart: "カバー率の計測開始", RunCoverage: "1プレイのカバー率", SessionCoverage: "全体のカバー率",
+  QuitBlocked: "終了操作を止めた",
+  FocusChanged: "ウィンドウ切り替え",
+  BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
+};
+const KIND_JA = { LOG: "ログ", WARN: "警告", ERROR: "エラー", EXCEPTION: "例外", ASSERT: "アサート", SESSION: "記録" };
+const SCENE_JA = { "01_Title": "タイトル", "02_Main": "メイン", "FinalResult": "リザルト" };
+const UPGRADE_JA = { Drill: "ドリル", Sonar: "ソナー", Engine: "エンジン", Rader: "レーダー", Light: "ライト", Jet: "ジェットパック" };
+const ITEM_JA = { Jewelry: "宝石", BigJewelry: "大きな宝石", LeatherBag: "革袋", GoldLeatherBag: "金の革袋", Key: "鍵", Bill: "お札" };
+
+// 一覧の絞り込み用のグループ
+const GROUPS = [
+  { id: "problem", label: "問題", test: e => e.severity >= 1 },
+  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked"].includes(e.name) },
+  { id: "item", label: "アイテム・お金", test: e => e.kind === "EVENT" && ["ItemCollected", "MoneyChanged", "TimeAdded", "Sonar"].includes(e.name) },
+  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged"].includes(e.name) },
+  { id: "log", label: "通常ログ", test: e => e.kind === "LOG" },
+];
+
+// 問題の種類ごとの見た目（色だけに頼らず、形と文字でも区別する）
+const ISSUE_TYPES = {
+  error:     { label: "エラー・例外", status: "critical", level: "重大", shape: "triangle", order: 0 },
+  stuck:     { label: "詰まり", status: "critical", level: "重大", shape: "cross", order: 1 },
+  nocontrol: { label: "操作できない状態", status: "serious", level: "重大", shape: "diamond", order: 2 },
+  lowfps:    { label: "FPS低下", status: "warning", level: "注意", shape: "square", order: 3 },
+  warn:      { label: "警告", status: "warning", level: "注意", shape: "circle", order: 4 },
+};
+// FPS低下の基準。記録全体のFPSが低い（エディターや遅いPC）ときは、中央値の6割を基準にする
+const LOW_FPS = 30;
+function lowFpsFor(rows) {
+  const v = rows.map(r => r.fps).filter(f => f != null).sort((a, b) => a - b);
+  if (!v.length) return { value: LOW_FPS, median: null, adjusted: false };
+  const median = v[Math.floor(v.length / 2)];
+  return median >= LOW_FPS * 1.2
+    ? { value: LOW_FPS, median, adjusted: false }
+    : { value: Math.max(5, Math.round(median * 0.6)), median, adjusted: true };
+}
+
+// ───────────────────────── 小道具 ─────────────────────────
+
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sceneJa = s => SCENE_JA[s] || s || "-";
+
+function fmtTime(sec) {
+  if (sec == null || isNaN(sec)) return "-";
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` : `${m}:${String(s).padStart(2, "0")}`;
+}
+function fmtDuration(sec) {
+  sec = Math.round(sec || 0);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  if (h) return `${h}時間${m}分`;
+  if (m) return `${m}分${s}秒`;
+  return `${s}秒`;
+}
+const depthOf = y => -y;
+function fmtPos(pos) {
+  if (!pos) return "-";
+  return `横 ${pos.z.toFixed(1)} / 深さ ${depthOf(pos.y).toFixed(1)}`;
+}
+function sessionLabel(name) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})(\d{2})$/.exec(name);
+  return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : name;
+}
+function parseVec(s) {
+  const m = /\(\s*([-\d.]+),\s*([-\d.]+),\s*([-\d.]+)\s*\)/.exec(s || "");
+  return m ? { x: +m[1], y: +m[2], z: +m[3] } : null;
+}
+
+const tip = $("tip");
+function showTip(html, ev) {
+  tip.innerHTML = html;
+  tip.style.display = "block";
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
+  tip.style.left = Math.max(8, x) + "px";
+  tip.style.top = Math.max(8, y) + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+// ───────────────────────── ログの読み取り ─────────────────────────
+
+const LINE_RE = /^(\d\d:\d\d:\d\d\.\d{3}) \[\s*([\d.]+)s f=(\d+) (\S*) pos=(\([^)]*\)|-)\] (.*)$/;
+
+function parseGameLog(text) {
+  const entries = [];
+  const env = [];
+  const lines = (text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  for (const line of lines) {
+    const m = LINE_RE.exec(line);
+    if (!m) {
+      // 改行を含むログの続き
+      if (entries.length && line.trim()) entries[entries.length - 1].more = (entries[entries.length - 1].more || "") + line + "\n";
+      continue;
+    }
+    const body = m[6];
+    const e = { clock: m[1], t: +m[2], frame: +m[3], scene: m[4], pos: m[5] === "-" ? null : parseVec(m[5]), raw: body };
+    if (body.startsWith("  ")) { env.push(body.trim()); continue; }
+    if (body === "SESSION START" || body === "SESSION END") { e.kind = "SESSION"; e.name = body === "SESSION START" ? "記録開始" : "記録終了"; e.detail = ""; }
+    else {
+      const sp = body.indexOf(" ");
+      const head = sp < 0 ? body : body.slice(0, sp);
+      const rest = sp < 0 ? "" : body.slice(sp + 1);
+      if (head === "EVENT") {
+        const sp2 = rest.indexOf(" ");
+        e.kind = "EVENT";
+        e.name = sp2 < 0 ? rest : rest.slice(0, sp2);
+        e.detail = sp2 < 0 ? "" : rest.slice(sp2 + 1);
+      } else {
+        e.kind = KIND_JA[head] ? head : "LOG";
+        e.name = e.kind;
+        e.detail = KIND_JA[head] ? rest : body;
+      }
+    }
+    e.severity = e.kind === "EXCEPTION" || e.kind === "ERROR" || e.kind === "ASSERT" ? 2
+      : e.kind === "WARN" ? 1
+      : e.kind === "EVENT" && (e.name === "Stuck" || e.name === "NoControl") ? 2 : 0;
+    e.index = entries.length;
+    entries.push(e);
+  }
+  const envMap = {};
+  for (const line of env) for (const kv of line.split(/ (?=\w+=)/)) {
+    const i = kv.indexOf("=");
+    if (i > 0) envMap[kv.slice(0, i)] = kv.slice(i + 1);
+  }
+  return { entries, env: envMap };
+}
+
+function parseErrors(text) {
+  const out = [];
+  for (const line of (text || "").replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    const m = LINE_RE.exec(line);
+    if (m) {
+      const body = m[6];
+      const sp = body.indexOf(" ");
+      out.push({ t: +m[2], clock: m[1], scene: m[4], pos: m[5] === "-" ? null : parseVec(m[5]),
+        label: body.slice(0, sp), message: body.slice(sp + 1), stack: "" });
+    } else if (out.length && line.trim()) {
+      out[out.length - 1].stack += line.replace(/^  /, "") + "\n";
+    }
+  }
+  return out;
+}
+
+function parseTelemetry(text) {
+  const lines = (text || "").replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+  if (!lines.length) return [];
+  const cols = lines[0].split(",");
+  const idx = n => cols.indexOf(n);
+  const I = { t: idx("time_s"), scene: idx("scene"), fps: idx("fps"), worst: idx("worst_frame_ms"), x: idx("pos_x"), y: idx("pos_y"), z: idx("pos_z"),
+    state: idx("player_state"), battery: idx("battery"), money: idx("money"), left: idx("time_left"), mem: idx("mem_mb") };
+  const num = v => v === undefined || v === "" ? null : +v;
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const c = lines[i].split(",");
+    const y = num(c[I.y]), z = num(c[I.z]);
+    rows.push({ t: num(c[I.t]), scene: c[I.scene], fps: num(c[I.fps]), worst: num(c[I.worst]),
+      pos: y == null || z == null ? null : { x: num(c[I.x]), y, z },
+      state: c[I.state] || "", battery: num(c[I.battery]), money: num(c[I.money]), left: num(c[I.left]), mem: num(c[I.mem]) });
+  }
+  return rows;
+}
+
+function parseCoverage(name, text) {
+  const lines = (text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  const first = lines[0] || "";
+  const seed = (/seed=(-?\d+)/.exec(first) || [])[1];
+  const vis = /visited=(\d+)\/(\d+) \(([\d.]+)%\)/.exec(first);
+  const depth = (/maxDepth=(\S+)/.exec(first) || [])[1];
+  const g = /grid rows=(\d+) cols=(\d+) cell=(\d+) blockSize=([-\d.]+) originY=([-\d.]+) originZ=([-\d.]+)/.exec(text || "");
+  const blank = lines.indexOf("");
+  const mapLines = blank >= 0 ? lines.slice(blank + 1).filter(l => l.length > 6) : [];
+  let grid = null;
+  if (g) {
+    grid = { rows: +g[1], cols: +g[2], cell: +g[3], blockSize: +g[4], originY: +g[5], originZ: +g[6], cells: [] };
+    // ファイルは上（地表）から書かれているので、行0（最深部）から並ぶように反転する
+    const body = mapLines.map(l => l.slice(6)).reverse();
+    for (let r = 0; r < grid.rows; r++) grid.cells.push(body[r] || "");
+  }
+  return { name, seed, visited: vis ? +vis[1] : null, total: vis ? +vis[2] : null, ratio: vis ? +vis[3] : null,
+    maxDepth: depth && depth !== "-" ? +depth : null, grid };
+}
+
+// ───────────────────────── 1セッション分の組み立て ─────────────────────────
+
+function buildSession(raw) {
+  const log = parseGameLog(raw.gameLog);
+  const errors = parseErrors(raw.errorLog);
+  const tele = parseTelemetry(raw.telemetry);
+  const coverage = (raw.coverage || []).map(c => parseCoverage(c.name, c.text));
+  const entries = log.entries;
+
+  const duration = Math.max(entries.length ? entries[entries.length - 1].t : 0, tele.length ? tele[tele.length - 1].t : 0);
+  const issues = [];
+
+  // 詰まり: 近い場所（6以内）で起きたものは1つにまとめる
+  const stuckEvents = entries.filter(e => e.kind === "EVENT" && e.name === "Stuck");
+  const clusters = [];
+  for (const e of stuckEvents) {
+    const pos = e.pos || parseVec((/anchor=(\([^)]*\))/.exec(e.detail) || [])[1]);
+    const still = +((/still=([\d.]+)s/.exec(e.detail) || [])[1] || 0);
+    const shot = (/screenshot=(\S+)/.exec(e.detail) || [])[1];
+    const item = { entry: e, pos, still, shot: shot && shot !== "-" ? shot : null };
+    const near = pos && clusters.find(c => c.pos && Math.hypot(c.pos.y - pos.y, c.pos.z - pos.z) <= 6);
+    if (near) near.items.push(item);
+    else clusters.push({ pos, items: [item] });
+  }
+  for (const c of clusters) {
+    const n = c.items.length;
+    issues.push({ type: "stuck", title: n > 1 ? `同じ場所で${n}回詰まり` : `${c.items[0].still.toFixed(0)}秒間ほとんど動けず`,
+      count: n, pos: c.pos, t: c.items[0].entry.t, entries: c.items.map(i => i.entry), shots: c.items.map(i => i.shot).filter(Boolean),
+      scene: c.items[0].entry.scene });
+  }
+
+  // 操作できない状態
+  for (const e of entries.filter(e => e.kind === "EVENT" && e.name === "NoControl")) {
+    const sec = +((/for=([\d.]+)s/.exec(e.detail) || [])[1] || 0);
+    const shot = (/screenshot=(\S+)/.exec(e.detail) || [])[1];
+    issues.push({ type: "nocontrol", title: `${sec.toFixed(0)}秒以上 操作できないまま`, count: 1, pos: e.pos, t: e.t, entries: [e],
+      shots: shot && shot !== "-" ? [shot] : [], scene: e.scene });
+  }
+
+  // エラー・例外: 同じ文面ごとにまとめる。errors.log が空なら game.log から拾う
+  const errSource = errors.length ? errors : entries.filter(e => e.severity === 2 && e.kind !== "EVENT")
+    .map(e => ({ t: e.t, clock: e.clock, scene: e.scene, pos: e.pos, label: e.kind, message: e.detail, stack: e.more || "" }));
+  const errGroups = new Map();
+  for (const er of errSource) {
+    const key = er.label + "|" + er.message.split("\n")[0];
+    if (!errGroups.has(key)) errGroups.set(key, { list: [], label: er.label, message: er.message.split("\n")[0] });
+    errGroups.get(key).list.push(er);
+  }
+  for (const g of errGroups.values()) {
+    const f = g.list[0];
+    issues.push({ type: "error", title: `${KIND_JA[g.label] || g.label}: ${g.message}`, count: g.list.length, pos: f.pos, t: f.t,
+      errors: g.list, scene: f.scene, entries: entries.filter(e => e.severity === 2 && e.kind !== "EVENT" && e.detail.split("\n")[0] === g.message) });
+  }
+
+  // 実際に操作している区間（操作開始 ～ 画面切り替え・時間切れ・クリア）。読み込み中のカクつきを数えないため
+  const intervals = [];
+  let open = null;
+  for (const e of entries) {
+    if (e.kind === "EVENT" && e.name === "ControlEnabled") open = e.t;
+    else if (open != null && ((e.kind === "EVENT" && ["SceneLoaded", "TimeUp", "GameClear"].includes(e.name)) || e.kind === "SESSION")) {
+      intervals.push([open, e.t]); open = null;
+    }
+  }
+  if (open != null) intervals.push([open, Infinity]);
+  const inPlay = r => r.scene === "02_Main" && intervals.some(([a, b]) => r.t >= a && r.t <= b);
+  for (const r of tele) r.playing = inPlay(r);
+
+  // FPS低下: 操作中に基準を下回る状態が3秒以上続いた区間
+  const play = tele.filter(r => r.playing && r.fps != null);
+  const low = lowFpsFor(play);
+  let run = [];
+  const flush = () => {
+    if (run.length >= 3) {
+      const worst = run.reduce((a, b) => (b.fps < a.fps ? b : a));
+      issues.push({ type: "lowfps", title: `${(run[run.length - 1].t - run[0].t + 1).toFixed(0)}秒間 FPS低下（最低 ${worst.fps.toFixed(0)}fps）`,
+        count: 1, pos: worst.pos, t: run[0].t, tEnd: run[run.length - 1].t, minFps: worst.fps, scene: "02_Main", entries: [] });
+    }
+    run = [];
+  };
+  for (const r of play) {
+    if (r.fps < low.value && (!run.length || r.t - run[run.length - 1].t <= 1.6)) run.push(r);
+    else { flush(); if (r.fps < low.value) run.push(r); }
+  }
+  flush();
+
+  // 警告: 同じ文面ごとにまとめる
+  const warnGroups = new Map();
+  for (const e of entries.filter(e => e.kind === "WARN")) {
+    if (!warnGroups.has(e.detail)) warnGroups.set(e.detail, []);
+    warnGroups.get(e.detail).push(e);
+  }
+  for (const [msg, list] of warnGroups) {
+    issues.push({ type: "warn", title: msg, count: list.length, pos: list[0].pos, t: list[0].t, entries: list, scene: list[0].scene });
+  }
+
+  issues.sort((a, b) => ISSUE_TYPES[a.type].order - ISSUE_TYPES[b.type].order || b.count - a.count || a.t - b.t);
+  issues.forEach((it, i) => it.id = "i" + i);
+
+  const runs = entries.filter(e => e.kind === "EVENT" && e.name === "RunCoverage").map(e => {
+    const m = /visited=(\d+)\/(\d+) \(([\d.]+)%\)/.exec(e.detail);
+    return { t: e.t, ratio: m ? +m[3] : null };
+  });
+  const playCount = entries.filter(e => e.kind === "EVENT" && e.name === "ControlEnabled").length;
+  const maxDepthTele = tele.reduce((d, r) => (r.pos && r.scene === "02_Main" ? Math.max(d, depthOf(r.pos.y)) : d), 0);
+  const cov = coverage[0] || null;
+  const latestRun = runs.length ? runs[runs.length - 1] : null;
+
+  return {
+    name: raw.name, label: sessionLabel(raw.name), env: log.env, version: log.env.version || "-",
+    entries, errors, tele, coverage, issues, duration, playCount, maxDepth: maxDepthTele, low, playRows: play,
+    coverageRatio: cov && cov.ratio != null ? cov.ratio : latestRun ? latestRun.ratio : null,
+    autoplay: entries.some(e => e.kind === "EVENT" && e.name === "AutoPlayStart"),
+    shotUrl: raw.shotUrl,
+    count: type => issues.filter(i => i.type === type).reduce((a, b) => a + b.count, 0),
+  };
+}
+
+// ───────────────────────── 読み込み ─────────────────────────
+
+const state = { sessions: [], current: null, selection: null, mapMode: "visited", groups: new Set(["problem", "progress"]) };
+
+function loadFromEmbedded(data) {
+  state.sessions = data.sessions.map(s => buildSession({
+    name: s.name, gameLog: s.gameLog, errorLog: s.errorLog, telemetry: s.telemetry,
+    coverage: (s.coverageNames || []).map((n, i) => ({ name: n, text: s.coverageTexts[i] })),
+    shotUrl: n => encodeURIComponent(s.name) + "/" + encodeURIComponent(n),
+  }));
+}
+
+async function loadFromFiles(fileList) {
+  const bySession = new Map();
+  for (const f of fileList) {
+    const parts = (f.webkitRelativePath || f.name).split("/");
+    const folder = parts.length >= 2 ? parts[parts.length - 2] : "セッション";
+    if (!bySession.has(folder)) bySession.set(folder, {});
+    bySession.get(folder)[parts[parts.length - 1]] = f;
+  }
+  const sessions = [];
+  for (const [name, files] of bySession) {
+    if (!files["game.log"]) continue;
+    const text = async n => (files[n] ? await files[n].text() : "");
+    const coverage = [];
+    for (const n of Object.keys(files).filter(n => /^coverage_.*\.txt$/.test(n))) coverage.push({ name: n, text: await files[n].text() });
+    const urls = {};
+    sessions.push(buildSession({
+      name, gameLog: await text("game.log"), errorLog: await text("errors.log"), telemetry: await text("telemetry.csv"), coverage,
+      shotUrl: n => files[n] ? (urls[n] ||= URL.createObjectURL(files[n])) : "",
+    }));
+  }
+  if (!sessions.length) throw new Error("game.log が入ったフォルダが見つかりませんでした。");
+  state.sessions = sessions;
+}
+
+function start() {
+  state.sessions.sort((a, b) => b.name.localeCompare(a.name));
+  const sel = $("sessionSelect");
+  sel.innerHTML = state.sessions.map((s, i) => `<option value="${i}">${esc(s.label)}${s.autoplay ? "（自動プレイ）" : ""}</option>`).join("");
+  sel.onchange = () => openSession(state.sessions[+sel.value]);
+  $("loader").hidden = true;
+  $("header").hidden = false;
+  $("app").hidden = false;
+  openSession(state.sessions[0]);
+}
+
+function showLoader(message) {
+  $("loader").hidden = false;
+  $("header").hidden = true;
+  $("app").hidden = true;
+  $("loadError").textContent = message || "";
+}
+
+$("pickBtn").onclick = () => $("picker").click();
+$("pickAgain").onclick = () => $("picker").click();
+$("picker").onchange = async e => {
+  try { await loadFromFiles(e.target.files); start(); }
+  catch (err) { showLoader(err.message); }
+  e.target.value = "";
+};
+const drop = $("drop");
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => {
+  e.preventDefault();
+  drop.classList.remove("over");
+  $("loadError").textContent = "フォルダは「フォルダを選ぶ」ボタンから選んでください。";
+});
+
+// 表示の明るさ
+const THEMES = [["", "自動"], ["light", "明るい"], ["dark", "暗い"]];
+let themeIndex = 0;
+try { const saved = localStorage.getItem("apd-theme"); const i = THEMES.findIndex(t => t[0] === saved); if (i > 0) themeIndex = i; } catch (e) {}
+function applyTheme() {
+  const [value, label] = THEMES[themeIndex];
+  if (value) document.documentElement.dataset.theme = value; else delete document.documentElement.dataset.theme;
+  $("themeBtn").textContent = "表示: " + label;
+  try { localStorage.setItem("apd-theme", value); } catch (e) {}
+}
+$("themeBtn").onclick = () => { themeIndex = (themeIndex + 1) % THEMES.length; applyTheme(); if (state.current) renderAll(); };
+applyTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => state.current && renderAll());
+
+// ───────────────────────── 画面の組み立て ─────────────────────────
+
+function openSession(s) {
+  state.current = s;
+  state.selection = null;
+  renderAll();
+}
+
+function renderAll() {
+  const s = state.current;
+  $("sessionMeta").textContent = `バージョン ${s.version} ・ 記録時間 ${fmtDuration(s.duration)}${s.env.platform ? " ・ " + (s.env.platform === "WindowsEditor" ? "Unityエディター" : s.env.platform) : ""}`;
+  renderTiles(s);
+  renderIssues(s);
+  renderMap(s);
+  renderTimeline(s);
+  renderEventChips();
+  renderEvents(s);
+  renderDetail();
+  renderTrend();
+}
+
+function statusBadge(type) {
+  const t = ISSUE_TYPES[type];
+  return `<span class="badge st-${t.status}">${shapeIcon(t.shape, 10)}${t.level}</span>`;
+}
+
+function shapeIcon(shape, size) {
+  const h = size / 2;
+  const p = { fill: "currentColor" };
+  let d;
+  switch (shape) {
+    case "triangle": d = `<path d="M${h} 0 L${size} ${size} L0 ${size}Z" fill="currentColor"/>`; break;
+    case "cross": d = `<path d="M1 1 L${size - 1} ${size - 1} M${size - 1} 1 L1 ${size - 1}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`; break;
+    case "diamond": d = `<path d="M${h} 0 L${size} ${h} L${h} ${size} L0 ${h}Z" fill="currentColor"/>`; break;
+    case "square": d = `<rect x="1" y="1" width="${size - 2}" height="${size - 2}" rx="1.5" fill="currentColor"/>`; break;
+    default: d = `<circle cx="${h}" cy="${h}" r="${h - 0.5}" fill="currentColor"/>`;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">${d}</svg>`;
+}
+
+// ── まとめ
+
+function renderTiles(s) {
+  const stuck = s.count("stuck"), noc = s.count("nocontrol"), err = s.count("error"), low = s.issues.filter(i => i.type === "lowfps").length;
+  const errKinds = s.issues.filter(i => i.type === "error").length;
+  const fpsRows = s.playRows;
+  const avgFps = fpsRows.length ? fpsRows.reduce((a, r) => a + r.fps, 0) / fpsRows.length : null;
+  const minFps = fpsRows.length ? Math.min(...fpsRows.map(r => r.fps)) : null;
+
+  const tile = (label, value, unit, note, status, jump) => `
+    <div class="tile"${jump ? ` data-jump="${jump}"` : ""}>
+      <div class="label">${status ? `<span class="st-${status}">${shapeIcon(status === "good" ? "circle" : ISSUE_TYPES[jump]?.shape || "circle", 10)}</span>` : ""}${label}</div>
+      <div class="value num">${value}${unit ? `<small>${unit}</small>` : ""}</div>
+      <div class="note">${note}</div>
+    </div>`;
+  const okOr = (n, st) => (n > 0 ? st : "good");
+
+  $("tiles").innerHTML = [
+    tile("詰まり", stuck, "回", stuck ? "要確認リストで場所を確認" : "問題なし", okOr(stuck, "critical"), "stuck"),
+    tile("操作できない状態", noc, "回", noc ? "進行不能の可能性" : "問題なし", okOr(noc, "serious"), "nocontrol"),
+    tile("エラー・例外", err, "件", err ? `${errKinds}種類` : "問題なし", okOr(err, "critical"), "error"),
+    tile("FPS低下", low, "区間", `${s.low.value}fps未満が3秒以上${s.low.adjusted ? "（全体が低いため基準を下げています）" : ""}・操作中の平均 ${avgFps != null ? avgFps.toFixed(0) : "-"}fps／最低 ${minFps != null ? minFps.toFixed(0) : "-"}fps`, okOr(low, "warning"), "lowfps"),
+    tile("カバー率", s.coverageRatio != null ? s.coverageRatio.toFixed(1) : "-", s.coverageRatio != null ? "%" : "", s.coverage.length ? "ステージのうち訪れた割合" : "自動プレイ停止時に記録", null, null),
+    tile("最も深く潜った", s.maxDepth ? s.maxDepth.toFixed(0) : "-", "", "地表からの深さ", null, null),
+    tile("プレイ回数", s.playCount, "回", `記録時間 ${fmtDuration(s.duration)}`, null, null),
+  ].join("");
+
+  for (const el of $("tiles").querySelectorAll("[data-jump]")) {
+    el.onclick = () => {
+      const first = s.issues.find(i => i.type === el.dataset.jump);
+      if (first) select({ issue: first });
+    };
+  }
+  const problems = stuck + noc + err;
+  $("summarySub").innerHTML = problems
+    ? `<span class="badge st-critical">${shapeIcon("triangle", 10)}要確認</span>　重大な問題が ${problems} 件あります。下の「要確認リスト」から確認してください。`
+    : `<span class="badge st-good">${shapeIcon("circle", 10)}良好</span>　重大な問題は見つかりませんでした。`;
+}
+
+// ── 要確認リスト
+
+function renderIssues(s) {
+  const list = s.issues;
+  if (!list.length) { $("issues").innerHTML = `<div class="empty">確認が必要なものはありません。</div>`; return; }
+  const shown = list.slice(0, 60);
+  $("issues").innerHTML = shown.map(it => `
+    <div class="issue${state.selection?.issue === it ? " sel" : ""}" data-id="${it.id}">
+      ${statusBadge(it.type)}
+      <div class="title">${esc(ISSUE_TYPES[it.type].label)}　${esc(it.title)}</div>
+      <div class="count num">${it.count > 1 ? `×${it.count}` : ""}</div>
+      <div class="where num">${fmtTime(it.t)} ・ ${esc(sceneJa(it.scene))} ・ ${fmtPos(it.pos)}</div>
+    </div>`).join("") + (list.length > shown.length ? `<div class="empty">ほか ${list.length - shown.length} 件</div>` : "");
+  for (const el of $("issues").querySelectorAll(".issue")) {
+    el.onclick = () => select({ issue: s.issues.find(i => i.id === el.dataset.id) });
+  }
+}
+
+// ── 選択と詳細
+
+function select(sel) {
+  state.selection = sel;
+  renderIssues(state.current);
+  updateMapSelection();
+  updateTimelineSelection();
+  renderEvents(state.current);
+  renderDetail();
+  if (sel.issue || sel.entry) $("detail").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function nearbyLog(s, t, highlight) {
+  const list = s.entries;
+  let i = list.findIndex(e => e.t >= t);
+  if (i < 0) i = list.length - 1;
+  const from = Math.max(0, i - 8), to = Math.min(list.length, i + 9);
+  return `<div class="loglines">` + list.slice(from, to).map(e =>
+    `<div class="${highlight && highlight.includes(e) ? "hl" : ""}"><span class="k">${fmtTime(e.t)} ${esc(sceneJa(e.scene))}</span> ${esc(entryKind(e))} ${esc(entryText(e))}</div>`).join("") + `</div>`;
+}
+
+function entryKind(e) { return e.kind === "EVENT" ? (EVENT_JA[e.name] || e.name) : (KIND_JA[e.kind] || e.kind); }
+
+// イベントの詳細を日本語にする（知らない形式はそのまま出す）
+function entryText(e) {
+  const d = e.detail || "";
+  if (e.kind !== "EVENT") return d;
+  const g = re => (re.exec(d) || [])[1];
+  switch (e.name) {
+    case "Stuck": return `${g(/still=([\d.]+)s/)}秒間ほとんど動けず（バッテリー ${g(/battery=(\d+)/) ?? "-"}）`;
+    case "StuckResolved": return `${g(/after=([\d.]+)s/)}秒後に動き出した`;
+    case "NoControl": return `${g(/for=([\d.]+)s/)}秒間 操作できない（時間の速さ ${g(/timeScale=([\d.]+)/)}）`;
+    case "NoControlResolved": return `${g(/after=([\d.]+)s/)}秒後に操作できるようになった`;
+    case "TimeAdded": { const m = /([+-][\d.]+)s -> ([\d.]+)/.exec(d); return m ? `${m[1]}秒（残り ${m[2]}秒）` : d; }
+    case "Damage": return `バッテリー ${g(/battery=(\d+)/)}`;
+    case "Sonar": return `残りバッテリー ${g(/battery=(\d+)/)}`;
+    case "MoneyChanged": { const m = /(-?\d+) -> (-?\d+) \(([+-]\d+)\)/.exec(d); return m ? `${m[1]} → ${m[2]}（${m[3]}）` : d; }
+    case "ItemCollected": { const m = /(\w+) value=(\d+)/.exec(d); return m ? `${ITEM_JA[m[1]] || m[1]}（${m[2]}円分）` : d; }
+    case "Upgrade": { const m = /(\w+) Lv(\d+)/.exec(d); return m ? `${UPGRADE_JA[m[1]] || m[1]} を Lv${m[2]} に` : d; }
+    case "SceneLoaded": {
+      const m = /^(\S+).*screen=(\S+) (\S+) targetFps=(-?\d+)/.exec(d);
+      return m ? `${sceneJa(m[1])}（${m[2]} ${m[3] === "Windowed" ? "ウィンドウ" : "フルスクリーン"}・目標 ${m[4]}fps）` : d;
+    }
+    case "Saved": return d === "settings.json" ? "設定" : d === "ranking.json" ? "ランキング" : d;
+    case "DoorEnter": return `扉の位置 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}`;
+    case "GameClear": return g(/timeLeft=([\d.]+)/) ? `残り ${g(/timeLeft=([\d.]+)/)}秒` : "";
+    case "SettingChanged": return d.replace("resolution=", "解像度 ").replace("frameRate=", "フレームレート ").replace("screenMode=", "画面モード ");
+    case "AutoPlayStart": return `乱数シード ${g(/seed=(-?\d+)/)}`;
+    case "AutoPlayStop": {
+      let text = `詰まり ${g(/stuck=(\d+)/)}回・諦めたマス ${g(/abandonedTargets=(\d+)/) ?? 0}`;
+      if (g(/doorPresses=(\d+)/) != null) text += `・Yボタン ${g(/doorPresses=(\d+)/)}回`;
+      if (g(/blocked=(\d+)/) != null) text += `・掘れないブロックで引き返し ${g(/blocked=(\d+)/)}回`;
+      const st = /steer=door:(\d+),radar:(\d+),explore:(\d+),random:(\d+)(?:,reverse:(\d+))?/.exec(d);
+      if (st) {
+        const total = st.slice(1).reduce((a, b) => a + +(b || 0), 0) || 1;
+        const pct = v => Math.round(+(v || 0) / total * 100) + "%";
+        text += `（進む向きの決め方: 扉 ${pct(st[1])}・レーダー ${pct(st[2])}・未探索 ${pct(st[3])}・ランダム ${pct(st[4])}${st[5] != null ? `・引き返し ${pct(st[5])}` : ""}）`;
+      }
+      return text;
+    }
+    case "BotDoorTarget": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}（距離 ${g(/dist=([\d.]+)/)}・${g(/exposed=(\w+)/) === "True" ? "露出済み" : "まだ埋まっている"}）`;
+    case "BotBlocked": {
+      const name = { Bedrock: "岩盤", Boundary: "外周の壁" }[g(/block=(\w+)/)] || g(/block=(\w+)/);
+      return `${name}に当たったので逆向きに掘り進む`;
+    }
+    case "FocusChanged": return /focused=True/.test(d) ? "ゲームのウィンドウに戻った" : "他のウィンドウに切り替えた（ゲームは動き続ける）";
+    case "BotPressY": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}`;
+    case "BotDoorGiveUp": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}（${g(/reason=(\w+)/) === "stuck" ? "途中で詰まった" : "時間内にたどり着けなかった"}）`;
+    case "RunCoverage": case "SessionCoverage": {
+      const m = /visited=(\d+)\/(\d+) \(([\d.]+)%\).*maxDepth=(\S+)/.exec(d);
+      return m ? `${m[3]}%（${m[1]} / ${m[2]}マス）最大深度 ${m[4]}` : d;
+    }
+    case "CoverageStart": return `マス ${g(/cells=(\d+)/)}個`;
+    default: return d;
+  }
+}
+
+function renderDetail() {
+  const s = state.current, sel = state.selection, el = $("detail");
+  const head = `<div><h2>詳細</h2></div>`;
+  if (!sel) {
+    el.innerHTML = head + `<p class="sub">要確認リスト・マップの印・グラフ・イベント一覧をクリックすると、ここに表示します。</p>`;
+    return;
+  }
+  let html = head;
+  if (sel.issue) {
+    const it = sel.issue, T = ISSUE_TYPES[it.type];
+    html += `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${statusBadge(it.type)}<b>${esc(T.label)}</b></div>
+      <div style="font-weight:600;overflow-wrap:anywhere">${esc(it.title)}</div>
+      <dl class="num">
+        <dt>時刻</dt><dd>${fmtTime(it.t)}${it.tEnd ? ` ～ ${fmtTime(it.tEnd)}` : ""}（記録開始から）${it.entries?.[0]?.clock ? `・${it.entries[0].clock.slice(0, 8)}` : ""}</dd>
+        <dt>画面</dt><dd>${esc(sceneJa(it.scene))}</dd>
+        <dt>場所</dt><dd>${fmtPos(it.pos)}</dd>
+        ${it.count > 1 ? `<dt>回数</dt><dd>${it.count}回</dd>` : ""}
+      </dl>`;
+    if (it.shots?.length) {
+      html += `<div style="display:grid;gap:8px">${it.shots.slice(0, 3).map(n => `<img src="${esc(s.shotUrl(n))}" alt="${esc(n)}" data-zoom>`).join("")}</div>`;
+    }
+    if (it.type === "error") {
+      const st = it.errors?.[0]?.stack;
+      html += `<div><div class="sub" style="margin:0 0 4px">スタックトレース（どのコードで起きたか）</div><div class="stack">${esc(st || "記録なし")}</div></div>`;
+    }
+    html += `<div><div class="sub" style="margin:0 0 4px">前後のログ</div>${nearbyLog(s, it.t, it.entries || [])}</div>`;
+  } else if (sel.entry) {
+    const e = sel.entry;
+    html += `<div><b>${esc(entryKind(e))}</b></div>
+      <div style="overflow-wrap:anywhere">${esc(entryText(e)) || "-"}</div>
+      <dl class="num">
+        <dt>時刻</dt><dd>${fmtTime(e.t)}（${e.clock.slice(0, 8)}）</dd>
+        <dt>画面</dt><dd>${esc(sceneJa(e.scene))}</dd>
+        <dt>場所</dt><dd>${fmtPos(e.pos)}</dd>
+      </dl>
+      ${e.more ? `<div class="stack">${esc(e.more)}</div>` : ""}
+      <div><div class="sub" style="margin:0 0 4px">前後のログ</div>${nearbyLog(s, e.t, [e])}</div>`;
+  } else if (sel.row) {
+    const r = sel.row;
+    html += `<div><b>${fmtTime(r.t)} の状態</b></div>
+      <dl class="num">
+        <dt>画面</dt><dd>${esc(sceneJa(r.scene))}</dd>
+        <dt>FPS</dt><dd>${r.fps != null ? r.fps.toFixed(1) : "-"}（いちばん遅いフレーム ${r.worst != null ? r.worst.toFixed(1) : "-"}ms）</dd>
+        <dt>場所</dt><dd>${fmtPos(r.pos)}</dd>
+        <dt>バッテリー</dt><dd>${r.battery ?? "-"}</dd>
+        <dt>所持金</dt><dd>${r.money ?? "-"}</dd>
+        <dt>残り時間</dt><dd>${r.left != null ? r.left.toFixed(0) + "秒" : "-"}</dd>
+        <dt>メモリ</dt><dd>${r.mem != null ? r.mem.toFixed(0) + "MB" : "-"}</dd>
+      </dl>
+      <div><div class="sub" style="margin:0 0 4px">前後のログ</div>${nearbyLog(s, r.t, [])}</div>`;
+  }
+  el.innerHTML = html;
+  for (const img of el.querySelectorAll("img[data-zoom]")) {
+    img.onclick = () => { const z = $("zoom"); z.querySelector("img").src = img.src; z.style.display = "flex"; };
+    img.onerror = () => { img.replaceWith(Object.assign(document.createElement("div"), { className: "sub", textContent: `スクリーンショット ${img.alt} が見つかりません` })); };
+  }
+}
+$("zoom").onclick = () => { $("zoom").style.display = "none"; };
+
+// ── マップ
+
+let mapView = null;
+
+function mapBounds(s) {
+  const grid = s.coverage.find(c => c.grid)?.grid;
+  if (state.mapMode === "stage" && grid) {
+    const bs = grid.blockSize, c = grid.cell;
+    return { z0: grid.originZ - bs / 2, z1: grid.originZ + (grid.cols * c - 0.5) * bs, y0: grid.originY - bs / 2, y1: grid.originY + (grid.rows * c - 0.5) * bs };
+  }
+  const pts = s.tele.filter(r => r.pos && r.scene === "02_Main").map(r => r.pos).concat(s.issues.map(i => i.pos).filter(Boolean));
+  if (!pts.length) return null;
+  let z0 = Math.min(...pts.map(p => p.z)), z1 = Math.max(...pts.map(p => p.z));
+  let y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
+  const m = 10;
+  z0 -= m; z1 += m; y0 -= m; y1 = Math.max(y1 + m, 0);
+  if (z1 - z0 < 60) { const c = (z0 + z1) / 2; z0 = c - 30; z1 = c + 30; }
+  return { z0, z1, y0, y1 };
+}
+
+function renderMap(s) {
+  const wrap = $("mapWrap"), canvas = $("mapCanvas"), svg = $("mapSvg");
+  for (const b of $("mapMode").querySelectorAll("button")) {
+    b.classList.toggle("on", b.dataset.mode === state.mapMode);
+    b.onclick = () => { state.mapMode = b.dataset.mode; renderMap(state.current); };
+  }
+  const hasGrid = s.coverage.some(c => c.grid);
+  $("mapMode").querySelector('[data-mode="stage"]').disabled = !hasGrid;
+  $("mapMode").querySelector('[data-mode="stage"]').title = hasGrid ? "" : "自動プレイを停止すると、ステージ全体の地図が記録されます";
+
+  const b = mapBounds(s);
+  if (!b) {
+    wrap.style.height = "120px";
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    svg.innerHTML = `<text x="16" y="40" fill="currentColor" style="color:var(--ink-2)">メイン画面での位置の記録がありません。</text>`;
+    mapView = null;
+    renderMapLegend(s, false);
+    return;
+  }
+
+  const W = wrap.clientWidth;
+  const rz = b.z1 - b.z0, ry = b.y1 - b.y0;
+  const H = Math.round(Math.min(Math.max(W * ry / rz, 320), 680));
+  wrap.style.height = H + "px";
+  const padL = 64, padR = 12, padT = 12, padB = 26;
+  const k = Math.min((W - padL - padR) / rz, (H - padT - padB) / ry);
+  const ox = padL + ((W - padL - padR) - rz * k) / 2;
+  const oy = padT + ((H - padT - padB) - ry * k) / 2;
+  const px = z => ox + (z - b.z0) * k;
+  const py = y => oy + (b.y1 - y) * k;
+  mapView = { px, py, k };
+
+  const dpr = devicePixelRatio || 1;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  const g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = css("--surface");
+  g.fillRect(0, 0, W, H);
+
+  // 訪れたマス
+  const cov = s.coverage.find(c => c.grid);
+  if (cov) {
+    const gr = cov.grid, size = gr.cell * gr.blockSize;
+    const colors = { "#": css("--visited"), ".": css("--unvisited"), "x": css("--abandoned") };
+    for (let r = 0; r < gr.rows; r++) {
+      const line = gr.cells[r];
+      for (let c = 0; c < gr.cols; c++) {
+        const ch = line[c];
+        if (!ch || ch === " ") continue;
+        const z = gr.originZ + (c * gr.cell - 0.5) * gr.blockSize;
+        const y = gr.originY + (r * gr.cell - 0.5) * gr.blockSize;
+        const x0 = px(z), y0 = py(y + size);
+        g.fillStyle = colors[ch] || colors["."];
+        g.fillRect(x0, y0, size * k - 0.5, size * k - 0.5);
+      }
+    }
+  }
+
+  // 深さの目盛り
+  const step = niceStep((b.y1 - b.y0) / 6);
+  g.font = "11px system-ui, sans-serif";
+  g.textBaseline = "middle";
+  g.textAlign = "right";
+  for (let d = Math.ceil(depthOf(b.y1) / step) * step; d <= depthOf(b.y0); d += step) {
+    const y = py(-d);
+    g.strokeStyle = css("--grid");
+    g.lineWidth = 1;
+    g.beginPath(); g.moveTo(padL, y); g.lineTo(W - padR, y); g.stroke();
+    g.fillStyle = css("--muted");
+    g.fillText(d === 0 ? "地表" : `深さ ${d}`, padL - 8, y);
+  }
+
+  // 通った道のり（プレイごと・ワープごとに線を切る）。FPSが低い区間は色を変えて太く
+  const rows = s.tele.filter(r => r.pos && r.scene === "02_Main");
+  g.lineJoin = "round"; g.lineCap = "round";
+  for (let i = 1; i < rows.length; i++) {
+    const a = rows[i - 1], c = rows[i];
+    if (c.t - a.t > 3 || Math.hypot(c.pos.z - a.pos.z, c.pos.y - a.pos.y) > 25) continue;
+    const slow = c.playing && c.fps != null && c.fps < s.low.value;
+    g.strokeStyle = slow ? css("--serious") : css("--line-soft");
+    g.lineWidth = slow ? 4 : 2;
+    g.beginPath(); g.moveTo(px(a.pos.z), py(a.pos.y)); g.lineTo(px(c.pos.z), py(c.pos.y)); g.stroke();
+  }
+
+  // 問題の印
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const markers = s.issues.filter(i => i.pos && (i.type !== "warn" || i.scene === "02_Main"))
+    .slice().sort((a, b2) => ISSUE_TYPES[b2.type].order - ISSUE_TYPES[a.type].order);
+  svg.innerHTML = markers.map(it => {
+    const x = px(it.pos.z), y = py(it.pos.y);
+    if (x < -20 || x > W + 20 || y < -20 || y > H + 20) return "";
+    return `<g class="marker" data-id="${it.id}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+      <circle r="14" fill="transparent"/>
+      <circle class="ring" r="13"/>
+      ${markerShape(ISSUE_TYPES[it.type])}
+      ${it.count > 1 ? `<text x="10" y="-8" font-size="11" font-weight="700" fill="${css("--ink")}" stroke="${css("--surface")}" stroke-width="3" paint-order="stroke">${it.count}</text>` : ""}
+    </g>`;
+  }).join("") + doorMarks(s, px, py) + `<circle id="mapCursor" r="6" fill="${css("--ink")}" stroke="${css("--surface")}" stroke-width="2" style="display:none"/>`;
+
+  for (const d of svg.querySelectorAll(".door")) d.onclick = () => select({ entry: s.entries[+d.dataset.i] });
+  for (const m of svg.querySelectorAll(".marker")) {
+    const it = s.issues.find(i => i.id === m.dataset.id);
+    m.onmouseenter = ev => showTip(`<b>${esc(ISSUE_TYPES[it.type].label)}</b>（${ISSUE_TYPES[it.type].level}）<br>${esc(it.title)}<br>${fmtTime(it.t)} ・ ${fmtPos(it.pos)}`, ev);
+    m.onmousemove = ev => showTip(tip.innerHTML, ev);
+    m.onmouseleave = hideTip;
+    m.onclick = () => select({ issue: it });
+  }
+  updateMapSelection();
+  renderMapLegend(s, !!cov);
+
+  const cv = s.coverage[0];
+  $("mapSub").textContent = "横がステージの左右、縦が深さです。線はプレイヤーが通った道のりです。"
+    + (cv && cv.ratio != null ? ` 訪れたマス ${cv.visited} / ${cv.total}（${cv.ratio}%）。` : " 自動プレイを停止すると、訪れたマスも表示されます。");
+}
+
+// 扉の位置（入った扉＝塗りつぶし、Botが諦めた扉＝白抜き）。問題ではないので色は付けず、墨色で描く
+function doorEvents(s) {
+  return s.entries.filter(e => e.kind === "EVENT" && (e.name === "DoorEnter" || e.name === "BotDoorGiveUp"))
+    .map(e => ({ e, pos: parseVec((/door=(\([^)]*\))/.exec(e.detail) || [])[1]) || e.pos, entered: e.name === "DoorEnter" }))
+    .filter(d => d.pos);
+}
+function doorMarks(s, px, py) {
+  const ink = css("--ink"), surface = css("--surface");
+  return doorEvents(s).map(d => {
+    const x = px(d.pos.z), y = py(d.pos.y);
+    return `<g class="door" transform="translate(${x.toFixed(1)},${y.toFixed(1)})" data-i="${d.e.index}" style="cursor:pointer">
+      <rect x="-6" y="-9" width="12" height="16" rx="5" ry="5" fill="${d.entered ? ink : surface}" stroke="${d.entered ? surface : ink}" stroke-width="2"/>
+      <title>${d.entered ? "入った扉" : "Botが諦めた扉"} ${fmtTime(d.e.t)}</title></g>`;
+  }).join("");
+}
+
+function markerShape(T) {
+  const color = css("--" + T.status), ring = css("--surface");
+  switch (T.shape) {
+    case "triangle": return `<path d="M0 -8 L8 6 L-8 6Z" fill="${color}" stroke="${ring}" stroke-width="2"/>`;
+    case "cross": return `<circle r="8" fill="${color}" stroke="${ring}" stroke-width="2"/><path d="M-3.5 -3.5 L3.5 3.5 M3.5 -3.5 L-3.5 3.5" stroke="${ring}" stroke-width="2.2" stroke-linecap="round"/>`;
+    case "diamond": return `<path d="M0 -9 L9 0 L0 9 L-9 0Z" fill="${color}" stroke="${ring}" stroke-width="2"/>`;
+    case "square": return `<rect x="-6.5" y="-6.5" width="13" height="13" rx="2" fill="${color}" stroke="${ring}" stroke-width="2"/>`;
+    default: return `<circle r="5" fill="${color}" stroke="${ring}" stroke-width="2"/>`;
+  }
+}
+
+function renderMapLegend(s, hasGrid) {
+  const types = ["stuck", "nocontrol", "error", "lowfps", "warn"];
+  let html = types.map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
+  if (doorEvents(s).length) {
+    html += `<span><span class="sw" style="width:10px;background:var(--ink);border-radius:4px"></span>入った扉</span>`;
+    html += `<span><span class="sw" style="width:10px;border:2px solid var(--ink);border-radius:4px"></span>Botが諦めた扉</span>`;
+  }
+  html += `<span><span class="sw" style="height:3px;background:var(--line)"></span>通った道のり</span>`;
+  html += `<span><span class="sw" style="height:4px;background:var(--serious)"></span>FPSが低かった所（${s.low.value}fps未満）</span>`;
+  if (hasGrid) {
+    html += `<span><span class="sw" style="background:var(--visited)"></span>訪れたマス</span>`;
+    html += `<span><span class="sw" style="background:var(--unvisited);outline:1px solid var(--grid)"></span>まだ行っていないマス</span>`;
+    html += `<span><span class="sw" style="background:var(--abandoned)"></span>たどり着けなかったマス</span>`;
+  }
+  $("mapLegend").innerHTML = html;
+}
+
+function updateMapSelection() {
+  const id = state.selection?.issue?.id;
+  for (const m of $("mapSvg").querySelectorAll(".marker")) m.classList.toggle("sel", m.dataset.id === id);
+  const pos = state.selection?.entry?.pos || state.selection?.row?.pos;
+  setMapCursor(pos);
+}
+
+function setMapCursor(pos) {
+  const c = $("mapCursor");
+  if (!c) return;
+  if (!pos || !mapView) { c.style.display = "none"; return; }
+  c.setAttribute("cx", mapView.px(pos.z));
+  c.setAttribute("cy", mapView.py(pos.y));
+  c.style.display = "";
+}
+
+function niceStep(raw) {
+  const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-9))));
+  const n = raw / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p;
+}
+
+// ── 時間の流れ
+
+let tlView = null;
+
+function renderTimeline(s) {
+  const host = $("timeline");
+  const W = host.clientWidth || 900;
+  const padL = 64, padR = 16;
+  const bandH = 22, chartH = 120, gap = 34;
+  const yBand = 18, yFps = yBand + bandH + gap, yDepth = yFps + chartH + gap;
+  const H = yDepth + chartH + 28;
+  const dur = Math.max(s.duration, 1);
+  const x = t => padL + (t / dur) * (W - padL - padR);
+
+  const rows = s.tele;
+  const fpsMax = Math.max(60, ...rows.map(r => r.fps || 0).filter(v => v < 1000)) * 1.05;
+  const depthMax = Math.max(10, ...rows.filter(r => r.pos && r.scene === "02_Main").map(r => depthOf(r.pos.y))) * 1.05;
+  const yF = v => yFps + chartH - (Math.min(v, fpsMax) / fpsMax) * chartH;
+  const yD = v => yDepth + (v / depthMax) * chartH;
+  tlView = { x, dur, padL, padR, W, yF, yD, yFps, yDepth, chartH };
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="FPSと深さの時間変化">`;
+
+  // 画面の帯
+  svg += `<text class="tl-title" x="0" y="${yBand + 15}">画面</text>`;
+  const sceneColor = { "01_Title": "--scene-title", "02_Main": "--scene-main", "FinalResult": "--scene-result" };
+  const scenes = s.entries.filter(e => e.kind === "EVENT" && e.name === "SceneLoaded");
+  for (let i = 0; i < scenes.length; i++) {
+    const name = scenes[i].detail.split(" ")[0];
+    const t0 = scenes[i].t, t1 = i + 1 < scenes.length ? scenes[i + 1].t : dur;
+    const w = Math.max(1, x(t1) - x(t0) - 2);
+    svg += `<rect x="${x(t0) + 1}" y="${yBand}" width="${w}" height="${bandH}" rx="4" fill="${css(sceneColor[name] || "--muted")}"><title>${esc(sceneJa(name))} ${fmtTime(t0)}～${fmtTime(t1)}</title></rect>`;
+    if (w > 46) svg += `<text x="${x(t0) + 7}" y="${yBand + 15}" font-size="11.5" font-weight="600" fill="#fff">${esc(sceneJa(name))}</text>`;
+  }
+
+  // 目盛りと罫線
+  const grid = (y0, h, ticks, fmt) => ticks.map(v => {
+    const y = fmt.y(v);
+    return `<line x1="${padL}" x2="${W - padR}" y1="${y}" y2="${y}" stroke="${css("--grid")}"/>
+      <text class="tl-label" x="${padL - 8}" y="${y + 4}" text-anchor="end">${fmt.label(v)}</text>`;
+  }).join("");
+  const fpsStep = niceStep(fpsMax / 4), depthStep = niceStep(depthMax / 4);
+  const range = (max, step) => { const a = []; for (let v = 0; v <= max; v += step) a.push(v); return a; };
+
+  svg += `<text class="tl-title" x="0" y="${yFps - 10}">FPS</text>`;
+  svg += grid(yFps, chartH, range(fpsMax, fpsStep), { y: yF, label: v => v });
+  svg += `<line x1="${padL}" x2="${W - padR}" y1="${yF(s.low.value)}" y2="${yF(s.low.value)}" stroke="${css("--serious")}" stroke-dasharray="4 4"/>
+    <text class="tl-label" x="${W - padR}" y="${yF(s.low.value) - 5}" text-anchor="end">${s.low.value}fps（これより下は要注意）</text>`;
+  svg += `<text class="tl-title" x="0" y="${yDepth - 10}">深さ（下ほど深い）</text>`;
+  svg += grid(yDepth, chartH, range(depthMax, depthStep), { y: yD, label: v => v });
+
+  // 線
+  const path = (sel, yOf, gapFn) => {
+    let d = "", prev = null;
+    for (const r of rows) {
+      const v = sel(r);
+      if (v == null) { prev = null; continue; }
+      const cmd = prev && !gapFn(prev, r) ? "L" : "M";
+      d += `${cmd}${x(r.t).toFixed(1)} ${yOf(v).toFixed(1)}`;
+      prev = r;
+    }
+    return d;
+  };
+  svg += `<path d="${path(r => (r.fps != null && r.fps < 1000 ? r.fps : null), yF, (a, b) => b.t - a.t > 3)}" fill="none" stroke="${css("--line")}" stroke-width="2" stroke-linejoin="round"/>`;
+  svg += `<path d="${path(r => (r.pos && r.scene === "02_Main" ? depthOf(r.pos.y) : null), yD, (a, b) => b.t - a.t > 3 || Math.abs(a.pos.y - b.pos.y) > 25)}" fill="none" stroke="${css("--line")}" stroke-width="2" stroke-linejoin="round"/>`;
+
+  // 時間の目盛り
+  const tStep = niceTimeStep(dur / Math.max(2, Math.floor((W - padL) / 110)));
+  for (let t = 0; t <= dur; t += tStep) {
+    svg += `<text class="tl-label" x="${x(t)}" y="${H - 8}" text-anchor="middle">${fmtTime(t)}</text>`;
+  }
+
+  // 問題の時刻（縦線＋上の印）
+  const marks = s.issues.filter(i => i.type !== "warn");
+  for (const it of marks) {
+    const T = ISSUE_TYPES[it.type], cx = x(it.t);
+    svg += `<g class="marker" data-id="${it.id}">
+      <line x1="${cx}" x2="${cx}" y1="${yFps}" y2="${yDepth + chartH}" stroke="${css("--" + T.status)}" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"/>
+      <g transform="translate(${cx},${yFps - 12})"><circle r="11" fill="transparent"/><circle class="ring" r="11"/>${markerShape(T)}</g>
+    </g>`;
+  }
+
+  // なぞり用
+  svg += `<line id="tlCursor" y1="${yFps}" y2="${yDepth + chartH}" stroke="${css("--ink")}" stroke-width="1" style="display:none"/>
+    <circle id="tlDotF" r="4" fill="${css("--line")}" stroke="${css("--surface")}" stroke-width="2" style="display:none"/>
+    <circle id="tlDotD" r="4" fill="${css("--line")}" stroke="${css("--surface")}" stroke-width="2" style="display:none"/>
+    <rect id="tlHit" x="${padL}" y="${yFps}" width="${W - padL - padR}" height="${yDepth + chartH - yFps}" fill="transparent"/>`;
+  svg += `</svg>`;
+  host.innerHTML = svg;
+
+  const hit = host.querySelector("#tlHit");
+  const svgEl = host.querySelector("svg");
+  const toT = ev => {
+    const rect = svgEl.getBoundingClientRect();
+    const vx = (ev.clientX - rect.left) * (W / rect.width);
+    return Math.max(0, Math.min(dur, ((vx - padL) / (W - padL - padR)) * dur));
+  };
+  hit.onmousemove = ev => {
+    const r = nearestRow(rows, toT(ev));
+    if (!r) return;
+    moveTimelineCursor(r);
+    setMapCursor(r.scene === "02_Main" ? r.pos : null);
+    showTip(`<b>${fmtTime(r.t)}</b> ・ ${esc(sceneJa(r.scene))}<br>FPS ${r.fps != null ? r.fps.toFixed(0) : "-"}${r.pos && r.scene === "02_Main" ? ` ・ 深さ ${depthOf(r.pos.y).toFixed(1)}` : ""}${r.battery != null ? `<br>バッテリー ${r.battery} ・ 残り ${r.left != null ? r.left.toFixed(0) + "秒" : "-"}` : ""}<br><span style="opacity:.7">クリックで詳細</span>`, ev);
+  };
+  hit.onmouseleave = () => { hideTip(); updateTimelineSelection(); updateMapSelection(); };
+  hit.onclick = ev => { const r = nearestRow(rows, toT(ev)); if (r) select({ row: r }); };
+  for (const m of host.querySelectorAll(".marker")) {
+    const it = s.issues.find(i => i.id === m.dataset.id);
+    m.style.cursor = "pointer";
+    m.onmouseenter = ev => showTip(`<b>${esc(ISSUE_TYPES[it.type].label)}</b><br>${esc(it.title)}<br>${fmtTime(it.t)}`, ev);
+    m.onmouseleave = hideTip;
+    m.onclick = () => select({ issue: it });
+  }
+
+  $("timelineLegend").innerHTML = [["01_Title", "--scene-title"], ["02_Main", "--scene-main"], ["FinalResult", "--scene-result"]]
+    .map(([n, v]) => `<span><span class="sw" style="background:var(${v})"></span>${sceneJa(n)}</span>`).join("")
+    + `<span><span class="sw" style="height:3px;background:var(--line)"></span>FPS・深さ</span>`
+    + ["stuck", "nocontrol", "error", "lowfps"].map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
+  updateTimelineSelection();
+}
+
+function niceTimeStep(raw) {
+  const steps = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200];
+  return steps.find(s => s >= raw) || 7200;
+}
+
+function nearestRow(rows, t) {
+  if (!rows.length) return null;
+  let lo = 0, hi = rows.length - 1;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (rows[mid].t < t) lo = mid + 1; else hi = mid; }
+  if (lo > 0 && Math.abs(rows[lo - 1].t - t) < Math.abs(rows[lo].t - t)) lo--;
+  return rows[lo];
+}
+
+function moveTimelineCursor(r) {
+  if (!tlView) return;
+  const c = $("tlCursor"), f = $("tlDotF"), d = $("tlDotD");
+  if (!c) return;
+  if (!r) { c.style.display = f.style.display = d.style.display = "none"; return; }
+  const cx = tlView.x(r.t);
+  c.setAttribute("x1", cx); c.setAttribute("x2", cx); c.style.display = "";
+  if (r.fps != null && r.fps < 1000) { f.setAttribute("cx", cx); f.setAttribute("cy", tlView.yF(r.fps)); f.style.display = ""; } else f.style.display = "none";
+  if (r.pos && r.scene === "02_Main") { d.setAttribute("cx", cx); d.setAttribute("cy", tlView.yD(depthOf(r.pos.y))); d.style.display = ""; } else d.style.display = "none";
+}
+
+function updateTimelineSelection() {
+  const sel = state.selection;
+  const id = sel?.issue?.id;
+  for (const m of $("timeline").querySelectorAll(".marker")) m.classList.toggle("sel", m.dataset.id === id);
+  const t = sel?.row?.t ?? sel?.entry?.t;
+  moveTimelineCursor(t != null ? nearestRow(state.current.tele, t) : null);
+}
+
+// ── イベント一覧
+
+function renderEventChips() {
+  $("eventChips").innerHTML = GROUPS.map(g => `<button type="button" class="chip${state.groups.has(g.id) ? " on" : ""}" data-g="${g.id}" aria-pressed="${state.groups.has(g.id)}">${g.label}</button>`).join("");
+  for (const c of $("eventChips").querySelectorAll(".chip")) {
+    c.onclick = () => {
+      const id = c.dataset.g;
+      if (state.groups.has(id)) state.groups.delete(id); else state.groups.add(id);
+      renderEventChips();
+      renderEvents(state.current);
+    };
+  }
+}
+
+function renderEvents(s) {
+  const active = GROUPS.filter(g => state.groups.has(g.id));
+  const list = s.entries.filter(e => e.kind !== "SESSION" && active.some(g => g.test(e)));
+  const LIMIT = 800;
+  const shown = list.slice(0, LIMIT);
+  const selEntries = state.selection?.issue?.entries || (state.selection?.entry ? [state.selection.entry] : []);
+  $("eventsSub").textContent = `${list.length} 件${list.length > LIMIT ? `（先頭 ${LIMIT} 件を表示）` : ""}。行をクリックすると、その時刻の場所と前後のログを表示します。`;
+  $("eventRows").innerHTML = shown.map(e => {
+    const st = e.severity === 2 ? (e.kind === "EVENT" && e.name === "NoControl" ? "serious" : "critical") : e.severity === 1 ? "warning" : null;
+    return `<tr data-i="${e.index}" class="${selEntries.includes(e) ? "sel" : ""}">
+      <td class="t num">${fmtTime(e.t)}</td>
+      <td>${esc(sceneJa(e.scene))}</td>
+      <td>${st ? `<span class="badge st-${st}">${esc(entryKind(e))}</span>` : esc(entryKind(e))}</td>
+      <td>${esc(entryText(e))}</td>
+      <td class="num">${e.pos && e.scene === "02_Main" ? fmtPos(e.pos) : "-"}</td></tr>`;
+  }).join("");
+  for (const tr of $("eventRows").querySelectorAll("tr")) {
+    tr.onclick = () => select({ entry: s.entries[+tr.dataset.i] });
+  }
+}
+
+// ── セッションごとの推移
+
+function renderTrend() {
+  const list = state.sessions.slice().sort((a, b) => a.name.localeCompare(b.name));
+  $("trendPanel").hidden = list.length < 2;
+  if (list.length < 2) return;
+  const charts = [
+    { title: "詰まり（回）", value: s => s.count("stuck"), unit: "回" },
+    { title: "エラー・例外（件）", value: s => s.count("error"), unit: "件" },
+    { title: "操作できない状態（回）", value: s => s.count("nocontrol"), unit: "回" },
+    { title: "カバー率（%）", value: s => s.coverageRatio, unit: "%" },
+  ];
+  $("trend").innerHTML = charts.map((c, ci) => trendChart(c, list, ci)).join("");
+  for (const bar of $("trend").querySelectorAll("[data-s]")) {
+    const s = list[+bar.dataset.s], c = charts[+bar.dataset.c];
+    bar.onmouseenter = ev => { const v = c.value(s); showTip(`<b>${esc(s.label)}</b><br>${esc(c.title.replace(/（.*/, ""))} ${v == null ? "記録なし" : (+v).toFixed(c.unit === "%" ? 1 : 0) + c.unit}<br><span style="opacity:.7">クリックで開く</span>`, ev); };
+    bar.onmouseleave = hideTip;
+    bar.onclick = () => { $("sessionSelect").value = state.sessions.indexOf(s); openSession(s); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  }
+}
+
+function trendChart(c, list, ci) {
+  const W = 360, H = 170, padL = 34, padR = 8, padT = 26, padB = 26;
+  const vals = list.map(c.value);
+  const max = Math.max(c.unit === "%" ? 10 : 3, ...vals.filter(v => v != null)) * 1.1;
+  const bw = (W - padL - padR) / list.length;
+  const y = v => padT + (H - padT - padB) * (1 - v / max);
+  const step = niceStep(max / 3);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.title)}の推移"><text class="tl-title" x="0" y="14">${esc(c.title)}</text>`;
+  for (let v = 0; v <= max; v += step) svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--grid")}"/><text class="tl-label" x="${padL - 6}" y="${y(v) + 4}" text-anchor="end">${+v.toFixed(1)}</text>`;
+  list.forEach((s, i) => {
+    const v = vals[i];
+    const x0 = padL + i * bw + Math.min(2, bw * 0.15), w = Math.max(2, bw - Math.min(4, bw * 0.3));
+    const cur = s === state.current;
+    if (v != null && v > 0) {
+      const top = y(v), h = y(0) - top, r = Math.min(4, w / 2, h);
+      svg += `<path d="M${x0} ${y(0)} V${top + r} Q${x0} ${top} ${x0 + r} ${top} H${x0 + w - r} Q${x0 + w} ${top} ${x0 + w} ${top + r} V${y(0)}Z" fill="${cur ? css("--line") : css("--visited")}"/>`;
+    }
+    svg += `<rect data-s="${i}" data-c="${ci}" x="${padL + i * bw}" y="${padT}" width="${bw}" height="${H - padT - padB}" fill="transparent" style="cursor:pointer"/>`;
+    if (cur && v != null) svg += `<text x="${x0 + w / 2}" y="${y(v) - 5}" text-anchor="middle" font-size="11" font-weight="700" fill="${css("--ink")}">${(+v).toFixed(c.unit === "%" ? 1 : 0)}</text>`;
+  });
+  svg += `<line x1="${padL}" x2="${W - padR}" y1="${y(0)}" y2="${y(0)}" stroke="${css("--axis")}"/>`;
+  svg += `<text class="tl-label" x="${padL}" y="${H - 8}">${esc(list[0].label)}</text><text class="tl-label" x="${W - padR}" y="${H - 8}" text-anchor="end">${esc(list[list.length - 1].label)}</text>`;
+  return svg + `</svg>`;
+}
+
+// ───────────────────────── 起動 ─────────────────────────
+
+let resizeTimer = 0;
+addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (state.current) { renderMap(state.current); renderTimeline(state.current); } }, 150);
+});
+
+if (window.AUTOPLAY_DATA && window.AUTOPLAY_DATA.sessions && window.AUTOPLAY_DATA.sessions.length) {
+  try { loadFromEmbedded(window.AUTOPLAY_DATA); start(); }
+  catch (err) { console.error(err); showLoader("ログの読み込みに失敗しました: " + err.message); }
+} else {
+  showLoader();
+}
+</script>
+</body>
+</html>

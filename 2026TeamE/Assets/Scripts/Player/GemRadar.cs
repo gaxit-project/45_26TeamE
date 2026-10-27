@@ -32,6 +32,15 @@ public class GemRadar : MonoBehaviour
     private LineRenderer lineRenderer;
     private float searchTimer = 0f;
 
+    /// <summary>いまギザギザが出ているか（範囲内に宝石・爆弾があるか）。</summary>
+    public bool HasSignal { get; private set; }
+
+    /// <summary>
+    /// ギザギザがいちばん大きく出ている向き。x が画面の左右（ワールドZ）、y が上下。
+    /// プレイヤーに見えている波と同じく、レーダーの精度による誤差を含む。
+    /// </summary>
+    public Vector2 SignalDirection { get; private set; }
+
     private float currentMaxDistance;
     private float currentMaxAngle;
     private float maxInaccuracyRange; 
@@ -92,6 +101,9 @@ public class GemRadar : MonoBehaviour
             omniCurrentWaveAmplitude = Mathf.Lerp(minAmplitude, maxAmplitude, t);
         }
 
+        float strongest = 0f;
+        float strongestAngle = 0f;
+
         for (int i = 0; i <= segments; i++)
         {
             float angle = (float)i / segments * Mathf.PI * 2f;
@@ -136,6 +148,12 @@ public class GemRadar : MonoBehaviour
                 }
 
                 currentRadius += finalWave;
+
+                if (maxInfluence > strongest)
+                {
+                    strongest = maxInfluence;
+                    strongestAngle = angle;
+                }
             }
             else if (mode == RadarMode.Omnidirectional && hasOmniTarget)
             {
@@ -164,6 +182,14 @@ public class GemRadar : MonoBehaviour
         }
 
         lineRenderer.SetPositions(linePositions);
+
+        if (mode == RadarMode.Omnidirectional)
+        {
+            strongest = hasOmniTarget ? omniCurrentWaveAmplitude : 0f;
+            strongestAngle = omniTargetAngle;
+        }
+        HasSignal = strongest > 0f;
+        SignalDirection = HasSignal ? new Vector2(Mathf.Cos(strongestAngle), Mathf.Sin(strongestAngle)) : Vector2.zero;
     }
 
     void FindGemsInRange()

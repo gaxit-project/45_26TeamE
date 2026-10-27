@@ -234,7 +234,7 @@ public class TimerManager : MonoBehaviour
 
         totalTime += seconds;
         isTimerRunning = true;
-        GameLogger.Event("TimeAdded", $"+{seconds:F1}s -> {totalTime:F1}");
+        GameLogger.Event("TimeAdded", $"{seconds:+0.0;-0.0}s -> {totalTime:F1}");
     }
 
     public static void ResetFirstLoad()

@@ -54,6 +54,12 @@ public static class GameLogger
     private static Vector3 currentPlayerPos;
     private static bool hasPlayer;
 
+    /// <summary>
+    /// ゲーム終了でログファイルを閉じる直前に呼ばれる。最後にまとめを書きたいときに使う。
+    /// （Application.quitting に直接登録すると、ファイルを閉じた後に呼ばれることがある）
+    /// </summary>
+    public static event Action SessionEnding;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
@@ -165,6 +171,9 @@ public static class GameLogger
 
     private static void OnQuitting()
     {
+        try { SessionEnding?.Invoke(); }
+        catch (Exception e) { Write(errorLog, $"EXCEPTION in SessionEnding: {e}"); }
+
         Write(gameLog, "SESSION END");
         Application.logMessageReceivedThreaded -= OnUnityLog;
         Application.quitting -= OnQuitting;
