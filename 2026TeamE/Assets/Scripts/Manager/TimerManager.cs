@@ -189,6 +189,8 @@ public class TimerManager : MonoBehaviour
 
     private void EndTimer()
     {
+        GameLogger.Event("TimeUp");
+
         if (canvasAnimator != null)
             canvasAnimator.SetBool("isTimeUp", true);
 
@@ -232,6 +234,7 @@ public class TimerManager : MonoBehaviour
 
         totalTime += seconds;
         isTimerRunning = true;
+        GameLogger.Event("TimeAdded", $"+{seconds:F1}s -> {totalTime:F1}");
     }
 
     public static void ResetFirstLoad()

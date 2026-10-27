@@ -113,6 +113,7 @@ public class ItemInventoryManager : MonoBehaviour
     // 互換性のためにメソッド名はAddItemのままにしておく（実際はお金として処理）
     public void AddItem(ItemType type, Sprite icon, Vector3 worldPosition, int moneyValue = 0)
     {
+        GameLogger.Event("ItemCollected", $"{type} value={moneyValue}");
         if (type == ItemType.Key) return; 
 
         StartCoroutine(FlyToUI(icon, worldPosition, moneyValue));

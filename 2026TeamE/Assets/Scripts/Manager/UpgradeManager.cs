@@ -31,5 +31,6 @@ public static class UpgradeManager
     {
         int nextLevel = GetLevel(itemName) + 1;
         currentLevels[itemName] = nextLevel;
+        GameLogger.Event("Upgrade", $"{itemName} Lv{nextLevel}");
     }
 }

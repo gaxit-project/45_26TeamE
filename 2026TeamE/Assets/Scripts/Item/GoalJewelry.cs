@@ -21,6 +21,7 @@ public class GoalJewelry : MonoBehaviour
         if (isPlayer && !isProcessed)
         {
             isProcessed = true;
+            GameLogger.Event("GameClear", TimerManager.Instance != null ? $"timeLeft={TimerManager.Instance.TotalTime:F1}" : null);
 
             SoundManager.Instance.StopBGM();
             SoundManager.Instance.PlaySE("Clear");

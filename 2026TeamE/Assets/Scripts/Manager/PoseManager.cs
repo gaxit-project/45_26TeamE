@@ -39,6 +39,7 @@ public class PoseManager : MonoBehaviour
 
     private void PauseGame()
     {
+        GameLogger.Event("Pause");
         Time.timeScale = 0f; 
         if (SoundManager.Instance != null)
         {
@@ -60,6 +61,7 @@ public class PoseManager : MonoBehaviour
 
     public void ResumeGame()
     {
+        GameLogger.Event("Resume");
         Time.timeScale = 1f; 
         if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る3");
         pauseMenu.SetActive(false); 
@@ -68,6 +70,7 @@ public class PoseManager : MonoBehaviour
 
     public void ReturnToTitle()
     {
+        GameLogger.Event("ReturnToTitle");
         StartCoroutine(ReturnToTitleCoroutine());
     }
 

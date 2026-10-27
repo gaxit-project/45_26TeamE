@@ -230,6 +230,7 @@ public class DoorBehaviour : BuriedItemBase
         }
 
         VoxelTerrain.Instance.MarkDoorEntered(transform.position);
+        GameLogger.Event("DoorEnter", $"door={transform.position} resetTimer={resetTimerOnEnter}");
 
         if (resetTimerOnEnter && TimerManager.Instance != null)
         {

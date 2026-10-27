@@ -180,6 +180,7 @@ public class SettingManager : MonoBehaviour
         if (TryParseResolution(availableResolutionOptions[index], out int width, out int height))
         {
             Screen.SetResolution(width, height, Screen.fullScreenMode);
+            GameLogger.Event("SettingChanged", $"resolution={width}x{height}");
         }
     }
 
@@ -198,10 +199,12 @@ public class SettingManager : MonoBehaviour
         int targetFPS = fpsOptions[index].Value;
         Application.targetFrameRate = targetFPS;
         SaveManager.Settings.frameRate = targetFPS;
+        GameLogger.Event("SettingChanged", $"frameRate={targetFPS}");
     }
 
     public void SetScreenMode(int index)
     {
         Screen.fullScreenMode = (index == 0) ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
+        GameLogger.Event("SettingChanged", $"screenMode={Screen.fullScreenMode}");
     }
 }

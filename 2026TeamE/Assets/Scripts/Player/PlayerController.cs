@@ -536,6 +536,7 @@ public class PlayerController : MonoBehaviour
             {
                 Instantiate(sonar, transform.position, Quaternion.identity);
                 currentBattery -= SonarConsuption;
+                GameLogger.Event("Sonar", $"battery={currentBattery:F0}");
             }
         }
     }
@@ -555,6 +556,7 @@ public class PlayerController : MonoBehaviour
     public void EnablePlayerControl()
     {
         CanMove = true;
+        GameLogger.Event("ControlEnabled");
         if (TextManager.Instance != null)
         {
             TextManager.Instance.ShowText("お宝を掘り当てて下へ進もう！");
@@ -632,6 +634,7 @@ public class PlayerController : MonoBehaviour
     {
         if (currentState == PlayerState.Normal)
         {
+            GameLogger.Event("Damage", $"battery={currentBattery:F0}");
             StartCoroutine(DamageRoutine(dropIcon));
         }
     }

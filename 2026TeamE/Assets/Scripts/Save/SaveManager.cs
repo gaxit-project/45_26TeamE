@@ -105,6 +105,7 @@ public static class SaveManager
             {
                 File.Move(tempPath, path);
             }
+            GameLogger.Event("Saved", fileName);
         }
         catch(Exception e)
         {
