@@ -17,7 +17,6 @@ public class RankingData
 
 public static class RankingManager
 {
-    private const string RANKING_SAVE_KEY = "LocalRankingData";
     private const int MAX_RANKING_COUNT = 5;
 
     public static string CurrentRunId { get; private set; }
@@ -48,18 +47,8 @@ public static class RankingManager
             data.entries.RemoveRange(MAX_RANKING_COUNT, data.entries.Count - MAX_RANKING_COUNT);
         }
 
-        string json = JsonUtility.ToJson(data);
-        PlayerPrefs.SetString(RANKING_SAVE_KEY, json);
-        PlayerPrefs.Save();
+        SaveManager.SaveRanking();
     }
 
-    public static RankingData LoadRankingData()
-    {
-        string json = PlayerPrefs.GetString(RANKING_SAVE_KEY, "");
-        if (string.IsNullOrEmpty(json))
-        {
-            return new RankingData();
-        }
-        return JsonUtility.FromJson<RankingData>(json);
-    }
+    public static RankingData LoadRankingData() => SaveManager.Ranking;
 }

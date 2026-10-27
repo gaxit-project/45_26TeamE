@@ -21,20 +21,12 @@ public class SoundManager : MonoBehaviour
     [Tooltip("スライダーを最大(100%)にした時の実際の音量。全体的に音がデカい場合はここを下げる")]
     [Range(0f, 1f)][SerializeField] private float maxSEVolume = 0.3f;
 
-    [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
-    [Range(0f, 1f)][SerializeField] private float defaultBGMSlider = 0.5f;
-    [Tooltip("初期状態のスライダー位置(0〜1)。0.5でちょうど真ん中")]
-    [Range(0f, 1f)][SerializeField] private float defaultSESlider = 0.5f;
-
     private float bgmSliderValue;
     private float seSliderValue;
 
     private bool isInitializing = false;
     private CriAtomExPlayback? loopPlayback;
     private string currentLoopCueName = "";
-
-    private const string BGM_VOLUME_SAVE_KEY = "SavedBGMSliderValue";
-    private const string SE_VOLUME_SAVE_KEY = "SavedSESliderValue";
 
     void Awake()
     {
@@ -64,8 +56,8 @@ public class SoundManager : MonoBehaviour
                 loopSeSource.loop = true;
             }
 
-            bgmSliderValue = PlayerPrefs.GetFloat(BGM_VOLUME_SAVE_KEY, defaultBGMSlider);
-            seSliderValue = PlayerPrefs.GetFloat(SE_VOLUME_SAVE_KEY, defaultSESlider);
+            bgmSliderValue = SaveManager.Settings.bgmVolume;
+            seSliderValue = SaveManager.Settings.seVolume;
 
             ApplyBGMVolume();
             ApplySEVolume();
@@ -189,8 +181,7 @@ public class SoundManager : MonoBehaviour
         bgmSliderValue = Mathf.Clamp01(sliderValue);
         ApplyBGMVolume();
 
-        PlayerPrefs.SetFloat(BGM_VOLUME_SAVE_KEY, bgmSliderValue);
-        PlayerPrefs.Save();
+        SaveManager.Settings.bgmVolume = bgmSliderValue;
     }
 
     public void SetSEVolume(float sliderValue)
@@ -200,8 +191,7 @@ public class SoundManager : MonoBehaviour
         seSliderValue = Mathf.Clamp01(sliderValue);
         ApplySEVolume();
 
-        PlayerPrefs.SetFloat(SE_VOLUME_SAVE_KEY, seSliderValue);
-        PlayerPrefs.Save();
+        SaveManager.Settings.seVolume = seSliderValue;
     }
 
     public void PlaySERestart(string cueName)

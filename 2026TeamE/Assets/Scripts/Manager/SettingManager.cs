@@ -35,8 +35,6 @@ public class SettingManager : MonoBehaviour
         new FrameRateOption { Label = "240 FPS", Value = 240 },
         new FrameRateOption { Label = "無制限", Value = -1 }
     };
-    [SerializeField] private int defaultFrameRate = 60;
-    private const string FPS_SAVE_KEY = "SavedFPS";
 
     private readonly List<string> fixedResolutionOptions = new List<string>
     {
@@ -80,10 +78,16 @@ public class SettingManager : MonoBehaviour
     public void CloseSettingPanel(bool playSound = true)
     {
         settingCanvas.SetActive(false);
+        SaveManager.SaveSettings();
         if (playSound)
         {
             SoundManager.Instance?.PlaySE("つるはしで掘る3");
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveManager.SaveSettings();
     }
 
     /// <summary>
@@ -157,7 +161,7 @@ public class SettingManager : MonoBehaviour
         int currentIndex = fpsOptions.FindIndex(x => x.Value == Application.targetFrameRate);
         if(currentIndex < 0)
         {
-            currentIndex = fpsOptions.FindIndex(x => x.Value == defaultFrameRate);
+            currentIndex = fpsOptions.FindIndex(x => x.Value == SettingData.DefaultFrameRate);
         }
 
         framerateDropdown.SetValueWithoutNotify(Mathf.Max(currentIndex, 0));
@@ -180,8 +184,8 @@ public class SettingManager : MonoBehaviour
     }
 
     private int LoadFrameRate(){
-        int saved = PlayerPrefs.GetInt(FPS_SAVE_KEY, defaultFrameRate);
-        return fpsOptions.Exists(x => x.Value == saved) ? saved : defaultFrameRate;
+        int saved = SaveManager.Settings.frameRate;
+        return fpsOptions.Exists(x => x.Value == saved) ? saved : SettingData.DefaultFrameRate;
     }
 
     public void SetFrameRate(int index)
@@ -193,8 +197,7 @@ public class SettingManager : MonoBehaviour
         }
         int targetFPS = fpsOptions[index].Value;
         Application.targetFrameRate = targetFPS;
-        PlayerPrefs.SetInt(FPS_SAVE_KEY, targetFPS);
-        PlayerPrefs.Save();
+        SaveManager.Settings.frameRate = targetFPS;
     }
 
     public void SetScreenMode(int index)
