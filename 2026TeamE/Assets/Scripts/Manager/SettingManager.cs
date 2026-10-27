@@ -35,7 +35,8 @@ public class SettingManager : MonoBehaviour
         new FrameRateOption { Label = "240 FPS", Value = 240 },
         new FrameRateOption { Label = "無制限", Value = -1 }
     };
-    [SerializeField] private int defaultFramerateIndex = 1;
+    [SerializeField] private int defaultFrameRate = 60;
+    private const string FPS_SAVE_KEY = "SavedFPS";
 
     private readonly List<string> fixedResolutionOptions = new List<string>
     {
@@ -44,7 +45,6 @@ public class SettingManager : MonoBehaviour
         "2560 x 1440",
         "3840 x 2160",
     };
-    private const string FPS_SAVE_KEY = "SavedFPSIndex";
 
     private void Awake()
     {
@@ -52,9 +52,8 @@ public class SettingManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            int savedFPSIndex = PlayerPrefs.GetInt(FPS_SAVE_KEY, defaultFramerateIndex);
             settingCanvas.SetActive(false);
-            SetFrameRate(savedFPSIndex);
+            Application.targetFrameRate = LoadFrameRate();
         }
         else
         {
@@ -68,6 +67,7 @@ public class SettingManager : MonoBehaviour
         SoundManager.Instance?.PlaySE("つるはしで掘る1");
         SoundManager.Instance?.InitSlider();
         InitResolutionSettings();
+        InitScreenModeSettings();
         InitFrameRateSettings();
 
         if (EventSystem.current != null && resolutionDropdown != null)
@@ -113,8 +113,7 @@ public class SettingManager : MonoBehaviour
                 break;
             }
         }
-        resolutionDropdown.value = currentResIndex;
-        resolutionDropdown.RefreshShownValue();
+        resolutionDropdown.SetValueWithoutNotify(currentResIndex);
     }
 
     private void BuildAvailableResolutionOptions()
@@ -154,14 +153,18 @@ public class SettingManager : MonoBehaviour
     {
         framerateDropdown.ClearOptions();
 
-        List<string> labels = fpsOptions.Select(x => x.Label).ToList();
-        framerateDropdown.AddOptions(labels);
+        framerateDropdown.AddOptions(fpsOptions.Select(x => x.Label).ToList());
+        int currentIndex = fpsOptions.FindIndex(x => x.Value == Application.targetFrameRate);
+        if(currentIndex < 0){
+            currentIndex = fpsOptions.FindIndex(x => x.Value == defaultFrameRate);
+        }
 
-        int currentFPS = Application.targetFrameRate;
-        int currentIndex = fpsOptions.FindIndex(x => x.Value == currentFPS);
+        framerateDropdown.SetValueWithoutNotify(Mathf.Max(currentIndex, 0));
+    }
 
-        framerateDropdown.value = (currentIndex != -1) ? currentIndex : defaultFramerateIndex;
-        framerateDropdown.RefreshShownValue();
+    public void InitScreenModeSettings(){
+        int index = (Screen.fullScreenMode == FullScreenMode.Windowed) ? 1 : 0;
+        screenModeDropdown.SetValueWithoutNotify(index);
     }
 
     public void SetResolution(int index)
@@ -174,6 +177,11 @@ public class SettingManager : MonoBehaviour
         }
     }
 
+    private int LoadFrameRate(){
+        int saved = PlayerPrefs.GetInt(FPS_SAVE_KEY, defaultFrameRate);
+        return fpsOptions.Exists(x => x.Value == saved) ? saved : defaultFrameRate;
+    }
+
     public void SetFrameRate(int index)
     {
         if(index < 0 || index >= fpsOptions.Count)
@@ -183,7 +191,7 @@ public class SettingManager : MonoBehaviour
         }
         int targetFPS = fpsOptions[index].Value;
         Application.targetFrameRate = targetFPS;
-        PlayerPrefs.SetInt(FPS_SAVE_KEY, index);
+        PlayerPrefs.SetInt(FPS_SAVE_KEY, targetFPS);
         PlayerPrefs.Save();
     }
 
