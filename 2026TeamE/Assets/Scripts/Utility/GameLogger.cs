@@ -115,7 +115,9 @@ public static class GameLogger
         if (!Directory.Exists(root)) return;
 
         // フォルダ名が日時なので、名前順＝古い順になる
+        // 日時の名前のフォルダだけを対象にする（Routes などの別用途のフォルダは消さない）
         var old = Directory.GetDirectories(root)
+            .Where(path => char.IsDigit(Path.GetFileName(path)[0]))
             .OrderBy(path => path, StringComparer.Ordinal)
             .ToList();
 

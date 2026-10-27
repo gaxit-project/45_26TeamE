@@ -76,65 +76,38 @@ public partial class VoxelTerrain
 
     private void SpawnItemsInZone(int zoneIndex, int bottomY, int topY, System.Random rnd)
     {
-        List<Vector3Int> candidates = CollectDiggablePositions(bottomY, topY);
-        if (candidates.Count == 0) return;
-
-        Shuffle(candidates, rnd);
+        var area = new SpawnArea(this, zoneIndex, bottomY, topY);
+        if (area.IsEmpty) return;
 
         List<SpawnItemType> treasureSequence = BuildTreasureSequence(zoneIndex, rnd);
-        List<Vector3Int> treasureCoords = new List<Vector3Int>();
-        List<Vector3Int> rejectedForTreasure = new List<Vector3Int>();
+        var occupied = new HashSet<Vector3Int>();
+        var treasureCoords = new List<Vector3Int>();
+        bool warnedDistance = false;
 
-        int sequenceIndex = 0;
-        int candidateIndex = 0;
-
-        while (sequenceIndex < treasureSequence.Count && candidateIndex < candidates.Count)
+        foreach (SpawnItemType type in treasureSequence)
         {
-            Vector3Int candidate = candidates[candidateIndex++];
+            bool found = TryPickDiggablePosition(area, rnd,
+                c => !occupied.Contains(c) && IsFarFromAll(c, treasureCoords, treasureMinDistance),
+                out Vector3Int coord);
 
-            bool isFarEnough = true;
-            foreach (var tCoord in treasureCoords)
+            if (!found)
             {
-                if (Vector3.Distance(candidate, tCoord) < treasureMinDistance)
+                if (!warnedDistance)
                 {
-                    isFarEnough = false;
-                    break;
+                    Debug.LogWarning($"[VoxelTerrain] ゾーン {zoneIndex} で宝箱の距離制限が厳しすぎるため、距離制限を無視して配置を継続します。");
+                    warnedDistance = true;
                 }
+                found = TryPickDiggablePosition(area, rnd, c => !occupied.Contains(c), out coord);
             }
+            if (!found) break;
 
-            if (isFarEnough)
-            {
-                SpawnItemAt(treasureSequence[sequenceIndex], candidate, zoneIndex);
-                treasureCoords.Add(candidate);
-                sequenceIndex++;
-            }
-            else
-            {
-                rejectedForTreasure.Add(candidate);
-            }
-        }
-
-        int rejectedIndex = 0;
-        if (sequenceIndex < treasureSequence.Count)
-        {
-            Debug.LogWarning($"[VoxelTerrain] ゾーン {zoneIndex} で宝箱の距離制限が厳しすぎるため、距離制限を無視して配置を継続します。");
-            while (sequenceIndex < treasureSequence.Count && rejectedIndex < rejectedForTreasure.Count)
-            {
-                Vector3Int candidate = rejectedForTreasure[rejectedIndex++];
-
-                SpawnItemAt(treasureSequence[sequenceIndex], candidate, zoneIndex);
-                treasureCoords.Add(candidate);
-                sequenceIndex++;
-            }
+            SpawnItemAt(type, coord, zoneIndex);
+            occupied.Add(coord);
+            treasureCoords.Add(coord);
         }
 
         int bombCount = Mathf.Max(0, zoneSettings[zoneIndex].bombCount);
-
-        List<Vector3Int> remainingCandidates = new List<Vector3Int>();
-        for (int i = rejectedIndex; i < rejectedForTreasure.Count; i++) remainingCandidates.Add(rejectedForTreasure[i]);
-        for (int i = candidateIndex; i < candidates.Count; i++) remainingCandidates.Add(candidates[i]);
-
-        SpawnSmartBombs(zoneIndex, bombCount, remainingCandidates, treasureCoords, rnd);
+        SpawnSmartBombs(zoneIndex, bombCount, area, occupied, treasureCoords, rnd);
     }
 
     private List<SpawnItemType> BuildTreasureSequence(int zoneIndex, System.Random rnd)
@@ -150,27 +123,64 @@ public partial class VoxelTerrain
         return sequence;
     }
 
-    private List<Vector3Int> CollectDiggablePositions(int bottomY, int topY)
+    /// <summary>ランダムに引いた座標が条件に合わなかったとき、引き直す回数の上限（1アイテムあたり）。</summary>
+    private const int SpawnAttemptsPerItem = 5000;
+
+    /// <summary>アイテムを置く候補を引く範囲。ゾーンの高さと横幅で囲まれた箱。</summary>
+    private readonly struct SpawnArea
     {
-        var positions = new List<Vector3Int>();
+        public readonly int BottomY;
+        public readonly int TopY;
+        public readonly int MinZ;
+        public readonly int MaxZ;
 
-        for (int y = bottomY; y < topY; y++)
+        public bool IsEmpty => BottomY >= TopY || MinZ > MaxZ;
+
+        public SpawnArea(VoxelTerrain terrain, int zoneIndex, int bottomY, int topY)
         {
-            for (int x = 0; x < thicknessX; x++)
-            {
-                for (int z = 0; z < maxStageWidthZ; z++)
-                {
-                    if (!IsInside(x, y, z)) continue;
+            BottomY = Mathf.Max(0, bottomY);
+            TopY = Mathf.Min(terrain.heightY, topY);
 
-                    if (IsDiggable(mapData[x, y, z]))
-                    {
-                        positions.Add(new Vector3Int(x, y, z));
-                    }
-                }
-            }
+            int centerZ = terrain.maxStageWidthZ / 2;
+            int halfWidth = terrain.zoneSettings[zoneIndex].widthZ / 2;
+            MinZ = Mathf.Max(0, centerZ - halfWidth);
+            MaxZ = Mathf.Min(terrain.maxStageWidthZ - 1, centerZ + halfWidth);
+        }
+    }
+
+    /// <summary>
+    /// 範囲内から掘れるブロックの座標をランダムに引き、accept を満たすものを返す。
+    /// </summary>
+    /// <remarks>
+    /// 以前は範囲内の掘れるブロックをすべてリストに集めてシャッフルしていたが、
+    /// 1ゾーンで数十万件になり、ステージ生成の最後に数秒止まる原因になっていた。
+    /// 範囲内から一様に引いて条件外を捨てる方式でも、選ばれる確率の分布は変わらない。
+    /// </remarks>
+    private bool TryPickDiggablePosition(SpawnArea area, System.Random rnd, System.Func<Vector3Int, bool> accept, out Vector3Int coord)
+    {
+        for (int attempt = 0; attempt < SpawnAttemptsPerItem; attempt++)
+        {
+            int x = rnd.Next(thicknessX);
+            int y = rnd.Next(area.BottomY, area.TopY);
+            int z = rnd.Next(area.MinZ, area.MaxZ + 1);
+
+            if (!IsInside(x, y, z) || !IsDiggable(mapData[x, y, z])) continue;
+
+            coord = new Vector3Int(x, y, z);
+            if (accept(coord)) return true;
         }
 
-        return positions;
+        coord = default;
+        return false;
+    }
+
+    private static bool IsFarFromAll(Vector3Int candidate, List<Vector3Int> others, float minDistance)
+    {
+        foreach (var other in others)
+        {
+            if (Vector3.Distance(candidate, other) < minDistance) return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -183,18 +193,6 @@ public partial class VoxelTerrain
             || block == (byte)BlockType.Ore
             || block == (byte)BlockType.Stone
             || block == (byte)BlockType.HardRock;
-    }
-
-    private static void Shuffle(List<Vector3Int> items, System.Random rnd)
-    {
-        for (int i = items.Count - 1; i > 0; i--)
-        {
-            int j = rnd.Next(i + 1);
-
-            Vector3Int temp = items[i];
-            items[i] = items[j];
-            items[j] = temp;
-        }
     }
 
     private void SpawnGoalTreasure(int zoneIndex, int bottomY, int topY)
@@ -261,77 +259,54 @@ public partial class VoxelTerrain
         }
     }
 
-    private void SpawnSmartBombs(int zoneIndex, int bombCount, List<Vector3Int> candidates, List<Vector3Int> treasureCoords, System.Random rnd)
+    /// <summary>
+    /// 爆弾を宝箱の近くほど出やすくなるように配置する。
+    /// </summary>
+    /// <remarks>
+    /// 宝箱からの距離で決まる重み（最大100）を、引いた座標を採用する確率として使う。
+    /// 全候補に重みを付けて抽選していた以前の方式と、選ばれる確率の分布は同じになる。
+    /// </remarks>
+    private void SpawnSmartBombs(int zoneIndex, int bombCount, SpawnArea area, HashSet<Vector3Int> occupied, List<Vector3Int> treasureCoords, System.Random rnd)
     {
-        if (candidates.Count == 0 || bombCount <= 0) return;
-
-        List<Vector3Int> validCandidates = new List<Vector3Int>();
-        List<float> weights = new List<float>();
-        float totalWeight = 0f;
+        if (bombCount <= 0) return;
 
         float safeDistSq = bombSafeDistanceFromTreasure * bombSafeDistanceFromTreasure;
 
-        foreach (var coord in candidates)
-        {
-            float minTreasureDistSq = float.MaxValue;
-            foreach (var tCoord in treasureCoords)
-            {
-                float dx = coord.x - tCoord.x;
-                float dy = coord.y - tCoord.y;
-                float dz = coord.z - tCoord.z;
-                float distSq = dx * dx + dy * dy + dz * dz;
-                if (distSq < minTreasureDistSq) minTreasureDistSq = distSq;
-            }
-
-            if (treasureCoords.Count > 0 && minTreasureDistSq < safeDistSq)
-                continue; 
-
-            float minDist = treasureCoords.Count == 0 ? 0 : Mathf.Sqrt(minTreasureDistSq);
-            float weight = Mathf.Max(1f, 100f - (minDist * bombWeightFalloff));
-
-            validCandidates.Add(coord);
-            weights.Add(weight);
-            totalWeight += weight;
-        }
-
-        if (validCandidates.Count == 0)
-        {
-            Debug.LogWarning($"[VoxelTerrain] ゾーン {zoneIndex} で爆弾の安全距離制限が厳しすぎるため、配置可能な場所がありません。");
-            return;
-        }
-
-        List<Vector3Int> spawnedBombCoords = new List<Vector3Int>();
-
         for (int i = 0; i < bombCount; i++)
         {
-            if (validCandidates.Count == 0 || totalWeight <= 0) break;
+            bool found = TryPickDiggablePosition(area, rnd,
+                c => !occupied.Contains(c) && RollBombPlacement(c, treasureCoords, safeDistSq, rnd),
+                out Vector3Int coord);
 
-            float roll = (float)(rnd.NextDouble() * totalWeight);
-            int selectedIndex = -1;
-
-            for (int w = 0; w < weights.Count; w++)
+            if (!found)
             {
-                if (roll < weights[w])
-                {
-                    selectedIndex = w;
-                    break;
-                }
-                roll -= weights[w];
+                Debug.LogWarning($"[VoxelTerrain] ゾーン {zoneIndex} で爆弾の安全距離制限が厳しすぎるため、配置可能な場所がありません。");
+                return;
             }
-            if (selectedIndex == -1) selectedIndex = weights.Count - 1;
 
-            Vector3Int selectedCoord = validCandidates[selectedIndex];
-            SpawnItemAt(SpawnItemType.Bomb, selectedCoord, zoneIndex);
-            spawnedBombCoords.Add(selectedCoord);
-
-            totalWeight -= weights[selectedIndex];
-
-            int lastIndex = validCandidates.Count - 1;
-            validCandidates[selectedIndex] = validCandidates[lastIndex];
-            weights[selectedIndex] = weights[lastIndex];
-
-            validCandidates.RemoveAt(lastIndex);
-            weights.RemoveAt(lastIndex);
+            SpawnItemAt(SpawnItemType.Bomb, coord, zoneIndex);
+            occupied.Add(coord);
         }
+    }
+
+    /// <summary>その座標に爆弾を置くかを、宝箱からの距離に応じた確率で決める。</summary>
+    private bool RollBombPlacement(Vector3Int coord, List<Vector3Int> treasureCoords, float safeDistSq, System.Random rnd)
+    {
+        if (treasureCoords.Count == 0) return true;
+
+        float minTreasureDistSq = float.MaxValue;
+        foreach (var tCoord in treasureCoords)
+        {
+            float dx = coord.x - tCoord.x;
+            float dy = coord.y - tCoord.y;
+            float dz = coord.z - tCoord.z;
+            float distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq < minTreasureDistSq) minTreasureDistSq = distSq;
+        }
+
+        if (minTreasureDistSq < safeDistSq) return false;
+
+        float weight = Mathf.Max(1f, 100f - (Mathf.Sqrt(minTreasureDistSq) * bombWeightFalloff));
+        return rnd.NextDouble() * 100.0 < weight;
     }
 }

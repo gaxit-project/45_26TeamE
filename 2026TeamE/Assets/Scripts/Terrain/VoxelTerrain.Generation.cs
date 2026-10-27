@@ -38,6 +38,7 @@ public partial class VoxelTerrain
             yield return RemoveIsolatedBlocksRoutine(budget);
 
             ApplyTerrainOrigin();
+            ComputeMeshZRanges();
 
             yield return BuildChunksRoutine(budget);
 

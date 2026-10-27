@@ -19,6 +19,8 @@ using UnityEngine.SceneManagement;
 /// 記録は GameLogger に書く。プレイヤーが一定時間ほぼ動かなければ「Stuck」としてスクリーンショット付きで残す。
 ///
 /// 進む向きは次の優先順で決める。
+///   0. 人のプレイを記録したルート（HumanRoute）があれば、同じ地形でそれをなぞる。ときどき寄り道して、
+///      寄り道の間は下の 1～4 で動き、終わったらルートの近くの地点から再開する
 ///   1. まだ使っていない扉があれば、そこへ向かい、入れる範囲に入ったら Y ボタンを押す
 ///   2. 宝石レーダー（GemRadar）のギザギザが出ていれば、その向きへ掘り進む
 ///   3. まだ行っていないマスへ向かう
@@ -47,6 +49,22 @@ public sealed class AutoPlayBot : MonoBehaviour
     [SerializeField] private float menuTapIntervalMax = 1.5f;
     [SerializeField, Range(0f, 1f)] private float menuCancelChance = 0.15f;
     [SerializeField, Range(0f, 1f)] private float menuNavigateChance = 0.4f;
+
+    [Header("人のルートをなぞる")]
+    [Tooltip("Logs/Routes に保存された人のプレイをお手本にしてなぞる")]
+    [SerializeField] private bool useHumanRoutes = true;
+    [Tooltip("お手本と同じシードで地形を作る（同じ地形でなぞる）。オフにすると違う地形の上でなぞる")]
+    [SerializeField] private bool matchRouteSeed = true;
+    [Tooltip("向きを選び直すたびに寄り道する確率")]
+    [SerializeField, Range(0f, 1f)] private float detourChance = 0.2f;
+    [SerializeField] private float detourSecondsMin = 3f;
+    [SerializeField] private float detourSecondsMax = 8f;
+    [Tooltip("道しるべにこの距離まで近づいたら、次の道しるべへ")]
+    [SerializeField] private float waypointReach = 2f;
+    [Tooltip("この秒数進めなかったら、ルートの少し先へ飛ばす")]
+    [SerializeField] private float waypointGiveUpSeconds = 12f;
+    [Tooltip("飛ばすときに進める道しるべの数")]
+    [SerializeField, Min(1)] private int routeSkipPoints = 6;
 
     [Header("扉")]
     [Tooltip("まだ使っていない扉のうち、この距離以内で最も近いものへ向かう")]
@@ -154,8 +172,21 @@ public sealed class AutoPlayBot : MonoBehaviour
     private int doorPresses;
 
     // どの理由で進む向きを決めたかの回数（停止時にログへ出す）
-    private enum Steer { Door, Radar, Explore, Random, Reverse }
-    private readonly int[] steerCounts = new int[5];
+    private enum Steer { Door, Radar, Explore, Random, Reverse, Route }
+    private readonly int[] steerCounts = new int[6];
+
+    // 人のルート
+    private List<HumanRoute> routes = new List<HumanRoute>();
+    private HumanRoute pendingRoute;
+    private HumanRoute activeRoute;
+    private bool activeRouteSameSeed;
+    private int routeIndex;
+    private float routeProgressTime;
+    private float detourUntil;
+    private bool returningFromDetour;
+    private int routeDetours;
+    private int routeSkips;
+    private float nextRouteSkipLogTime;
     private Steer currentSteer = Steer.Random;
 
     // 掘れないブロックから引き返す
@@ -222,6 +253,9 @@ public sealed class AutoPlayBot : MonoBehaviour
         blockedCount = 0;
         Array.Clear(steerCounts, 0, steerCounts.Length);
         coverageBook = new AutoPlayCoverageBook();
+        routes = useHumanRoutes ? HumanRoute.LoadAll() : new List<HumanRoute>();
+        pendingRoute = activeRoute = null;
+        GameLogger.Event("RoutesLoaded", $"count={routes.Count} folder={HumanRoute.Folder}");
         trackedTerrain = null;
         runCoverage = null;
         hasCell = hasTarget = false;
@@ -248,9 +282,13 @@ public sealed class AutoPlayBot : MonoBehaviour
 
         FinishRun();
         ReportSessionCoverage();
+
+        // 地形のシードを予約したまま止めると、次に人が遊ぶ地形まで同じになってしまうので取り消す
+        if (pendingRoute != null && VoxelTerrain.ForceUseSeed) VoxelTerrain.ForceUseSeed = false;
+        pendingRoute = null;
         GameLogger.Event("AutoPlayStop",
             $"stuck={stuckCount} abandonedTargets={abandonedCount} doorPresses={doorPresses} blocked={blockedCount} " +
-            $"steer=door:{steerCounts[(int)Steer.Door]},radar:{steerCounts[(int)Steer.Radar]},explore:{steerCounts[(int)Steer.Explore]},random:{steerCounts[(int)Steer.Random]},reverse:{steerCounts[(int)Steer.Reverse]}");
+            $"steer=door:{steerCounts[(int)Steer.Door]},radar:{steerCounts[(int)Steer.Radar]},explore:{steerCounts[(int)Steer.Explore]},random:{steerCounts[(int)Steer.Random]},reverse:{steerCounts[(int)Steer.Reverse]},route:{steerCounts[(int)Steer.Route]}");
         Debug.Log("[AutoPlayBot] 自動プレイを停止しました。");
     }
 
@@ -281,6 +319,7 @@ public sealed class AutoPlayBot : MonoBehaviour
         PlayerController player = PlayerController.Instance;
         bool inControl = player != null && player.IsControlEnabled;
 
+        PrepareRouteSeed();
         TrackCoverage(player);
 
         if (inControl) UpdateGameplayInput(player);
@@ -302,6 +341,9 @@ public sealed class AutoPlayBot : MonoBehaviour
         {
             // ソナーは押しっぱなしにせず、1フレームだけ押して離す
             tapSonar = false;
+
+            // ルートは曲がりくねっているので、向きは毎フレーム道しるべへ合わせ直す
+            if (currentSteer == Steer.Route && !FollowRoute(player)) nextSegmentTime = 0f;
         }
         else
         {
@@ -318,6 +360,12 @@ public sealed class AutoPlayBot : MonoBehaviour
     /// <summary>進む向きを、扉 → レーダー → 未探索のマス → ランダム の順で決める。</summary>
     private void ChooseSteering(PlayerController player)
     {
+        if (TrySteerByRoute(player))
+        {
+            currentSteer = Steer.Route;
+            return;
+        }
+
         if (TrySteerToDoor(player))
         {
             currentSteer = Steer.Door;
@@ -450,6 +498,7 @@ public sealed class AutoPlayBot : MonoBehaviour
             stuckCount++;
             AbandonTarget();
             SkipDoorTarget("stuck");
+            if (currentSteer == Steer.Route) SkipRouteAhead("stuck");
             string shot = TakeScreenshot("stuck");
             GameLogger.Event("Stuck", $"#{stuckCount} still={stillTime:F1}s anchor={anchorPos} battery={player.currentBattery:F0} screenshot={shot}");
         }
@@ -482,6 +531,129 @@ public sealed class AutoPlayBot : MonoBehaviour
         }
     }
 
+    // ーーーーーーーーーーーーーーーーー人のルートーーーーーーーーーーーーーー
+
+    /// <summary>
+    /// メインシーンに入る前（タイトルなど）に、次になぞるルートを選び、その地形のシードを予約しておく。
+    /// 地形はメインシーンに入った瞬間に作られるので、それより前に決めておく必要がある。
+    /// </summary>
+    private void PrepareRouteSeed()
+    {
+        if (routes.Count == 0 || pendingRoute != null || activeRoute != null) return;
+        if (SceneManager.GetActiveScene().name == "02_Main") return;
+
+        pendingRoute = routes[random.Next(routes.Count)];
+        if (matchRouteSeed) VoxelTerrain.RequestSeedForNextStage(pendingRoute.Seed);
+    }
+
+    /// <summary>地形ができたら、予約していたルートをなぞり始める。</summary>
+    private void StartRoute()
+    {
+        HumanRoute route = pendingRoute;
+        pendingRoute = null;
+
+        // メインシーンの途中で F9 を押した場合は予約が無いので、同じ地形のルートがあればそれを使う
+        if (route == null) route = routes.Find(r => r.Seed == runSeed);
+        if (route == null) return;
+
+        activeRoute = route;
+        activeRouteSameSeed = route.Seed == runSeed;
+        routeIndex = 0;
+        routeProgressTime = Time.unscaledTime;
+        detourUntil = 0f;
+        returningFromDetour = false;
+        routeDetours = routeSkips = 0;
+        GameLogger.Event("RouteStart", $"route={route.Name} seed={route.Seed} sameSeed={activeRouteSameSeed} points={route.Points.Count}");
+    }
+
+    /// <summary>向きを選び直すとき: ルートをなぞるか、寄り道を始めるかを決める。</summary>
+    private bool TrySteerByRoute(PlayerController player)
+    {
+        if (activeRoute == null || Time.unscaledTime < detourUntil) return false;
+
+        if (!returningFromDetour && Chance(detourChance))
+        {
+            detourUntil = Time.unscaledTime + Range(detourSecondsMin, detourSecondsMax);
+            returningFromDetour = true;
+            routeDetours++;
+            return false;
+        }
+
+        return FollowRoute(player);
+    }
+
+    /// <summary>次の道しるべへ向ける。ルートを最後までなぞり終えたら false。</summary>
+    private bool FollowRoute(PlayerController player)
+    {
+        if (activeRoute == null) return false;
+
+        List<Vector2> points = activeRoute.Points;
+        Vector3 p = player.transform.position;
+        var pos = new Vector2(p.z, p.y);
+
+        // 寄り道から戻ったときは、元の地点ではなく「ルートの少し先で一番近い地点」から再開する
+        if (returningFromDetour)
+        {
+            returningFromDetour = false;
+            routeIndex = NearestPointAhead(pos, routeIndex, 60);
+            routeProgressTime = Time.unscaledTime;
+        }
+
+        while (routeIndex < points.Count && (points[routeIndex] - pos).sqrMagnitude < waypointReach * waypointReach)
+        {
+            routeIndex++;
+            routeProgressTime = Time.unscaledTime;
+        }
+
+        if (routeIndex >= points.Count)
+        {
+            GameLogger.Event("RouteFinished", $"route={activeRoute.Name} detours={routeDetours} skips={routeSkips}");
+            activeRoute = null;
+            return false;
+        }
+
+        if (Time.unscaledTime - routeProgressTime > waypointGiveUpSeconds) SkipRouteAhead("timeout");
+
+        Vector2 dir = (points[routeIndex] - pos).normalized;
+        stick = dir;
+        holdDrill = true;
+        holdJump = dir.y > 0.3f;
+        return true;
+    }
+
+    private int NearestPointAhead(Vector2 pos, int from, int window)
+    {
+        List<Vector2> points = activeRoute.Points;
+        int best = from;
+        float bestSqr = float.MaxValue;
+        for (int i = from; i < Mathf.Min(points.Count, from + window); i++)
+        {
+            float sqr = (points[i] - pos).sqrMagnitude;
+            if (sqr < bestSqr)
+            {
+                bestSqr = sqr;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    /// <summary>今の道しるべにたどり着けないとき（壁・詰まり・時間切れ）、少し先の道しるべへ飛ばす。</summary>
+    private void SkipRouteAhead(string reason)
+    {
+        if (activeRoute == null) return;
+
+        routeIndex = Mathf.Min(activeRoute.Points.Count - 1, routeIndex + routeSkipPoints);
+        routeProgressTime = Time.unscaledTime;
+        routeSkips++;
+
+        if (Time.unscaledTime >= nextRouteSkipLogTime)
+        {
+            nextRouteSkipLogTime = Time.unscaledTime + 3f;
+            GameLogger.Event("RouteSkip", $"reason={reason} index={routeIndex}/{activeRoute.Points.Count}");
+        }
+    }
+
     // ーーーーーーーーーーーーーーーーー掘れないブロックーーーーーーーーーーーーーー
 
     /// <summary>
@@ -510,6 +682,7 @@ public sealed class AutoPlayBot : MonoBehaviour
         switch (currentSteer)
         {
             case Steer.Door: SkipDoorTarget("blocked"); break;
+            case Steer.Route: SkipRouteAhead("blocked"); break;
             case Steer.Explore: AbandonTarget(); break;
             case Steer.Radar: radarSuppressedUntil = Time.unscaledTime + radarCooldownAfterWall; break;
         }
@@ -690,6 +863,7 @@ public sealed class AutoPlayBot : MonoBehaviour
             runSeed = VoxelTerrain.LastUsedSeed;
             runCoverage = AutoPlayCoverage.Create(terrain, coverageCellBlocks);
             GameLogger.Event("CoverageStart", $"seed={runSeed} cells={runCoverage.InsideCount} grid={runCoverage.Rows}x{runCoverage.Cols}");
+            StartRoute();
         }
 
         if (player == null) return;
@@ -732,6 +906,13 @@ public sealed class AutoPlayBot : MonoBehaviour
 
         GameLogger.Event("RunCoverage", $"seed={runSeed} {runCoverage.Summary()}");
         coverageBook.Add(runSeed, runCoverage);
+
+        if (activeRoute != null)
+        {
+            int total = activeRoute.Points.Count;
+            GameLogger.Event("RouteResult", $"route={activeRoute.Name} progress={routeIndex}/{total} ({routeIndex * 100f / total:F0}%) sameSeed={activeRouteSameSeed} detours={routeDetours} skips={routeSkips}");
+            activeRoute = null;
+        }
 
         runCoverage = null;
         trackedTerrain = null;

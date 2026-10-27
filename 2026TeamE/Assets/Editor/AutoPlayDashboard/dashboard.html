@@ -384,6 +384,9 @@ const EVENT_JA = {
   CoverageStart: "カバー率の計測開始", RunCoverage: "1プレイのカバー率", SessionCoverage: "全体のカバー率",
   QuitBlocked: "終了操作を止めた",
   FocusChanged: "ウィンドウ切り替え",
+  StageSeed: "地形のシード", RouteSaved: "人のプレイをお手本として保存", RoutesLoaded: "お手本ルートの読み込み",
+  RouteStart: "お手本ルートをなぞり始めた", RouteSkip: "お手本ルートの先へ飛ばした",
+  RouteFinished: "お手本ルートを最後までなぞった", RouteResult: "お手本ルートの結果",
   BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
 };
 const KIND_JA = { LOG: "ログ", WARN: "警告", ERROR: "エラー", EXCEPTION: "例外", ASSERT: "アサート", SESSION: "記録" };
@@ -394,9 +397,9 @@ const ITEM_JA = { Jewelry: "宝石", BigJewelry: "大きな宝石", LeatherBag: 
 // 一覧の絞り込み用のグループ
 const GROUPS = [
   { id: "problem", label: "問題", test: e => e.severity >= 1 },
-  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked"].includes(e.name) },
+  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved"].includes(e.name) },
   { id: "item", label: "アイテム・お金", test: e => e.kind === "EVENT" && ["ItemCollected", "MoneyChanged", "TimeAdded", "Sonar"].includes(e.name) },
-  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged"].includes(e.name) },
+  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip"].includes(e.name) },
   { id: "log", label: "通常ログ", test: e => e.kind === "LOG" },
 ];
 
@@ -688,9 +691,26 @@ function buildSession(raw) {
 
 // ───────────────────────── 読み込み ─────────────────────────
 
-const state = { sessions: [], current: null, selection: null, mapMode: "visited", groups: new Set(["problem", "progress"]) };
+const state = { sessions: [], routes: new Map(), current: null, selection: null, mapMode: "visited", groups: new Set(["problem", "progress"]) };
+
+// お手本ルート（Logs/Routes/route_〜.csv）
+function parseRoute(name, text) {
+  const lines = (text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  const seed = (/seed=(-?\d+)/.exec(lines[0] || "") || [])[1];
+  const points = [];
+  for (const line of lines) {
+    const c = line.split(",");
+    if (c.length < 3 || isNaN(+c[1]) || line.startsWith("t,")) continue;
+    points.push({ t: +c[0], y: +c[1], z: +c[2] });
+  }
+  return { name, seed, points };
+}
+function setRoutes(list) {
+  state.routes = new Map(list.map(r => [r.name, parseRoute(r.name, r.text)]));
+}
 
 function loadFromEmbedded(data) {
+  setRoutes((data.routeNames || []).map((n, i) => ({ name: n, text: data.routeTexts[i] })));
   state.sessions = data.sessions.map(s => buildSession({
     name: s.name, gameLog: s.gameLog, errorLog: s.errorLog, telemetry: s.telemetry,
     coverage: (s.coverageNames || []).map((n, i) => ({ name: n, text: s.coverageTexts[i] })),
@@ -706,6 +726,11 @@ async function loadFromFiles(fileList) {
     if (!bySession.has(folder)) bySession.set(folder, {});
     bySession.get(folder)[parts[parts.length - 1]] = f;
   }
+  const routes = [];
+  for (const [n, f] of Object.entries(bySession.get("Routes") || {})) {
+    if (/^route_.*\.csv$/.test(n)) routes.push({ name: n, text: await f.text() });
+  }
+  setRoutes(routes);
   const sessions = [];
   for (const [name, files] of bySession) {
     if (!files["game.log"]) continue;
@@ -725,7 +750,7 @@ async function loadFromFiles(fileList) {
 function start() {
   state.sessions.sort((a, b) => b.name.localeCompare(a.name));
   const sel = $("sessionSelect");
-  sel.innerHTML = state.sessions.map((s, i) => `<option value="${i}">${esc(s.label)}${s.autoplay ? "（自動プレイ）" : ""}</option>`).join("");
+  sel.innerHTML = state.sessions.map((s, i) => `<option value="${i}">${esc(s.label)}${s.autoplay ? "（自動プレイ）" : s.entries.some(e => e.name === "RouteSaved") ? "（人のプレイ・お手本あり）" : ""}</option>`).join("");
   sel.onchange = () => openSession(state.sessions[+sel.value]);
   $("loader").hidden = true;
   $("header").hidden = false;
@@ -919,11 +944,13 @@ function entryText(e) {
       let text = `詰まり ${g(/stuck=(\d+)/)}回・諦めたマス ${g(/abandonedTargets=(\d+)/) ?? 0}`;
       if (g(/doorPresses=(\d+)/) != null) text += `・Yボタン ${g(/doorPresses=(\d+)/)}回`;
       if (g(/blocked=(\d+)/) != null) text += `・掘れないブロックで引き返し ${g(/blocked=(\d+)/)}回`;
-      const st = /steer=door:(\d+),radar:(\d+),explore:(\d+),random:(\d+)(?:,reverse:(\d+))?/.exec(d);
-      if (st) {
-        const total = st.slice(1).reduce((a, b) => a + +(b || 0), 0) || 1;
-        const pct = v => Math.round(+(v || 0) / total * 100) + "%";
-        text += `（進む向きの決め方: 扉 ${pct(st[1])}・レーダー ${pct(st[2])}・未探索 ${pct(st[3])}・ランダム ${pct(st[4])}${st[5] != null ? `・引き返し ${pct(st[5])}` : ""}）`;
+      const steer = g(/steer=(\S+)/);
+      if (steer) {
+        const names = { route: "お手本ルート", door: "扉", radar: "レーダー", explore: "未探索", random: "ランダム", reverse: "引き返し" };
+        const pairs = steer.split(",").map(kv => kv.split(":")).filter(kv => kv.length === 2);
+        const total = pairs.reduce((a, kv) => a + +kv[1], 0) || 1;
+        pairs.sort((a, b) => b[1] - a[1]);
+        text += `（進む向きの決め方: ${pairs.map(([k, v]) => `${names[k] || k} ${Math.round(+v / total * 100)}%`).join("・")}）`;
       }
       return text;
     }
@@ -931,6 +958,16 @@ function entryText(e) {
     case "BotBlocked": {
       const name = { Bedrock: "岩盤", Boundary: "外周の壁" }[g(/block=(\w+)/)] || g(/block=(\w+)/);
       return `${name}に当たったので逆向きに掘り進む`;
+    }
+    case "StageSeed": return `シード ${g(/seed=(-?\d+)/)}`;
+    case "RouteSaved": return `${g(/route=(\S+)/)}（道しるべ ${g(/points=(\d+)/)}個）`;
+    case "RoutesLoaded": return `${g(/count=(\d+)/)}本`;
+    case "RouteStart": return `${g(/route=(\S+)/)}（${g(/sameSeed=(\w+)/) === "True" ? "人と同じ地形" : "人とは違う地形"}・道しるべ ${g(/points=(\d+)/)}個）`;
+    case "RouteSkip": return `${{ stuck: "詰まったので", blocked: "掘れないブロックがあったので", timeout: "進めなかったので" }[g(/reason=(\w+)/)] || ""}先へ（${g(/index=(\S+)/)}）`;
+    case "RouteFinished": return `寄り道 ${g(/detours=(\d+)/)}回・飛ばし ${g(/skips=(\d+)/)}回`;
+    case "RouteResult": {
+      const m = /progress=(\d+)\/(\d+) \((\d+)%\)/.exec(d);
+      return `${m ? `${m[3]}% までなぞった（${m[1]} / ${m[2]}）` : d}・寄り道 ${g(/detours=(\d+)/)}回・飛ばし ${g(/skips=(\d+)/)}回`;
     }
     case "FocusChanged": return /focused=True/.test(d) ? "ゲームのウィンドウに戻った" : "他のウィンドウに切り替えた（ゲームは動き続ける）";
     case "BotPressY": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}`;
@@ -1013,7 +1050,8 @@ function mapBounds(s) {
     const bs = grid.blockSize, c = grid.cell;
     return { z0: grid.originZ - bs / 2, z1: grid.originZ + (grid.cols * c - 0.5) * bs, y0: grid.originY - bs / 2, y1: grid.originY + (grid.rows * c - 0.5) * bs };
   }
-  const pts = s.tele.filter(r => r.pos && r.scene === "02_Main").map(r => r.pos).concat(s.issues.map(i => i.pos).filter(Boolean));
+  const pts = s.tele.filter(r => r.pos && r.scene === "02_Main").map(r => r.pos).concat(s.issues.map(i => i.pos).filter(Boolean))
+    .concat(usedRoutes(s).flatMap(r => r.points));
   if (!pts.length) return null;
   let z0 = Math.min(...pts.map(p => p.z)), z1 = Math.max(...pts.map(p => p.z));
   let y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
@@ -1112,7 +1150,7 @@ function renderMap(s) {
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const markers = s.issues.filter(i => i.pos && (i.type !== "warn" || i.scene === "02_Main"))
     .slice().sort((a, b2) => ISSUE_TYPES[b2.type].order - ISSUE_TYPES[a.type].order);
-  svg.innerHTML = markers.map(it => {
+  svg.innerHTML = routeLines(s, px, py) + markers.map(it => {
     const x = px(it.pos.z), y = py(it.pos.y);
     if (x < -20 || x > W + 20 || y < -20 || y > H + 20) return "";
     return `<g class="marker" data-id="${it.id}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
@@ -1140,6 +1178,18 @@ function renderMap(s) {
 }
 
 // 扉の位置（入った扉＝塗りつぶし、Botが諦めた扉＝白抜き）。問題ではないので色は付けず、墨色で描く
+// このセッションでBotがなぞったお手本ルート
+function usedRoutes(s) {
+  const names = [...new Set(s.entries.filter(e => e.kind === "EVENT" && e.name === "RouteStart").map(e => (/route=(\S+)/.exec(e.detail) || [])[1]))];
+  return names.map(n => state.routes.get(n)).filter(Boolean);
+}
+function routeLines(s, px, py) {
+  return usedRoutes(s).map(r => {
+    const d = r.points.map((p, i) => `${i ? "L" : "M"}${px(p.z).toFixed(1)} ${py(p.y).toFixed(1)}`).join("");
+    return `<path d="${d}" fill="none" stroke="${css("--ink-2")}" stroke-width="1.5" stroke-dasharray="5 4" stroke-linejoin="round" opacity=".85"><title>お手本ルート ${esc(r.name)}</title></path>`;
+  }).join("");
+}
+
 function doorEvents(s) {
   return s.entries.filter(e => e.kind === "EVENT" && (e.name === "DoorEnter" || e.name === "BotDoorGiveUp"))
     .map(e => ({ e, pos: parseVec((/door=(\([^)]*\))/.exec(e.detail) || [])[1]) || e.pos, entered: e.name === "DoorEnter" }))
@@ -1169,6 +1219,9 @@ function markerShape(T) {
 function renderMapLegend(s, hasGrid) {
   const types = ["stuck", "nocontrol", "error", "lowfps", "warn"];
   let html = types.map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
+  if (usedRoutes(s).length) {
+    html += `<span><span class="sw" style="height:0;border-top:2px dashed var(--ink-2);border-radius:0"></span>お手本にした人のルート</span>`;
+  }
   if (doorEvents(s).length) {
     html += `<span><span class="sw" style="width:10px;background:var(--ink);border-radius:4px"></span>入った扉</span>`;
     html += `<span><span class="sw" style="width:10px;border:2px solid var(--ink);border-radius:4px"></span>Botが諦めた扉</span>`;

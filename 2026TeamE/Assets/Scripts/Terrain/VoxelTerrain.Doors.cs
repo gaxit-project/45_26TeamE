@@ -135,6 +135,13 @@ public partial class VoxelTerrain
     /// <returns>配置できた場合はtrue。</returns>
     private bool TrySpawnDoorInBand(int unit, int bandStartChunk, int bandEndChunk, int bottomY, int topY, System.Random rnd)
     {
+        if (TryPickDoorPosition(bottomY, topY, rnd, out Vector3Int picked))
+        {
+            SpawnDoorAt(picked);
+            return true;
+        }
+
+        // ランダムに引いても見つからないほど候補が少ない帯だけ、全座標を調べ直す。
         List<Vector3Int> candidates = CollectDoorCandidates(bottomY, topY);
         if (candidates.Count == 0)
         {
@@ -179,31 +186,68 @@ public partial class VoxelTerrain
 
         int minY = Mathf.Max(0, bottomY);
         int maxY = Mathf.Min(heightY - 1, topY - 1);
-        int centerZ = maxStageWidthZ / 2;
-
-        // 扉は常に地形の中央の層に置き、奥行きの埋まり具合を揃える。
-        int doorX = thicknessX / 2;
 
         for (int y = minY; y <= maxY; y++)
         {
-            int zoneIndex = GetRelayID(y);
-            if (!allowDoorsInGoalZone && zoneSettings[zoneIndex].isGoalZone) continue;
-
-            // 端に寄りすぎると壁に食い込んで見えるため、左右から余白分だけ内側に寄せる。
-            int halfWidth = zoneSettings[zoneIndex].widthZ / 2;
-            int minZ = centerZ - halfWidth + doorEdgeMarginZ;
-            int maxZ = centerZ + halfWidth - doorEdgeMarginZ;
-            if (minZ > maxZ) continue;
-
-            for (int z = minZ; z <= maxZ; z++)
+            for (int z = 0; z < maxStageWidthZ; z++)
             {
-                if (!IsFullyBuried(doorX, y, z)) continue;
-
-                positions.Add(new Vector3Int(doorX, y, z));
+                if (IsDoorCandidate(y, z)) positions.Add(new Vector3Int(DoorX, y, z));
             }
         }
 
         return positions;
+    }
+
+    /// <summary>ランダムに引いた座標が扉を置けない場所だったとき、引き直す回数の上限。</summary>
+    private const int DoorSpawnAttempts = 3000;
+
+    /// <summary>扉は常に地形の中央の層に置き、奥行きの埋まり具合を揃える。</summary>
+    private int DoorX => thicknessX / 2;
+
+    /// <summary>
+    /// 帯の中から扉を置ける座標をランダムに引く。
+    /// </summary>
+    /// <remarks>
+    /// 候補を全部集めると、1マスごとに周囲を調べるため1帯で数千万回の判定になり、
+    /// ステージ生成の最後に数秒止まる原因になっていた。
+    /// 帯の中から一様に引いて条件外を捨てても、選ばれる確率の分布は全候補からの抽選と同じ。
+    /// </remarks>
+    private bool TryPickDoorPosition(int bottomY, int topY, System.Random rnd, out Vector3Int coord)
+    {
+        int minY = Mathf.Max(0, bottomY);
+        int maxY = Mathf.Min(heightY - 1, topY - 1);
+
+        if (minY <= maxY)
+        {
+            for (int attempt = 0; attempt < DoorSpawnAttempts; attempt++)
+            {
+                int y = rnd.Next(minY, maxY + 1);
+                int z = rnd.Next(maxStageWidthZ);
+
+                if (!IsDoorCandidate(y, z)) continue;
+
+                coord = new Vector3Int(DoorX, y, z);
+                return true;
+            }
+        }
+
+        coord = default;
+        return false;
+    }
+
+    private bool IsDoorCandidate(int y, int z)
+    {
+        int zoneIndex = GetRelayID(y);
+        if (!allowDoorsInGoalZone && zoneSettings[zoneIndex].isGoalZone) return false;
+
+        // 端に寄りすぎると壁に食い込んで見えるため、左右から余白分だけ内側に寄せる。
+        int centerZ = maxStageWidthZ / 2;
+        int halfWidth = zoneSettings[zoneIndex].widthZ / 2;
+        int minZ = centerZ - halfWidth + doorEdgeMarginZ;
+        int maxZ = centerZ + halfWidth - doorEdgeMarginZ;
+        if (z < minZ || z > maxZ) return false;
+
+        return IsFullyBuried(DoorX, y, z);
     }
 
     /// <summary>

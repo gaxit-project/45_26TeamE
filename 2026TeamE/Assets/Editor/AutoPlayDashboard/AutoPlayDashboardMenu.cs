@@ -34,6 +34,8 @@ public static class AutoPlayDashboardMenu
     {
         public string generatedAt;
         public SessionData[] sessions;
+        public string[] routeNames;
+        public string[] routeTexts;
     }
 
     private static string LogsRoot => Path.Combine(Application.persistentDataPath, "Logs");
@@ -69,6 +71,12 @@ public static class AutoPlayDashboardMenu
                     .Select(ReadSession)
                     .ToArray(),
             };
+
+            // 人のプレイのお手本ルート（自動プレイがなぞったルートをマップに重ねるため）
+            string routesDir = Path.Combine(root, "Routes");
+            string[] routeFiles = Directory.Exists(routesDir) ? Directory.GetFiles(routesDir, "route_*.csv") : new string[0];
+            data.routeNames = routeFiles.Select(Path.GetFileName).ToArray();
+            data.routeTexts = routeFiles.Select(ReadShared).ToArray();
 
             File.WriteAllText(Path.Combine(root, "dashboard_data.js"),
                 "window.AUTOPLAY_DATA = " + JsonUtility.ToJson(data) + ";\n", new UTF8Encoding(false));

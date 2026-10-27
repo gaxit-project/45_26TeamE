@@ -90,6 +90,16 @@ public partial class VoxelTerrain : MonoBehaviour
     [Header("同期オプション")]
     public static int LastUsedSeed { get; private set; }
     public static bool ForceUseSeed = false;
+
+    /// <summary>
+    /// 次に作るステージのシードを指定する（1回だけ有効）。
+    /// 自動プレイが、人のプレイと同じ地形でルートをなぞるときに使う。
+    /// </summary>
+    public static void RequestSeedForNextStage(int seed)
+    {
+        LastUsedSeed = seed;
+        ForceUseSeed = true;
+    }
     [SerializeField] private bool useDeterministicSeed = true;
     [SerializeField] private int seed = 12345;
 

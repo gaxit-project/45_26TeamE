@@ -32,7 +32,9 @@ public class Chunk : MonoBehaviour
         meshRenderer.materials = new Material[] { dirtMat, oreMat, bedrockMat, stoneMat, hardRockMat, quartziteMat, boundaryMat };
     }
 
-    public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize)
+    /// <param name="meshMinZ">行ごとにメッシュにするZの最小値。null なら全幅。</param>
+    /// <param name="meshMaxZ">行ごとにメッシュにするZの最大値。null なら全幅。</param>
+    public void RebuildMesh(byte[,,] mapData, int startY, int endY, int thicknessX, int heightY, int widthZ, float blockSize, int[] meshMinZ = null, int[] meshMaxZ = null)
     {
         vertices.Clear();
         uvs.Clear();
@@ -48,7 +50,10 @@ public class Chunk : MonoBehaviour
         {
             for (int y = startY; y < endY; y++)
             {
-                for (int z = 0; z < widthZ; z++)
+                int minZ = meshMinZ != null ? meshMinZ[y] : 0;
+                int maxZ = meshMaxZ != null ? meshMaxZ[y] : widthZ - 1;
+
+                for (int z = minZ; z <= maxZ; z++)
                 {
                     if (mapData[x, y, z] != 0)
                         AddCube(x, y, z, mapData[x, y, z], mapData, thicknessX, heightY, widthZ, blockSize);
