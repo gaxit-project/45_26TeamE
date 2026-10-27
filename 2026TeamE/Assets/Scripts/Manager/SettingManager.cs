@@ -155,14 +155,16 @@ public class SettingManager : MonoBehaviour
 
         framerateDropdown.AddOptions(fpsOptions.Select(x => x.Label).ToList());
         int currentIndex = fpsOptions.FindIndex(x => x.Value == Application.targetFrameRate);
-        if(currentIndex < 0){
+        if(currentIndex < 0)
+        {
             currentIndex = fpsOptions.FindIndex(x => x.Value == defaultFrameRate);
         }
 
         framerateDropdown.SetValueWithoutNotify(Mathf.Max(currentIndex, 0));
     }
 
-    public void InitScreenModeSettings(){
+    public void InitScreenModeSettings()
+    {
         int index = (Screen.fullScreenMode == FullScreenMode.Windowed) ? 1 : 0;
         screenModeDropdown.SetValueWithoutNotify(index);
     }

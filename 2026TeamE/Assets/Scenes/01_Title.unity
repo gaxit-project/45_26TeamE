@@ -5500,7 +5500,7 @@ MonoBehaviour:
     Value: 240
   - Label: "\u7121\u5236\u9650"
     Value: -1
-  defaultFramerateIndex: 1
+  defaultFrameRate: 60
 --- !u!4 &1243058452
 Transform:
   m_ObjectHideFlags: 0
