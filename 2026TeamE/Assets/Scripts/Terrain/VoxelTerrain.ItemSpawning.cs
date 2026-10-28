@@ -165,6 +165,7 @@ public partial class VoxelTerrain
             int z = rnd.Next(area.MinZ, area.MaxZ + 1);
 
             if (!IsInside(x, y, z) || !IsDiggable(mapData[x, y, z])) continue;
+            if (!IsBuriedForItem(x, y, z)) continue;
 
             coord = new Vector3Int(x, y, z);
             if (accept(coord)) return true;
@@ -172,6 +173,33 @@ public partial class VoxelTerrain
 
         coord = default;
         return false;
+    }
+
+    /// <summary>
+    /// 宝箱・爆弾を置く位置の周囲が、空気に面していないか。
+    /// </summary>
+    /// <remarks>
+    /// 掘れるブロックかどうかだけで選ぶと、地表のすぐ下や開始地点の空洞の縁にも置かれ、
+    /// 地上と地面の境で最初から見えてしまう。扉の IsFullyBuried と同じ考え方で、
+    /// 上下左右 itemBurialMargin ブロック以内に空気が無い位置だけを候補にする。
+    /// 境界壁や岩盤は空気ではないので、壁際や底に置くことは妨げない。
+    /// </remarks>
+    private bool IsBuriedForItem(int x, int centerY, int centerZ)
+    {
+        int margin = Mathf.Max(0, itemBurialMargin);
+
+        for (int y = centerY - margin; y <= centerY + margin; y++)
+        {
+            if (y < 0 || y >= heightY) return false;
+
+            for (int z = centerZ - margin; z <= centerZ + margin; z++)
+            {
+                if (z < 0 || z >= maxStageWidthZ) return false;
+                if (mapData[x, y, z] == (byte)BlockType.Air) return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool IsFarFromAll(Vector3Int candidate, List<Vector3Int> others, float minDistance)

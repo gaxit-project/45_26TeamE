@@ -418,6 +418,9 @@ const EVENT_JA = {
   RouteFinished: "お手本ルートを最後までなぞった", RouteResult: "お手本ルートの結果",
   HumanModel: "人の流れ・操作の癖を学習", BotHabits: "Botの操作の癖",
   TesterName: "テスターの名前を設定", RecordsExported: "記録を書き出した",
+  WallClip: "ブロックにめり込んだ", WallClipResolved: "めり込みが解消", OutOfStage: "ステージの外に出た",
+  ValueAnomaly: "値の異常", ValueAnomalyResolved: "値が正常に戻った", MenuStuck: "画面から抜けられない",
+  FrameSpike: "重い瞬間", RunStart: "プレイ開始の状態", RunSummary: "1プレイのまとめ", ZoneReached: "新しい層に到着",
   BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
 };
 const KIND_JA = { LOG: "ログ", WARN: "警告", ERROR: "エラー", EXCEPTION: "例外", ASSERT: "アサート", SESSION: "記録" };
@@ -428,7 +431,7 @@ const ITEM_JA = { Jewelry: "宝石", BigJewelry: "大きな宝石", LeatherBag: 
 // 一覧の絞り込み用のグループ
 const GROUPS = [
   { id: "problem", label: "問題", test: e => e.severity >= 1 },
-  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved", "HumanModel", "BotHabits"].includes(e.name) },
+  { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved", "HumanModel", "BotHabits", "RunStart", "RunSummary", "ZoneReached", "WallClipResolved", "ValueAnomalyResolved"].includes(e.name) },
   { id: "item", label: "アイテム・お金", test: e => e.kind === "EVENT" && ["ItemCollected", "MoneyChanged", "TimeAdded", "Sonar"].includes(e.name) },
   { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip", "TesterName", "RecordsExported"].includes(e.name) },
   { id: "log", label: "通常ログ", test: e => e.kind === "LOG" },
@@ -437,11 +440,17 @@ const GROUPS = [
 // 問題の種類ごとの見た目（色だけに頼らず、形と文字でも区別する）
 const ISSUE_TYPES = {
   error:     { label: "エラー・例外", status: "critical", level: "重大", shape: "triangle", order: 0 },
-  stuck:     { label: "詰まり", status: "critical", level: "重大", shape: "cross", order: 1 },
-  nocontrol: { label: "操作できない状態", status: "serious", level: "重大", shape: "diamond", order: 2 },
-  lowfps:    { label: "FPS低下", status: "warning", level: "注意", shape: "square", order: 3 },
-  warn:      { label: "警告", status: "warning", level: "注意", shape: "circle", order: 4 },
+  clip:      { label: "めり込み・ステージ外", status: "critical", level: "重大", shape: "square", order: 1 },
+  anomaly:   { label: "値の異常", status: "critical", level: "重大", shape: "circle", order: 2 },
+  stuck:     { label: "詰まり", status: "critical", level: "重大", shape: "cross", order: 3 },
+  nocontrol: { label: "操作できない状態", status: "serious", level: "重大", shape: "diamond", order: 4 },
+  menustuck: { label: "画面から抜けられない", status: "serious", level: "重大", shape: "triangle", order: 5 },
+  lowfps:    { label: "FPS低下", status: "warning", level: "注意", shape: "square", order: 6 },
+  spike:     { label: "重い瞬間", status: "warning", level: "注意", shape: "diamond", order: 7 },
+  warn:      { label: "警告", status: "warning", level: "注意", shape: "circle", order: 8 },
 };
+const ANOMALY_JA = { money: "所持金がマイナス", timeLeft: "残り時間がおかしい", battery: "バッテリーがおかしい", position: "位置が壊れた値", velocity: "速度が壊れた・速すぎる" };
+const BLOCK_JA = { Dirt: "土", Ore: "鉱石", Stone: "石", HardRock: "硬い岩", Quartzite: "珪岩", Bedrock: "岩盤", Boundary: "外周の壁" };
 // FPS低下の基準。記録全体のFPSが低い（エディターや遅いPC）ときは、中央値の6割を基準にする
 const LOW_FPS = 30;
 function lowFpsFor(rows) {
@@ -537,7 +546,8 @@ function parseGameLog(text) {
     }
     e.severity = e.kind === "EXCEPTION" || e.kind === "ERROR" || e.kind === "ASSERT" ? 2
       : e.kind === "WARN" ? 1
-      : e.kind === "EVENT" && (e.name === "Stuck" || e.name === "NoControl") ? 2 : 0;
+      : e.kind === "EVENT" && ["Stuck", "NoControl", "WallClip", "OutOfStage", "ValueAnomaly", "MenuStuck"].includes(e.name) ? 2
+      : e.kind === "EVENT" && e.name === "FrameSpike" ? 1 : 0;
     e.index = entries.length;
     entries.push(e);
   }
@@ -641,6 +651,52 @@ function buildSession(raw) {
     const shot = (/screenshot=(\S+)/.exec(e.detail) || [])[1];
     issues.push({ type: "nocontrol", title: `${sec.toFixed(0)}秒以上 操作できないまま`, count: 1, pos: e.pos, t: e.t, entries: [e],
       shots: shot && shot !== "-" ? [shot] : [], scene: e.scene });
+  }
+
+  // めり込み・ステージ外: 近い場所（6以内）で起きたものは1つにまとめる
+  const clipClusters = [];
+  for (const e of entries.filter(e => e.kind === "EVENT" && (e.name === "WallClip" || e.name === "OutOfStage"))) {
+    const shot = (/screenshot=(\S+)/.exec(e.detail) || [])[1];
+    const title = e.name === "OutOfStage"
+      ? ((/where=(\w+)/.exec(e.detail) || [])[1] === "below" ? "ステージの底より下に落ちた" : "ステージの外・外周の壁の中に出た")
+      : `${BLOCK_JA[(/block=(\w+)/.exec(e.detail) || [])[1]] || "ブロック"}の中にめり込んだ`;
+    const near = e.pos && clipClusters.find(c => c.title === title && c.pos && Math.hypot(c.pos.y - e.pos.y, c.pos.z - e.pos.z) <= 6);
+    if (near) { near.entries.push(e); if (shot && shot !== "-") near.shots.push(shot); }
+    else clipClusters.push({ title, pos: e.pos, t: e.t, scene: e.scene, entries: [e], shots: shot && shot !== "-" ? [shot] : [] });
+  }
+  for (const c of clipClusters) issues.push({ type: "clip", title: c.entries.length > 1 ? `${c.title}（同じ場所で${c.entries.length}回）` : c.title, count: c.entries.length, pos: c.pos, t: c.t, entries: c.entries, shots: c.shots, scene: c.scene });
+
+  // 値の異常: 種類ごとにまとめる
+  const anomalyGroups = new Map();
+  for (const e of entries.filter(e => e.kind === "EVENT" && e.name === "ValueAnomaly")) {
+    const kind = (/kind=(\w+)/.exec(e.detail) || [])[1] || "?";
+    if (!anomalyGroups.has(kind)) anomalyGroups.set(kind, []);
+    anomalyGroups.get(kind).push(e);
+  }
+  for (const [kind, list] of anomalyGroups) {
+    const value = (/value=(\S+)/.exec(list[0].detail) || [])[1];
+    issues.push({ type: "anomaly", title: `${ANOMALY_JA[kind] || kind}（${value}）`, count: list.length, pos: list[0].pos, t: list[0].t, entries: list, scene: list[0].scene });
+  }
+
+  // 画面から抜けられない（自動プレイ中）
+  for (const e of entries.filter(e => e.kind === "EVENT" && e.name === "MenuStuck")) {
+    const shot = (/screenshot=(\S+)/.exec(e.detail) || [])[1];
+    const scene = (/scene=(\S+)/.exec(e.detail) || [])[1];
+    issues.push({ type: "menustuck", title: `${sceneJa(scene)}画面から ${(/for=(\d+)s/.exec(e.detail) || [])[1]}秒以上抜けられない`, count: 1, pos: null, t: e.t, entries: [e],
+      shots: shot && shot !== "-" ? [shot] : [], scene: e.scene });
+  }
+
+  // 重い瞬間: 原因の組み合わせごとにまとめる
+  const spikeGroups = new Map();
+  for (const e of entries.filter(e => e.kind === "EVENT" && e.name === "FrameSpike")) {
+    const key = spikeCause(e.detail);
+    if (!spikeGroups.has(key)) spikeGroups.set(key, []);
+    spikeGroups.get(key).push(e);
+  }
+  for (const [cause, list] of spikeGroups) {
+    const worst = list.reduce((a, b) => (+(/ms=(\d+)/.exec(b.detail) || [])[1] > +(/ms=(\d+)/.exec(a.detail) || [])[1] ? b : a));
+    const total = list.reduce((a, e) => a + 1 + +((/more=(\d+)/.exec(e.detail) || [])[1] || 0), 0);
+    issues.push({ type: "spike", title: `${cause}（最大 ${(/ms=(\d+)/.exec(worst.detail) || [])[1]}ms）`, count: total, pos: worst.pos, t: list[0].t, entries: list, scene: worst.scene });
   }
 
   // エラー・例外: 同じ文面ごとにまとめる。errors.log が空なら game.log から拾う
@@ -915,7 +971,8 @@ function shapeIcon(shape, size) {
 // ── まとめ
 
 function renderTiles(s) {
-  const stuck = s.count("stuck"), noc = s.count("nocontrol"), err = s.count("error"), low = s.issues.filter(i => i.type === "lowfps").length;
+  const stuck = s.count("stuck"), noc = s.count("nocontrol") + s.count("menustuck"), err = s.count("error"), low = s.issues.filter(i => i.type === "lowfps").length;
+  const clip = s.count("clip"), anomaly = s.count("anomaly"), spikes = s.count("spike");
   const errKinds = s.issues.filter(i => i.type === "error").length;
   const fpsRows = s.playRows;
   const avgFps = fpsRows.length ? fpsRows.reduce((a, r) => a + r.fps, 0) / fpsRows.length : null;
@@ -931,7 +988,10 @@ function renderTiles(s) {
 
   $("tiles").innerHTML = [
     tile("詰まり", stuck, "回", stuck ? "要確認リストで場所を確認" : "問題なし", okOr(stuck, "critical"), "stuck"),
-    tile("操作できない状態", noc, "回", noc ? "進行不能の可能性" : "問題なし", okOr(noc, "serious"), "nocontrol"),
+    tile("操作できない状態", noc, "回", noc ? "進行不能の可能性（画面から抜けられないも含む）" : "問題なし", okOr(noc, "serious"), "nocontrol"),
+    tile("めり込み・ステージ外", clip, "回", clip ? "壁抜け・すり抜けの可能性" : "問題なし", okOr(clip, "critical"), "clip"),
+    tile("値の異常", anomaly, "件", anomaly ? "お金・時間・位置などがおかしい" : "問題なし", okOr(anomaly, "critical"), "anomaly"),
+    tile("重い瞬間", spikes, "回", spikes ? "1フレーム100ms超え・原因は要確認リストで" : "問題なし", okOr(spikes, "warning"), "spike"),
     tile("エラー・例外", err, "件", err ? `${errKinds}種類` : "問題なし", okOr(err, "critical"), "error"),
     tile("FPS低下", low, "区間", `${s.low.value}fps未満が3秒以上${s.low.adjusted ? "（全体が低いため基準を下げています）" : ""}・操作中の平均 ${avgFps != null ? avgFps.toFixed(0) : "-"}fps／最低 ${minFps != null ? minFps.toFixed(0) : "-"}fps`, okOr(low, "warning"), "lowfps"),
     tile("カバー率", s.coverageRatio != null ? s.coverageRatio.toFixed(1) : "-", s.coverageRatio != null ? "%" : "", s.coverage.length ? "ステージのうち訪れた割合" : "自動プレイ停止時に記録", null, null),
@@ -945,7 +1005,7 @@ function renderTiles(s) {
       if (first) select({ issue: first });
     };
   }
-  const problems = stuck + noc + err;
+  const problems = stuck + noc + err + clip + anomaly;
   $("summarySub").innerHTML = problems
     ? `<span class="badge st-critical">${shapeIcon("triangle", 10)}要確認</span>　重大な問題が ${problems} 件あります。下の「要確認リスト」から確認してください。`
     : `<span class="badge st-good">${shapeIcon("circle", 10)}良好</span>　重大な問題は見つかりませんでした。`;
@@ -988,6 +1048,18 @@ function nearbyLog(s, t, highlight) {
   const from = Math.max(0, i - 8), to = Math.min(list.length, i + 9);
   return `<div class="loglines">` + list.slice(from, to).map(e =>
     `<div class="${highlight && highlight.includes(e) ? "hl" : ""}"><span class="k">${fmtTime(e.t)} ${esc(sceneJa(e.scene))}</span> ${esc(entryKind(e))} ${esc(entryText(e))}</div>`).join("") + `</div>`;
+}
+
+// 重いフレームの原因を、記録された状況から日本語にする
+function spikeCause(d) {
+  const causes = [];
+  if (+((/chunks=(\d+)/.exec(d) || [])[1] || 0) > 0) causes.push("地形の作り直し");
+  if (/gc=True/.test(d)) causes.push("メモリの掃除（GC）");
+  if (+((/sonar=(\d+)/.exec(d) || [])[1] || 0) > 0) causes.push("ソナー");
+  if (/dashing=True/.test(d)) causes.push("ダッシュ");
+  else if (/drilling=True/.test(d)) causes.push("掘削中");
+  if (/shop=True/.test(d)) causes.push("ショップ");
+  return causes.length ? causes.join("＋") + "のときに重い" : "原因不明の重い瞬間";
 }
 
 function entryKind(e) { return e.kind === "EVENT" ? (EVENT_JA[e.name] || e.name) : (KIND_JA[e.kind] || e.kind); }
@@ -1040,6 +1112,23 @@ function entryText(e) {
       if (/^none/.test(d)) return `学べる記録がまだ足りない（記録 ${g(/records=(\d+)/)}本）`;
       return `人のプレイ ${g(/runs=(\d+)/)}回分（${g(/samples=(\d+)/)}行）から学習`;
     case "BotHabits": return `${g(/runs=(\d+)/)}プレイ・${g(/seconds=(\d+)/)}秒分の操作を集計`;
+    case "WallClip": return `${BLOCK_JA[g(/block=(\w+)/)] || g(/block=(\w+)/)}の中に ${g(/for=([\d.]+)s/)}秒（深さ ${g(/depth=([-\d.]+)/)}${/dashing=True/.test(d) ? "・ダッシュ中" : ""}）`;
+    case "WallClipResolved": case "ValueAnomalyResolved": return g(/after=([\d.]+)s/) ? `${g(/after=([\d.]+)s/)}秒後` : (ANOMALY_JA[g(/kind=(\w+)/)] || "");
+    case "OutOfStage": return `${g(/where=(\w+)/) === "below" ? "ステージの底より下" : "ステージの外・外周の壁の中"}（深さ ${g(/depth=([-\d.]+)/)}）`;
+    case "ValueAnomaly": return `${ANOMALY_JA[g(/kind=(\w+)/)] || g(/kind=(\w+)/)}（${g(/value=(\S+)/)}）`;
+    case "MenuStuck": return `${sceneJa(g(/scene=(\S+)/))}画面に ${g(/for=(\d+)s/)}秒（時間の速さ ${g(/timeScale=([\d.]+)/)}${/loading=True/.test(d) ? "・読み込み中" : ""}）`;
+    case "FrameSpike": return `${g(/ms=(\d+)/)}ms・${spikeCause(d)}${+(g(/more=(\d+)/) || 0) ? `（ほか ${g(/more=(\d+)/)}回）` : ""}`;
+    case "ZoneReached": return `${g(/zone=(\d+)/)}層目（${Math.round(+g(/after=([\d.]+)s/))}秒で到着）`;
+    case "RunStart": {
+      const ups = (g(/upgrades=(\S+)/) || "").split(",").map(kv => kv.split(":")).filter(kv => kv.length === 2 && +kv[1] > 1)
+        .map(([k, v]) => `${UPGRADE_JA[k] || k}Lv${v}`);
+      return `強化 ${ups.length ? ups.join("・") : "なし"}・所持金 ${g(/money=(-?\d+)/)}・バッテリー ${g(/battery=([\d.]+)/)}・残り ${g(/timeLeft=([-\d.]+)/)}秒`;
+    }
+    case "RunSummary": {
+      const reason = { clear: "クリア", timeup: "時間切れ", scene: "途中で画面を移動", quit: "途中で終了" }[g(/reason=(\w+)/)] || g(/reason=(\w+)/);
+      const money = /money=(-?\d+)->(-?\d+)/.exec(d);
+      return `${reason}・${g(/seconds=(\d+)/)}秒・最大深度 ${g(/maxDepth=(\d+)/)}・${g(/zone=(\d+)/)}層目まで・扉 ${g(/doors=(\d+)/)}回・被弾 ${g(/damage=(\d+)/)}回・稼ぎ ${g(/earned=(-?\d+)/)}${money ? `（所持金 ${money[1]} → ${money[2]}）` : ""}${/bot=True/.test(d) ? "・Bot" : ""}`;
+    }
     case "StageSeed": return `シード ${g(/seed=(-?\d+)/)}`;
     case "RouteSaved": return `${g(/player=(\S+)/) ? g(/player=(\S+)/) + " さんのプレイ・" : ""}記録 ${g(/points=(\d+)/)}行${g(/doors=(\d+)/) ? `・扉 ${g(/doors=(\d+)/)}回` : ""}`;
     case "RoutesLoaded": {
@@ -1304,7 +1393,7 @@ function markerShape(T) {
 }
 
 function renderMapLegend(s, hasGrid) {
-  const types = ["stuck", "nocontrol", "error", "lowfps", "warn"];
+  const types = ["stuck", "clip", "anomaly", "nocontrol", "error", "lowfps", "spike", "warn"];
   let html = types.map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
   if (usedRoutes(s).length) {
     html += `<span><span class="sw" style="height:0;border-top:2px dashed var(--ink-2);border-radius:0"></span>お手本にした人のルート</span>`;
@@ -1462,7 +1551,7 @@ function renderTimeline(s) {
   $("timelineLegend").innerHTML = [["01_Title", "--scene-title"], ["02_Main", "--scene-main"], ["FinalResult", "--scene-result"]]
     .map(([n, v]) => `<span><span class="sw" style="background:var(${v})"></span>${sceneJa(n)}</span>`).join("")
     + `<span><span class="sw" style="height:3px;background:var(--line)"></span>FPS・深さ</span>`
-    + ["stuck", "nocontrol", "error", "lowfps"].map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
+    + ["stuck", "clip", "anomaly", "nocontrol", "menustuck", "error", "lowfps", "spike"].map(t => `<span><span class="st-${ISSUE_TYPES[t].status}">${shapeIcon(ISSUE_TYPES[t].shape, 12)}</span>${ISSUE_TYPES[t].label}</span>`).join("");
   updateTimelineSelection();
 }
 
@@ -1520,7 +1609,7 @@ function renderEvents(s) {
   const selEntries = state.selection?.issue?.entries || (state.selection?.entry ? [state.selection.entry] : []);
   $("eventsSub").textContent = `${list.length} 件${list.length > LIMIT ? `（先頭 ${LIMIT} 件を表示）` : ""}。行をクリックすると、その時刻の場所と前後のログを表示します。`;
   $("eventRows").innerHTML = shown.map(e => {
-    const st = e.severity === 2 ? (e.kind === "EVENT" && e.name === "NoControl" ? "serious" : "critical") : e.severity === 1 ? "warning" : null;
+    const st = e.severity === 2 ? (e.kind === "EVENT" && (e.name === "NoControl" || e.name === "MenuStuck") ? "serious" : "critical") : e.severity === 1 ? "warning" : null;
     return `<tr data-i="${e.index}" class="${selEntries.includes(e) ? "sel" : ""}">
       <td class="t num">${fmtTime(e.t)}</td>
       <td>${esc(sceneJa(e.scene))}</td>

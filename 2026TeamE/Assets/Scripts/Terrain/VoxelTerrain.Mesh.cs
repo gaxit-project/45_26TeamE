@@ -88,8 +88,12 @@ public partial class VoxelTerrain
         }
     }
 
+    /// <summary>直前のフレームでメッシュを作り直したチャンクの数。重いフレームの原因を調べるために記録する。</summary>
+    public int ChunksRebuiltLastFrame { get; private set; }
+
     private void LateUpdate()
     {
+        ChunksRebuiltLastFrame = chunksToUpdate.Count;
         if (chunksToUpdate.Count > 0)
         {
             foreach (int index in chunksToUpdate)

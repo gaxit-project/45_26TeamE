@@ -54,6 +54,21 @@ public static class GameLogger
     private static Vector3 currentPlayerPos;
     private static bool hasPlayer;
 
+    private static int screenshotCount;
+
+    /// <summary>
+    /// 今の画面をセッションフォルダに保存し、ファイル名を返す（ログに書く用）。保存できなければ "-"。
+    /// 実際の書き出しはそのフレームの描画後に行われる。
+    /// </summary>
+    public static string CaptureScreenshot(string label)
+    {
+        if (string.IsNullOrEmpty(SessionFolder)) return "-";
+        screenshotCount++;
+        string fileName = $"{label}_{screenshotCount:000}.png";
+        ScreenCapture.CaptureScreenshot(Path.Combine(SessionFolder, fileName));
+        return fileName;
+    }
+
     /// <summary>
     /// ゲーム終了でログファイルを閉じる直前に呼ばれる。最後にまとめを書きたいときに使う。
     /// （Application.quitting に直接登録すると、ファイルを閉じた後に呼ばれることがある）

@@ -114,6 +114,8 @@ public partial class VoxelTerrain : MonoBehaviour
     [SerializeField] private float bombWeightFalloff = 10f;
     [Tooltip("宝箱から爆弾を離す最低距離（ブロック数）。これより近い場所には爆弾は生成されません。")]
     [SerializeField] private float bombSafeDistanceFromTreasure = 2f;
+    [Tooltip("宝箱・爆弾の周囲に必要な土の厚み（ブロック数）。地表や空洞に面して最初から見えてしまうのを防ぎます。")]
+    [SerializeField] private int itemBurialMargin = 2;
 
     [Header("アイテムPrefab設定")]
     [SerializeField] private GameObject treasurePrefab;
