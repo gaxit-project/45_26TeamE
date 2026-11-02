@@ -63,15 +63,23 @@ public sealed class HumanRoute
     /// <summary>記録したすべての行。</summary>
     public List<HumanSample> Samples { get; } = new List<HumanSample>();
 
-    public static string Folder => Path.Combine(Application.persistentDataPath, "Logs", "Routes");
+    /// <summary>この PC が記録を保存するフォルダ。</summary>
+    public static string Folder => Path.Combine(LogLocation.Root, "Routes");
 
-    /// <summary>Routes フォルダの全ルートを読み込む。読めないファイルは飛ばす。</summary>
+    /// <summary>
+    /// 全ルートを読み込む。共有の保存先が設定されていれば、全 PC の Routes から読む。読めないファイルは飛ばす。
+    /// </summary>
     public static List<HumanRoute> LoadAll()
     {
         var routes = new List<HumanRoute>();
-        if (!Directory.Exists(Folder)) return routes;
+        var files = new List<string>();
+        foreach (var root in LogLocation.AllRoots())
+        {
+            string dir = Path.Combine(root.Value, "Routes");
+            if (Directory.Exists(dir)) files.AddRange(Directory.GetFiles(dir, "route_*.csv"));
+        }
 
-        foreach (string path in Directory.GetFiles(Folder, "route_*.csv"))
+        foreach (string path in files)
         {
             try
             {

@@ -421,7 +421,7 @@ const EVENT_JA = {
   WallClip: "ブロックにめり込んだ", WallClipResolved: "めり込みが解消", OutOfStage: "ステージの外に出た",
   ValueAnomaly: "値の異常", ValueAnomalyResolved: "値が正常に戻った", MenuStuck: "画面から抜けられない",
   FrameSpike: "重い瞬間", RunStart: "プレイ開始の状態", RunSummary: "1プレイのまとめ", ZoneReached: "新しい層に到着",
-  BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
+  BotAvoidQuit: "Botが終了ボタンを避けた", BotDoorTarget: "Botが扉を目指す", BotBlocked: "Botが掘れないブロックで引き返した", BotPressY: "BotがYボタンを押した", BotDoorGiveUp: "Botが扉を諦めた",
 };
 const KIND_JA = { LOG: "ログ", WARN: "警告", ERROR: "エラー", EXCEPTION: "例外", ASSERT: "アサート", SESSION: "記録" };
 const SCENE_JA = { "01_Title": "タイトル", "02_Main": "メイン", "FinalResult": "リザルト" };
@@ -433,7 +433,7 @@ const GROUPS = [
   { id: "problem", label: "問題", test: e => e.severity >= 1 },
   { id: "progress", label: "進行", test: e => e.kind === "EVENT" && ["SceneLoaded", "ControlEnabled", "DoorEnter", "GameClear", "TimeUp", "Damage", "Upgrade", "ReturnToTitle", "AutoPlayStart", "AutoPlayStop", "RunCoverage", "SessionCoverage", "CoverageStart", "StuckResolved", "NoControlResolved", "BotDoorTarget", "BotPressY", "BotDoorGiveUp", "BotBlocked", "RouteStart", "RouteFinished", "RouteResult", "RouteSaved", "HumanModel", "BotHabits", "RunStart", "RunSummary", "ZoneReached", "WallClipResolved", "ValueAnomalyResolved"].includes(e.name) },
   { id: "item", label: "アイテム・お金", test: e => e.kind === "EVENT" && ["ItemCollected", "MoneyChanged", "TimeAdded", "Sonar"].includes(e.name) },
-  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip", "TesterName", "RecordsExported"].includes(e.name) },
+  { id: "system", label: "設定・セーブ", test: e => e.kind === "EVENT" && ["Saved", "SettingChanged", "Pause", "Resume", "QuitBlocked", "BotAvoidQuit", "FocusChanged", "StageSeed", "RoutesLoaded", "RouteSkip", "TesterName", "RecordsExported"].includes(e.name) },
   { id: "log", label: "通常ログ", test: e => e.kind === "LOG" },
 ];
 
@@ -768,7 +768,7 @@ function buildSession(raw) {
   const latestRun = runs.length ? runs[runs.length - 1] : null;
 
   return {
-    name: raw.name, label: sessionLabel(raw.name), env: log.env, version: log.env.version || "-",
+    name: raw.name, pc: raw.pc || "", label: sessionLabel(raw.name), env: log.env, version: log.env.version || "-",
     entries, errors, tele, coverage, issues, duration, playCount, maxDepth: maxDepthTele, low, playRows: play,
     coverageRatio: cov && cov.ratio != null ? cov.ratio : latestRun ? latestRun.ratio : null,
     autoplay: entries.some(e => e.kind === "EVENT" && e.name === "AutoPlayStart"),
@@ -800,19 +800,23 @@ function setRoutes(list) {
 function loadFromEmbedded(data) {
   setRoutes((data.routeNames || []).map((n, i) => ({ name: n, text: data.routeTexts[i] })));
   state.sessions = data.sessions.map(s => buildSession({
-    name: s.name, gameLog: s.gameLog, errorLog: s.errorLog, telemetry: s.telemetry,
+    name: s.name, pc: s.pc, gameLog: s.gameLog, errorLog: s.errorLog, telemetry: s.telemetry,
     coverage: (s.coverageNames || []).map((n, i) => ({ name: n, text: s.coverageTexts[i] })),
-    shotUrl: n => encodeURIComponent(s.name) + "/" + encodeURIComponent(n),
+    // 共有の保存先では「PC名/セッション」の下にある
+    shotUrl: n => (s.path || s.name).split("/").map(encodeURIComponent).join("/") + "/" + encodeURIComponent(n),
   }));
 }
 
 async function loadFromFiles(fileList) {
   const bySession = new Map();
+  const pcOf = new Map();
   for (const f of fileList) {
     const parts = (f.webkitRelativePath || f.name).split("/");
     const folder = parts.length >= 2 ? parts[parts.length - 2] : "セッション";
     if (!bySession.has(folder)) bySession.set(folder, {});
     bySession.get(folder)[parts[parts.length - 1]] = f;
+    // 共有の保存先を選んだときは「保存先/PC名/セッション/ファイル」になっている
+    if (parts.length >= 4) pcOf.set(folder, parts[parts.length - 3]);
   }
   const routes = [];
   for (const [n, f] of Object.entries(bySession.get("Routes") || {})) {
@@ -827,7 +831,7 @@ async function loadFromFiles(fileList) {
     for (const n of Object.keys(files).filter(n => /^coverage_.*\.txt$/.test(n))) coverage.push({ name: n, text: await files[n].text() });
     const urls = {};
     sessions.push(buildSession({
-      name, gameLog: await text("game.log"), errorLog: await text("errors.log"), telemetry: await text("telemetry.csv"), coverage,
+      name, pc: pcOf.get(name), gameLog: await text("game.log"), errorLog: await text("errors.log"), telemetry: await text("telemetry.csv"), coverage,
       shotUrl: n => files[n] ? (urls[n] ||= URL.createObjectURL(files[n])) : "",
     }));
   }
@@ -838,7 +842,9 @@ async function loadFromFiles(fileList) {
 function start() {
   state.sessions.sort((a, b) => b.name.localeCompare(a.name));
   const sel = $("sessionSelect");
-  sel.innerHTML = state.sessions.map((s, i) => `<option value="${i}">${esc(s.label)}${s.autoplay ? "（自動プレイ）" : s.entries.some(e => e.name === "RouteSaved") ? "（人のプレイ・お手本あり）" : ""}</option>`).join("");
+  // 複数の PC のログがあるときは、どの PC のものかも出す
+  const multiPc = new Set(state.sessions.map(s => s.pc).filter(Boolean)).size > 1;
+  sel.innerHTML = state.sessions.map((s, i) => `<option value="${i}">${esc(s.label)}${multiPc && s.pc ? `［${esc(s.pc)}］` : ""}${s.autoplay ? "（自動プレイ）" : s.entries.some(e => e.name === "RouteSaved") ? "（人のプレイ・お手本あり）" : ""}</option>`).join("");
   sel.onchange = () => openSession(state.sessions[+sel.value]);
   $("loader").hidden = true;
   $("header").hidden = false;
@@ -893,7 +899,7 @@ function openSession(s) {
 
 function renderAll() {
   const s = state.current;
-  $("sessionMeta").textContent = `バージョン ${s.version} ・ 記録時間 ${fmtDuration(s.duration)}${s.env.platform ? " ・ " + (s.env.platform === "WindowsEditor" ? "Unityエディター" : s.env.platform) : ""}`;
+  $("sessionMeta").textContent = `${s.pc ? `PC ${s.pc} ・ ` : ""}バージョン ${s.version} ・ 記録時間 ${fmtDuration(s.duration)}${s.env.platform ? " ・ " + (s.env.platform === "WindowsEditor" ? "Unityエディター" : s.env.platform) : ""}`;
   renderTiles(s);
   renderIssues(s);
   renderMap(s);
@@ -1145,6 +1151,7 @@ function entryText(e) {
       const m = /progress=(\d+)\/(\d+) \((\d+)%\)/.exec(d);
       return `${m ? `${m[3]}% までなぞった（${m[1]} / ${m[2]}）` : d}・寄り道 ${g(/detours=(\d+)/)}回・飛ばし ${g(/skips=(\d+)/)}回`;
     }
+    case "BotAvoidQuit": return `${sceneJa(g(/scene=(\S+)/))}画面の「${g(/button=(\S+)/)}」を押さずにカーソルを移動（累計 ${g(/count=(\d+)/)}回）`;
     case "FocusChanged": return /focused=True/.test(d) ? "ゲームのウィンドウに戻った" : "他のウィンドウに切り替えた（ゲームは動き続ける）";
     case "BotPressY": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}`;
     case "BotDoorGiveUp": return `扉 ${fmtPos(parseVec(g(/door=(\([^)]*\))/)))}（${g(/reason=(\w+)/) === "stuck" ? "途中で詰まった" : "時間内にたどり着けなかった"}）`;

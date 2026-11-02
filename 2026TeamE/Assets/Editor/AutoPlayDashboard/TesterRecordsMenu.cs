@@ -19,7 +19,7 @@ public static class TesterRecordsMenu
     private const string MenuRoot = "Tools/自動プレイ/";
     private const string Title = "テスターの記録";
 
-    private static string LogsRoot => Path.Combine(Application.persistentDataPath, "Logs");
+    private static string LogsRoot => LogLocation.Root;
 
     [MenuItem(MenuRoot + "テスター版をビルド", priority = 20)]
     private static void BuildTesterVersion()

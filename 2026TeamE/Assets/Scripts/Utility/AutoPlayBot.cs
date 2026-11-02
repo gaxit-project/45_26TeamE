@@ -6,7 +6,9 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// デバッグ用の自動プレイ。仮想ゲームパッドを1台追加し、そこへランダムな入力を流してゲームを動かし続ける。
@@ -228,6 +230,10 @@ public sealed class AutoPlayBot : MonoBehaviour
     private float reverseUntil;
     private float radarSuppressedUntil;
     private float nextBlockedLogTime;
+
+    // 終了ボタンを避けた回数
+    private int quitAvoided;
+    private float nextQuitLogTime;
     private int blockedCount;
 
     // テスター版（TESTER_BUILD）では自動プレイを起動しない。F9 も -autoplay も効かず、人のプレイだけを記録する
@@ -495,10 +501,56 @@ public sealed class AutoPlayBot : MonoBehaviour
         {
             tapCancel = true;
         }
+        else if (IsQuitButtonSelected(out string quitButton))
+        {
+            // 終了ボタンは押さずに、カーソルを別のボタンへ動かす
+            stick = Chance(0.5f) ? Vector2.up : Vector2.down;
+            quitAvoided++;
+            if (Time.unscaledTime >= nextQuitLogTime)
+            {
+                nextQuitLogTime = Time.unscaledTime + 10f;
+                GameLogger.Event("BotAvoidQuit", $"button={quitButton} scene={SceneManager.GetActiveScene().name} count={quitAvoided}");
+            }
+        }
         else
         {
             tapSubmit = true;
         }
+    }
+
+    /// <summary>
+    /// 選ばれているボタンが「ゲームを終了する」ボタンか。
+    /// 押すと自動プレイが止まってしまう（エディターではプレイモードが終わる）ので、決定を押さないために使う。
+    /// 呼び出すメソッド名に Quit が入っているか、ボタンの名前・文字に QUIT / EXIT / 終了 が入っていれば終了ボタンとみなす。
+    /// </summary>
+    private static bool IsQuitButtonSelected(out string buttonName)
+    {
+        buttonName = null;
+        GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        if (selected == null) return false;
+
+        var button = selected.GetComponent<Button>();
+        if (button != null)
+        {
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                string method = button.onClick.GetPersistentMethodName(i);
+                if (!string.IsNullOrEmpty(method) && method.IndexOf("Quit", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    buttonName = selected.name;
+                    return true;
+                }
+            }
+        }
+
+        var label = selected.GetComponentInChildren<TMPro.TMP_Text>();
+        string text = (selected.name + " " + (label != null ? label.text : "")).ToUpperInvariant();
+        if (text.Contains("QUIT") || text.Contains("EXIT") || text.Contains("終了"))
+        {
+            buttonName = selected.name;
+            return true;
+        }
+        return false;
     }
 
     private void SendState()

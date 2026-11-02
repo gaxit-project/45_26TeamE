@@ -12,6 +12,7 @@ using UnityEngine;
 /// Logs フォルダの全セッションを読み込んで dashboard_data.js にまとめ、
 /// dashboard.html と一緒に Logs フォルダへ置いてブラウザで開く。
 /// （ブラウザはローカルのファイルを勝手に読めないため、データを JS として横に置いて読ませる）
+/// 共有の保存先（LogLocation）を設定していれば、全 PC 分をまとめて読み、共有の保存先に置く。
 /// </summary>
 public static class AutoPlayDashboardMenu
 {
@@ -22,6 +23,10 @@ public static class AutoPlayDashboardMenu
     private class SessionData
     {
         public string name;
+        /// <summary>どの PC のログか。</summary>
+        public string pc;
+        /// <summary>dashboard.html から見たセッションフォルダの場所（スクショの読み込みに使う）。</summary>
+        public string path;
         public string gameLog;
         public string errorLog;
         public string telemetry;
@@ -38,12 +43,12 @@ public static class AutoPlayDashboardMenu
         public string[] routeTexts;
     }
 
-    private static string LogsRoot => Path.Combine(Application.persistentDataPath, "Logs");
-
     [MenuItem(MenuRoot + "ダッシュボードを開く", priority = 1)]
     private static void OpenDashboard()
     {
-        string root = LogsRoot;
+        // 共有の保存先があれば全 PC 分を集めてそこに置く。無ければこの PC の Logs に置く
+        string shared = LogLocation.SharedBase;
+        string root = shared ?? LogLocation.DefaultRoot;
         if (!Directory.Exists(root))
         {
             EditorUtility.DisplayDialog("自動プレイ ダッシュボード",
@@ -62,19 +67,29 @@ public static class AutoPlayDashboardMenu
         {
             EditorUtility.DisplayProgressBar("自動プレイ ダッシュボード", "ログを集めています…", 0.3f);
 
+            var sessions = new List<SessionData>();
+            var routeFileList = new List<string>();
+            foreach (var pcRoot in LogLocation.AllRoots())
+            {
+                if (!Directory.Exists(pcRoot.Value)) continue;
+                foreach (string dir in Directory.GetDirectories(pcRoot.Value))
+                {
+                    if (!File.Exists(Path.Combine(dir, "game.log"))) continue;
+                    string relative = shared != null ? $"{pcRoot.Key}/{Path.GetFileName(dir)}" : Path.GetFileName(dir);
+                    sessions.Add(ReadSession(dir, pcRoot.Key, relative));
+                }
+
+                // 人のプレイのお手本ルート（自動プレイがなぞったルートをマップに重ねるため）
+                string routesDir = Path.Combine(pcRoot.Value, "Routes");
+                if (Directory.Exists(routesDir)) routeFileList.AddRange(Directory.GetFiles(routesDir, "route_*.csv"));
+            }
+
             var data = new DashboardData
             {
                 generatedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                sessions = Directory.GetDirectories(root)
-                    .Where(dir => File.Exists(Path.Combine(dir, "game.log")))
-                    .OrderByDescending(dir => Path.GetFileName(dir), StringComparer.Ordinal)
-                    .Select(ReadSession)
-                    .ToArray(),
+                sessions = sessions.OrderByDescending(x => x.name, StringComparer.Ordinal).ToArray(),
             };
-
-            // 人のプレイのお手本ルート（自動プレイがなぞったルートをマップに重ねるため）
-            string routesDir = Path.Combine(root, "Routes");
-            string[] routeFiles = Directory.Exists(routesDir) ? Directory.GetFiles(routesDir, "route_*.csv") : new string[0];
+            string[] routeFiles = routeFileList.ToArray();
             data.routeNames = routeFiles.Select(Path.GetFileName).ToArray();
             data.routeTexts = routeFiles.Select(ReadShared).ToArray();
 
@@ -98,16 +113,67 @@ public static class AutoPlayDashboardMenu
     [MenuItem(MenuRoot + "ログフォルダを開く", priority = 2)]
     private static void RevealLogs()
     {
-        Directory.CreateDirectory(LogsRoot);
-        EditorUtility.RevealInFinder(LogsRoot + Path.DirectorySeparatorChar);
+        string root = LogLocation.Root;
+        Directory.CreateDirectory(root);
+        EditorUtility.RevealInFinder(root + Path.DirectorySeparatorChar);
     }
 
-    private static SessionData ReadSession(string dir)
+    [MenuItem(MenuRoot + "ログの保存先を設定…", priority = 3)]
+    private static void SetSharedLocation()
+    {
+        string current = LogLocation.SharedBase;
+        string oneDrive = Environment.GetEnvironmentVariable("OneDrive");
+        string folder = EditorUtility.OpenFolderPanel("ログの保存先（OneDrive などの同期フォルダ）", current ?? oneDrive ?? "", "");
+        if (string.IsNullOrEmpty(folder)) return;
+
+        folder = folder.Replace('/', Path.DirectorySeparatorChar);
+        LogLocation.SaveSharedBase(folder);
+        string pcFolder = Path.Combine(folder, LogLocation.PcName);
+        Directory.CreateDirectory(pcFolder);
+
+        bool copy = Directory.Exists(LogLocation.DefaultRoot) && EditorUtility.DisplayDialog("ログの保存先",
+            $"これからのログは次のフォルダに保存します（エディターも、この PC のビルドも同じです）。\n\n{pcFolder}\n\n" +
+            "これまでこの PC に保存したログと記録も、そこへコピーしますか？", "コピーする", "コピーしない");
+        int copied = copy ? CopyMissing(LogLocation.DefaultRoot, pcFolder) : 0;
+
+        EditorUtility.DisplayDialog("ログの保存先",
+            $"保存先を設定しました。\n{pcFolder}" + (copy ? $"\n\nこれまでのファイルを {copied} 件コピーしました。" : "") +
+            "\n\nほかの PC も同じ同期フォルダを設定すると、PC ごとのフォルダに分かれて集まります。" +
+            "\nUnity の無い PC では、ビルドの exe と同じフォルダに log_location.txt（1行目に保存先のフォルダ）を置くか、" +
+            "起動オプション -logdir \"フォルダ\" で指定できます。", "OK");
+    }
+
+    [MenuItem(MenuRoot + "ログの保存先を元に戻す", priority = 4)]
+    private static void ResetSharedLocation()
+    {
+        LogLocation.ClearSharedBase();
+        EditorUtility.DisplayDialog("ログの保存先",
+            $"この PC の中のいつもの場所に戻しました。\n{LogLocation.DefaultRoot}\n\n同期フォルダに保存したログはそのまま残っています。", "OK");
+    }
+
+    /// <summary>コピー先に無いファイルだけをコピーする。コピーした数を返す。</summary>
+    private static int CopyMissing(string from, string to)
+    {
+        int count = 0;
+        foreach (string file in Directory.GetFiles(from, "*", SearchOption.AllDirectories))
+        {
+            string target = Path.Combine(to, file.Substring(from.Length).TrimStart(Path.DirectorySeparatorChar));
+            if (File.Exists(target) || Path.GetFileName(file).StartsWith("dashboard")) continue;
+            Directory.CreateDirectory(Path.GetDirectoryName(target));
+            File.Copy(file, target);
+            count++;
+        }
+        return count;
+    }
+
+    private static SessionData ReadSession(string dir, string pc, string relativePath)
     {
         string[] coverageFiles = Directory.GetFiles(dir, "coverage_*.txt");
         return new SessionData
         {
             name = Path.GetFileName(dir),
+            pc = pc,
+            path = relativePath,
             gameLog = ReadShared(Path.Combine(dir, "game.log")),
             errorLog = ReadShared(Path.Combine(dir, "errors.log")),
             telemetry = ReadShared(Path.Combine(dir, "telemetry.csv")),

@@ -236,7 +236,7 @@ public sealed class TesterPanel : MonoBehaviour
 /// </summary>
 public static class RecordExporter
 {
-    private static string LogsRoot => Path.Combine(Application.persistentDataPath, "Logs");
+    private static string LogsRoot => LogLocation.Root;
 
     public static string ExportToDesktop()
     {

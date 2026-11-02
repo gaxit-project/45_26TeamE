@@ -81,23 +81,19 @@ public static class GameLogger
         // エディターでドメインリロードを切っている場合に二重に開かないようにする
         if (gameLog != null) return;
 
-        try
+        // 共有の保存先（同期フォルダなど）が設定されていればそこへ。書けなければ PC の中のいつもの場所へ戻す
+        string root = LogLocation.Root;
+        string fallbackReason = null;
+        if (!TryOpenSession(root, out string error) && root != LogLocation.DefaultRoot)
         {
-            string root = Path.Combine(Application.persistentDataPath, "Logs");
-            DeleteOldSessions(root);
-
-            SessionFolder = Path.Combine(root, DateTime.Now.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture));
-            Directory.CreateDirectory(SessionFolder);
-
-            gameLog = OpenWriter("game.log");
-            errorLog = OpenWriter("errors.log");
-            telemetry = OpenWriter("telemetry.csv");
+            fallbackReason = error;
+            root = LogLocation.DefaultRoot;
+            TryOpenSession(root, out error);
         }
-        catch (Exception e)
+        if (gameLog == null)
         {
             // ログが書けなくてもゲームは止めない
-            Debug.LogWarning($"[GameLogger] ログフォルダを作れなかったため、ファイルへのログ出力を無効にします。{e.Message}");
-            CloseAll();
+            Debug.LogWarning($"[GameLogger] ログフォルダを作れなかったため、ファイルへのログ出力を無効にします。{error}");
             return;
         }
 
@@ -105,6 +101,8 @@ public static class GameLogger
         currentScene = SceneManager.GetActiveScene().name;
 
         WriteSessionHeader();
+        Write(gameLog, $"  logRoot={root} pc={LogLocation.PcName}");
+        if (fallbackReason != null) Write(gameLog, $"WARN 共有の保存先に書けなかったため、この PC の中に保存しています。{fallbackReason}");
         telemetry.WriteLine("time_s,frame,scene,fps,worst_frame_ms,pos_x,pos_y,pos_z,player_state,battery,money,time_left,mem_mb");
 
         Application.logMessageReceivedThreaded += OnUnityLog;
@@ -117,6 +115,29 @@ public static class GameLogger
         go.AddComponent<Sampler>();
 
         Debug.Log($"[GameLogger] ログ出力先: {SessionFolder}");
+    }
+
+    private static bool TryOpenSession(string root, out string error)
+    {
+        try
+        {
+            DeleteOldSessions(root);
+            SessionFolder = Path.Combine(root, DateTime.Now.ToString("yyyy-MM-dd_HHmmss", CultureInfo.InvariantCulture));
+            Directory.CreateDirectory(SessionFolder);
+
+            gameLog = OpenWriter("game.log");
+            errorLog = OpenWriter("errors.log");
+            telemetry = OpenWriter("telemetry.csv");
+            error = null;
+            return true;
+        }
+        catch (Exception e)
+        {
+            CloseAll();
+            SessionFolder = null;
+            error = e.Message;
+            return false;
+        }
     }
 
     private static StreamWriter OpenWriter(string fileName)
