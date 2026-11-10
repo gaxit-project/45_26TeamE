@@ -313,6 +313,10 @@ public class BombReaction : BuriedItemBase
                 {
                     PlayerController pc = obj.GetComponent<PlayerController>();
 
+                    // 被弾中・クリア後・タイムアップ後はペナルティを与えない。
+                    // 連鎖爆発で何度も巻き込まれても、被弾演出と同じく1回分だけにするため。
+                    if (pc == null || pc.currentState != PlayerController.PlayerState.Normal) continue;
+
                     if (MoneyManager.Instance != null)
                     {
                         int currentMoney = MoneyManager.Instance.GetMoneyOnHand();
@@ -329,10 +333,7 @@ public class BombReaction : BuriedItemBase
                         TimerManager.Instance.AddTime(-10f);
                     }
 
-                    if (pc != null)
-                    {
-                        pc.TakeDamageWithMoney(moneyIconSprite);
-                    }
+                    pc.TakeDamageWithMoney(moneyIconSprite);
                 }
             }
         }

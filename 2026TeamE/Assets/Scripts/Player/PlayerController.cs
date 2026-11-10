@@ -698,6 +698,10 @@ public class PlayerController : MonoBehaviour
         }
 
         SetRenderersEnabled(true); // 確実に表示状態に戻す
+
+        // 被弾中にクリア・タイムアップになった場合は、その状態と演出を上書きしない
+        if (currentState != PlayerState.TakingDamage) yield break;
+
         animator.Play("Walk Tree"); // 入力はリセットされているので、Walk Tree内の「待機アニメーション」が再生されます
         currentState = PlayerState.Normal;
     }

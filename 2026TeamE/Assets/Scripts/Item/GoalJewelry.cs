@@ -20,6 +20,10 @@ public class GoalJewelry : MonoBehaviour
 
         if (isPlayer && !isProcessed)
         {
+            // タイムアップ後（操作不能の間に落下して触れた場合など）はクリア扱いにしない。
+            PlayerController timedOutPlayer = other.GetComponentInParent<PlayerController>();
+            if (timedOutPlayer != null && timedOutPlayer.currentState == PlayerController.PlayerState.GameOver) return;
+
             isProcessed = true;
             GameLogger.Event("GameClear", TimerManager.Instance != null ? $"timeLeft={TimerManager.Instance.TotalTime:F1}" : null);
 
