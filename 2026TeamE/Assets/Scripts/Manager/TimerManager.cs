@@ -232,8 +232,9 @@ public class TimerManager : MonoBehaviour
     {
         if (isTimerEnded) return;
 
+        // 残り時間を増減するだけで、タイマーの開始・再開はしない。
+        // ここで動かすと、ゴール後に止めたタイマーが爆発や酸素ボンベで再び動き出してしまう。
         totalTime += seconds;
-        isTimerRunning = true;
         GameLogger.Event("TimeAdded", $"{seconds:+0.0;-0.0}s -> {totalTime:F1}");
     }
 
