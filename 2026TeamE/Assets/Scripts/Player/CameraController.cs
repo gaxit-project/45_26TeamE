@@ -77,7 +77,7 @@ public class CameraController : MonoBehaviour
     {
         if (player == null)
         {
-            GameObject found = GameObject.FindWithTag("Player");
+            GameObject found = PlayerController.FindPlayerObject();
             if (found != null) player = found.transform;
         }
         if (player == null) return;

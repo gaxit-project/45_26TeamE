@@ -54,7 +54,6 @@ public class DoorBehaviour : BuriedItemBase
     [SerializeField] private bool resetTimerOnEnter = true;
 
     [Header("判定")]
-    [SerializeField] private string playerTag = "Player";
     [Tooltip("扉に入れる距離（ワールド単位）。横から見るゲームなので奥行き（X）は無視して判定します。")]
     [SerializeField] private float enterRadius = 2.5f;
 
@@ -136,20 +135,13 @@ public class DoorBehaviour : BuriedItemBase
     {
         if (cachedPlayer == null)
         {
-            if (PlayerController.Instance != null)
+            GameObject playerObject = PlayerController.FindPlayerObject();
+            if (playerObject == null)
             {
-                cachedPlayer = PlayerController.Instance.transform;
+                SetPlayerInRange(false);
+                return;
             }
-            else
-            {
-                GameObject playerObject = GameObject.FindWithTag(playerTag);
-                if (playerObject == null)
-                {
-                    SetPlayerInRange(false);
-                    return;
-                }
-                cachedPlayer = playerObject.transform;
-            }
+            cachedPlayer = playerObject.transform;
         }
 
         // 横から見るゲームなので、奥行き（X）の差は無視してYZ平面で測る。

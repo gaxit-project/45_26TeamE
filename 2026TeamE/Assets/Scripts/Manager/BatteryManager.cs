@@ -43,6 +43,8 @@ public class BatteryManager : MonoBehaviour
 
     void Update()
     {
+        if (playerController == null) return;
+
         CheckBatteryDecrease();
 
         int targetIndex = GetTargetIndex();
@@ -95,14 +97,27 @@ public class BatteryManager : MonoBehaviour
         previousBattery = playerController.currentBattery;
     }
 
+    /// <summary>ゲージの本数。UIに並べた電池の数に合わせる。</summary>
+    private int SegmentCount => Mathf.Min(battery.Count, batteryImages.Count);
+
+    /// <summary>
+    /// ゲージ1本あたりのバッテリー量。
+    /// 以前は最大値1000・5本を前提に数値を直接書いていたため、最大値を変えると表示がずれていた。
+    /// </summary>
+    private float SegmentSize => SegmentCount > 0 ? playerController.MaxBattery / SegmentCount : 0f;
+
+    /// <summary>いま減っている途中のゲージの番号。左（満タン側）から0始まり。空なら-1。</summary>
     private int GetTargetIndex()
     {
-        if (playerController.currentBattery > 800) return 0;
-        if (playerController.currentBattery > 600) return 1;
-        if (playerController.currentBattery > 400) return 2;
-        if (playerController.currentBattery > 200) return 3;
-        if (playerController.currentBattery > 0) return 4;
-        return -1; 
+        float currentBat = playerController.currentBattery;
+        if (currentBat <= 0f || SegmentCount == 0) return -1;
+
+        float maxBat = playerController.MaxBattery;
+        for (int i = 0; i < SegmentCount; i++)
+        {
+            if (currentBat > maxBat - (i + 1) * SegmentSize) return i;
+        }
+        return SegmentCount - 1;
     }
 
     private void HandleBlinking(int targetIndex)
@@ -121,7 +136,7 @@ public class BatteryManager : MonoBehaviour
 
     private void UpdateActiveStates()
     {
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < SegmentCount; i++)
         {
             if (batteryImages[i] != null && battery[i] != null)
             {
@@ -143,13 +158,15 @@ public class BatteryManager : MonoBehaviour
     private void UpdateFillAmounts()
     {
         float currentBat = playerController.currentBattery;
+        float maxBat = playerController.MaxBattery;
+        float segmentSize = SegmentSize;
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < SegmentCount; i++)
         {
             if (batteryImages[i] == null) continue;
 
-            float segmentMin = 1000f - (i + 1) * 200f; 
-            float segmentMax = 1000f - i * 200f;       
+            float segmentMin = maxBat - (i + 1) * segmentSize;
+            float segmentMax = maxBat - i * segmentSize;
 
             float fill = 0f;
             if (currentBat >= segmentMax)
@@ -163,7 +180,7 @@ public class BatteryManager : MonoBehaviour
             else
             {
 
-                fill = (currentBat - segmentMin) / 200f;
+                fill = (currentBat - segmentMin) / segmentSize;
             }
 
             if (!Mathf.Approximately(batteryImages[i].fillAmount, fill))

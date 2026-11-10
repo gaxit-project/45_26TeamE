@@ -108,6 +108,8 @@ public class SelectPoint : MonoBehaviour
 
             if (shop != null)
             {
+                // その場でショップを開くのでシーンの読み込み直しは起きず、扉の位置へ戻す必要もない
+                VoxelTerrain.Instance.CancelDoorReturn();
                 shop.OpenShop();
             }
             else

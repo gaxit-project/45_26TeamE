@@ -108,7 +108,7 @@ public partial class VoxelTerrain
 
     private void ClearBlocksAroundPlayer()
     {
-        GameObject player = GameObject.FindWithTag("Player");
+        GameObject player = PlayerController.FindPlayerObject();
         if (player == null) return;
 
         ClearBlocksAroundPoint(player.transform.position, PlayerSpawnClearRadius);

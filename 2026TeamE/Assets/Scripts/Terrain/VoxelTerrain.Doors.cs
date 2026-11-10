@@ -303,6 +303,16 @@ public partial class VoxelTerrain
     }
 
     /// <summary>
+    /// 記録した復帰位置を取り消す。
+    /// ショップをメインシーン内で開いた場合はシーンを読み込み直さないため、
+    /// 残しておくと、後でメインシーンを読み込み直したときに古い扉の位置へ飛ばされる。
+    /// </summary>
+    public void CancelDoorReturn()
+    {
+        HasPendingDoorReturn = false;
+    }
+
+    /// <summary>
     /// メインシーンに戻ってきたとき、入った扉の位置までプレイヤーを戻す。
     /// 扉は壊れているので、同じ扉で再び画面移行することはない。
     /// </summary>
@@ -311,7 +321,7 @@ public partial class VoxelTerrain
         if (!HasPendingDoorReturn) return;
         HasPendingDoorReturn = false;
 
-        GameObject player = GameObject.FindWithTag("Player");
+        GameObject player = PlayerController.FindPlayerObject();
         if (player == null) return;
 
         Vector3 worldPos = transform.TransformPoint(doorReturnLocalPosition);

@@ -7,7 +7,7 @@ public class PlayerSpawnHandler : MonoBehaviour
     {
         yield return null;
 
-        GameObject player = GameObject.FindWithTag("Player");
+        GameObject player = PlayerController.FindPlayerObject();
         if (player == null) yield break;
 
         if (CheckpointManager.Instance != null && CheckpointManager.Instance.HasCheckpoint())

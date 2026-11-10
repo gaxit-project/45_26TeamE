@@ -386,7 +386,7 @@ public class ShoppingManager : MonoBehaviour
 
         isShopOpen = true;
 
-        SoundManager.Instance.PlayBGM("room2");
+        SoundManager.Instance?.PlayBGM("room2");
 
         if (shopPanelRoot != null)
         {
@@ -469,7 +469,7 @@ public class ShoppingManager : MonoBehaviour
     {
         isShopOpen = false;
 
-        SoundManager.Instance.PlayBGM("メインBGM");
+        SoundManager.Instance?.PlayBGM("メインBGM");
 
         if (shopPanelRoot != null)
         {
@@ -556,17 +556,11 @@ public class ShoppingManager : MonoBehaviour
     {
         if (cachedPlayerController != null) return cachedPlayerController;
 
-        GameObject taggedPlayer = GameObject.FindWithTag("Player");
-        if (taggedPlayer != null)
+        // Player タグは展示用モデルにも付いているため、タグでは探さない
+        GameObject playerObject = PlayerController.FindPlayerObject();
+        if (playerObject != null)
         {
-            cachedPlayerController = taggedPlayer.GetComponent<PlayerController>()
-                ?? taggedPlayer.GetComponentInParent<PlayerController>()
-                ?? taggedPlayer.GetComponentInChildren<PlayerController>();
-        }
-
-        if (cachedPlayerController == null)
-        {
-            cachedPlayerController = Object.FindFirstObjectByType<PlayerController>();
+            cachedPlayerController = playerObject.GetComponent<PlayerController>();
         }
 
         return cachedPlayerController;
@@ -602,14 +596,14 @@ public class ShoppingManager : MonoBehaviour
     {
         if (item.currentLevel >= item.maxLevel)
         {
-            SoundManager.Instance.PlaySE("つるはしで掘る3");
+            SoundManager.Instance?.PlaySE("つるはしで掘る3");
             return;
         }
 
         MoneyManager mm = MoneyManager.Instance;
         if (mm == null)
         {
-            SoundManager.Instance.PlaySE("つるはしで掘る3");
+            SoundManager.Instance?.PlaySE("つるはしで掘る3");
             return;
         }
 
@@ -617,7 +611,7 @@ public class ShoppingManager : MonoBehaviour
 
         if (mm.GetMoney() >= cost)
         {
-            SoundManager.Instance.PlaySE("つるはしで掘る4");
+            SoundManager.Instance?.PlaySE("つるはしで掘る4");
             mm.SpendMoney(cost);
 
             GameObject effectPrefabToSpawn = purchaseEffectPrefab != null ? purchaseEffectPrefab : jewelSparkEffect;
@@ -662,7 +656,7 @@ public class ShoppingManager : MonoBehaviour
         }
         else
         {
-            SoundManager.Instance.PlaySE("つるはしで掘る3");
+            SoundManager.Instance?.PlaySE("つるはしで掘る3");
         }
     }
 

@@ -7,7 +7,7 @@ public partial class VoxelTerrain
         if (CheckpointManager.Instance == null) return;
 
         Vector3 lastPos = CheckpointManager.Instance.GetLastCheckpoint();
-        GameObject player = GameObject.FindWithTag("Player");
+        GameObject player = PlayerController.FindPlayerObject();
 
         if (player != null)
         {
@@ -60,7 +60,7 @@ public partial class VoxelTerrain
 
     private void TeleportPlayerToStart(int x, int y, int z)
     {
-        GameObject player = GameObject.FindWithTag("Player");
+        GameObject player = PlayerController.FindPlayerObject();
         if (player != null)
         {
             Vector3 worldPos = transform.position + new Vector3(x * blockSize, y * blockSize + 1.5f, z * blockSize);

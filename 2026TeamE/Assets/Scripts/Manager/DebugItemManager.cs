@@ -67,28 +67,40 @@ public class DebugItemManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 扉に入ったことにして、リザルト（お金の両替・強化）シーンへ移行する。
-    /// 復帰先は現在のプレイヤー位置になる。
+    /// 扉に入ったことにして、メインシーン内のショップ（お金の両替・強化）を開く。
     /// </summary>
+    /// <remarks>
+    /// 以前は「Money Exchange」シーンへ移行していたが、そのシーンはビルド対象から外れており読み込めない。
+    /// </remarks>
     private void EnterCheckpointProcess()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null || VoxelTerrain.Instance == null || SelectPoint.Instance == null)
+        ShoppingManager shop = ShoppingManager.Instance;
+        if (shop == null)
         {
-            Debug.LogWarning("[Debug] プレイヤー・VoxelTerrain・SelectPoint のいずれかが見つからないため、扉の突入処理を実行できませんでした。");
+            shop = Object.FindFirstObjectByType<ShoppingManager>(FindObjectsInactive.Include);
+        }
+        if (shop == null)
+        {
+            Debug.LogWarning("[Debug] ShoppingManager が見つからないため、扉の突入処理を実行できませんでした。");
             return;
         }
 
         Debug.Log("[Debug] 扉の突入処理を実行します。");
-        VoxelTerrain.Instance.MarkDoorEntered(player.transform.position);
-        SelectPoint.Instance.GoToResult();
+        if (TimerManager.Instance != null) TimerManager.Instance.ResetTimer();
+        shop.OpenShop();
     }
 
     private void TriggerGoal()
     {
-        Debug.Log("[Debug] 7キー: BigJewelry取得として、ゴール・リザルトシーンへ移行します。");
+        Debug.Log("[Debug] 7キー: BigJewelry取得として、最終リザルトシーンへ移行します。");
         GoalJewelry.isGoalReached = true;
-        SceneManager.LoadScene("Money Exchange");
+        if (TimerManager.Instance != null)
+        {
+            TimerManager.Instance.StopTimer();
+            FinalResultManager.RecordOxygenRemaining(TimerManager.Instance.TotalTime);
+        }
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("FinalResult");
     }
 
 #endif

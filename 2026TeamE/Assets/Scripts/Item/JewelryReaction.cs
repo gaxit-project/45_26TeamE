@@ -49,7 +49,10 @@ public class JewelryReaction : BuriedItemBase, ICollectible
 
         yield return PickupAnimationUtil.PopAndFlash(transform);
 
-        Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        if (EfectPrefab != null)
+        {
+            Instantiate(EfectPrefab, transform.position + new Vector3(5, 0, 0), Quaternion.Euler(-90, -90, 0));
+        }
 
         Destroy(gameObject);
     }

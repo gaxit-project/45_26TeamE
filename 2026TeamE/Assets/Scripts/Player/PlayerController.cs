@@ -90,6 +90,23 @@ public class PlayerController : MonoBehaviour
 
     public static PlayerController Instance { get; private set; }
 
+    /// <summary>
+    /// 操作対象のプレイヤーの GameObject を返す。
+    /// </summary>
+    /// <remarks>
+    /// メインシーンにはショップ用の展示モデル（shopPlayer）にも Player タグが付いているため、
+    /// FindWithTag("Player") ではどちらが返るか保証されない。Instance を優先して使う。
+    /// </remarks>
+    public static GameObject FindPlayerObject()
+    {
+        if (Instance != null) return Instance.gameObject;
+
+        PlayerController found = FindFirstObjectByType<PlayerController>();
+        return found != null ? found.gameObject : null;
+    }
+
+    public float MaxBattery => maxBattery;
+
     public bool IsDrilling => IsControlEnabled && drillFlag;
 
     /// <summary>プレイヤーの操作が解禁されており、かつ行動可能な状態か。ムービー中や被弾・ポーズ中はfalse。</summary>
