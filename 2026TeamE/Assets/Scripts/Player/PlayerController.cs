@@ -78,13 +78,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float drillConsumption = 1f;
     [SerializeField] float SonarConsuption = 200f;
 
-    [Header("JetPack")]
-    [SerializeField] float baseJetpackForce = 15f;
-    [SerializeField] float baseJetpackMaxSpeed = 6f;
-
-    [Header("JetPack Effect")]
-    [SerializeField] private ParticleSystem jetpackEffectLeft;
-    [SerializeField] private ParticleSystem jetpackEffectRight;
     public int DrillLevel => drillLevel;
     public void UpgradeDrill() => drillLevel++;
 
@@ -246,12 +239,6 @@ public class PlayerController : MonoBehaviour
         drillCDstarttime = Time.time;
         poseManager = GetComponent<PoseManager>();
 
-        if (jetpackEffectLeft != null)
-            jetpackEffectLeft.Stop();
-
-        if (jetpackEffectRight != null)
-            jetpackEffectRight.Stop();
-
         drillTip = GetComponentInChildren<DrillTip>();
     }
 
@@ -275,44 +262,7 @@ public class PlayerController : MonoBehaviour
             Vector3 targetVelocity = moveDirection * Speed;
             rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
 
-            if (!isGround && isJumpPressed)
-            {
-                if (rb.linearVelocity.y < CurrentJetpackMaxSpeed)
-                {
-                    rb.AddForce(
-                        Vector3.up * CurrentJetpackForce,
-                        ForceMode.Acceleration
-                    );
-                }
-            }
-
             ApplyCustomGravity();
-        }
-    }
-
-    private float CurrentJetpackForce
-    {
-        get
-        {
-            int level = UpgradeManager.GetLevel(UpgradeManager.JET);
-            return baseJetpackForce + (level - 1) * 5f;
-        }
-    }
-
-    private float CurrentJetpackMaxSpeed
-    {
-        get
-        {
-            int level = UpgradeManager.GetLevel(UpgradeManager.JET);
-            return baseJetpackMaxSpeed + (level - 1) * 2f;
-        }
-    }
-
-    private bool IsJetpacking
-    {
-        get
-        {
-            return !isGround && isJumpPressed;
         }
     }
 
@@ -377,31 +327,7 @@ public class PlayerController : MonoBehaviour
 
         UpdateAnimation();
         HandleDrillRotation();
-        UpdateJetpackEffects();
         UpdateRumbleState();
-    }
-
-    private void UpdateJetpackEffects()
-    {
-        if (jetpackEffectLeft == null || jetpackEffectRight == null)
-            return;
-
-        if (IsJetpacking)
-        {
-            if (!jetpackEffectLeft.isPlaying)
-                jetpackEffectLeft.Play();
-
-            if (!jetpackEffectRight.isPlaying)
-                jetpackEffectRight.Play();
-        }
-        else
-        {
-            if (jetpackEffectLeft.isPlaying)
-                jetpackEffectLeft.Stop();
-
-            if (jetpackEffectRight.isPlaying)
-                jetpackEffectRight.Stop();
-        }
     }
 
     private void HandleDrillRotation()
