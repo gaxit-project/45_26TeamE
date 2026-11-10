@@ -63,9 +63,10 @@ public class FinalResultManager : MonoBehaviour
     {
         if (SoundManager.Instance != null) SoundManager.Instance.PlayBGM("Virtual_Adventure_2");
 
-        if (firstSelectedButton != null && UnityEngine.EventSystems.EventSystem.current != null)
+        // ボタンは数え上げが終わってから選択する
+        if (UnityEngine.EventSystems.EventSystem.current != null)
         {
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectedButton);
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         }
 
         float totalOxygen = 0f;
@@ -97,7 +98,11 @@ public class FinalResultManager : MonoBehaviour
             finalScoreAmount += MoneyManager.Instance.GetTotalEarnedMoney(); 
         }
 
-        if (totalEarnedText != null) totalEarnedText.text = "0"; 
+        if (totalEarnedText != null) totalEarnedText.text = "0";
+
+        // 今回の最終スコアをランキングに登録する。
+        // 数え上げの後に登録すると、演出中に画面を離れた場合に記録されないため、先に済ませる。
+        RankingManager.SaveScore(finalScoreAmount);
 
         StartCoroutine(CountUpRoutine());
     }
@@ -133,11 +138,13 @@ public class FinalResultManager : MonoBehaviour
 
         if (totalEarnedText != null) totalEarnedText.text = finalScoreAmount.ToString("N0");
 
-        // 今回の最終スコアをランキングに登録
-        RankingManager.SaveScore(finalScoreAmount);
-
         yield return new WaitForSeconds(0.2f);
         isAnimationFinished = true;
+
+        if (firstSelectedButton != null && UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(firstSelectedButton);
+        }
     }
 
     // --- ボタンから呼び出される処理 ---
@@ -176,8 +183,6 @@ public class FinalResultManager : MonoBehaviour
     private IEnumerator LoadMainAfterResetRoutine()
     {
         yield return null;
-
-        // ローディング画面を挟むことで、ステージ生成中の画面を見せないようにする。
         // SceneLoader は内部で生成完了（SceneInitializationGate）を待ってから切り替える。
         if (SceneLoader.Instance != null)
         {
