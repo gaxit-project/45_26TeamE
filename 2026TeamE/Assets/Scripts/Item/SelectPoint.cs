@@ -76,9 +76,11 @@ public class SelectPoint : MonoBehaviour
     {
         if (VoxelTerrain.Instance == null) return;
 
+        bool canOperate = IsPlayerOperable();
+
         if (actionPromptUI != null)
         {
-            bool canEnter = !isTransitioning && VoxelTerrain.Instance.CurrentDoorInRange != null;
+            bool canEnter = canOperate && !isTransitioning && VoxelTerrain.Instance.CurrentDoorInRange != null;
             if (actionPromptUI.activeSelf != canEnter)
             {
                 actionPromptUI.SetActive(canEnter);
@@ -86,7 +88,7 @@ public class SelectPoint : MonoBehaviour
         }
 
         if (enterDoorAction == null || !enterDoorAction.WasPressedThisFrame()) return;
-
+        if (!canOperate) return;
         if (isTransitioning)
         {
             Debug.LogWarning("[SelectPoint] 遷移中フラグが立っているため入力を無視しました。前回の遷移後にフラグが戻っていない可能性があります。");
@@ -114,6 +116,12 @@ public class SelectPoint : MonoBehaviour
                 GoToResult();
             }
         }
+    }
+
+    /// <summary>プレイヤーを操作できる状態か。扉への入場はこの間だけ受け付ける。</summary>
+    private static bool IsPlayerOperable()
+    {
+        return PlayerController.Instance != null && PlayerController.Instance.IsControlEnabled;
     }
 
     /// <summary>リザルト（お金の両替・強化）シーンへ移行する。</summary>
