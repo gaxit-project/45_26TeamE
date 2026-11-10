@@ -12,7 +12,7 @@ public class TimerManager : MonoBehaviour
     private bool isTimerEnded = false;
     private bool isTimerRunning = false;
 
-    /// <summary>Inspectorで設定された初期値。リセット時に戻す基準になる。</summary>
+    /// <summary>Inspectorで設定された初期値。リセット時の基準になる。</summary>
     private float initialTime;
 
     private void Awake()
@@ -101,7 +101,7 @@ public class TimerManager : MonoBehaviour
 
     private void Update()
     {
-        if (isTimerRunning && totalTime > 0)
+        if (isTimerRunning)
         {
             totalTime -= Time.deltaTime;
 
