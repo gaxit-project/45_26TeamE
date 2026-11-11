@@ -14,9 +14,7 @@ public class GoalJewelry : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
 
-        bool isPlayer = other.gameObject.CompareTag("Player") || 
-                        (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("Player")) || 
-                        other.transform.root.CompareTag("Player");
+        bool isPlayer = other.gameObject.CompareTag("Player");
 
         if (isPlayer && !isProcessed)
         {

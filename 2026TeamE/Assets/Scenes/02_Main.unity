@@ -6920,6 +6920,10 @@ MonoBehaviour:
   lookAheadDistance: 2
   lookAheadMaxSpeed: 8
   lookAheadSmoothTime: 0.4
+  gameOverZoomDelay: 0.4
+  gameOverZoomDuration: 1.6
+  gameOverHoldDuration: 1.5
+  gameOverScreenPadding: 5
 --- !u!114 &258130703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7503,6 +7507,10 @@ MonoBehaviour:
   lookAheadDistance: 2
   lookAheadMaxSpeed: 8
   lookAheadSmoothTime: 0.4
+  gameOverZoomDelay: 0.4
+  gameOverZoomDuration: 1.6
+  gameOverHoldDuration: 1.5
+  gameOverScreenPadding: 5
 --- !u!114 &334186083
 MonoBehaviour:
   m_ObjectHideFlags: 0
