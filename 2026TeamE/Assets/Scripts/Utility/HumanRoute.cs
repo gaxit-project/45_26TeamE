@@ -1,4 +1,3 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,6 +24,7 @@ public struct HumanSample
     public bool HasInput;
 }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 /// <summary>
 /// 人がプレイしたときの記録。自動プレイが「お手本」としてなぞったり（Points）、
 /// 人の流れや操作の癖を学んだり（Samples → HumanModel）するのに使う。
@@ -195,9 +195,11 @@ public sealed class HumanRoute
         return fileName;
     }
 }
+#endif
 
 /// <summary>
-/// 人がプレイしている間（自動プレイを動かしていない間）の位置と操作を記録し、1プレイ終わるごとに保存する。
+/// プレイ中の位置と操作を記録する。製品版でも動き、最後のプレイのルートを LastRoute で読める（リザルト表示用）。
+/// 開発ビルドでは、人がプレイしている間（自動プレイを動かしていない間）の記録を1プレイ終わるごとに CSV に保存する。
 /// 途中で一度でも自動プレイが動いたプレイは、人のお手本にならないので保存しない。
 /// </summary>
 public sealed class HumanRouteRecorder : MonoBehaviour
@@ -221,13 +223,29 @@ public sealed class HumanRouteRecorder : MonoBehaviour
 
     private GemRadar radar;
 
+    private static HumanRouteRecorder instance;
+    private static readonly List<HumanSample> lastRoute = new List<HumanSample>();
+
+    /// <summary>
+    /// 最後のプレイ（または今のプレイ）のルート。リザルト画面から読む用。
+    /// 時間切れ・クリアになった同じフレームに読んでも取りこぼさないよう、記録中ならその時点までの記録を返す。
+    /// Position の x がワールドZ（画面の左右）、y がワールドY（上下）。まだ1度もプレイしていなければ空。
+    /// </summary>
+    public static IReadOnlyList<HumanSample> LastRoute =>
+        instance != null && instance.terrain != null ? instance.samples : lastRoute;
+
+    /// <summary>LastRoute を記録したステージのシード。</summary>
+    public static int LastRouteSeed =>
+        instance != null && instance.terrain != null ? instance.seed : lastRouteSeed;
+    private static int lastRouteSeed;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
         var go = new GameObject("[HumanRouteRecorder]");
         go.hideFlags = HideFlags.HideInHierarchy;
         DontDestroyOnLoad(go);
-        go.AddComponent<HumanRouteRecorder>();
+        instance = go.AddComponent<HumanRouteRecorder>();
     }
 
     private void Update()
@@ -255,7 +273,9 @@ public sealed class HumanRouteRecorder : MonoBehaviour
             GameLogger.Event("StageSeed", $"seed={seed}");
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (AutoPlayBot.Instance != null && AutoPlayBot.Instance.IsRunning) touchedByBot = true;
+#endif
 
         bool shopOpen = ShoppingManager.Instance != null && ShoppingManager.Instance.IsOpen;
         if (shopOpen && !wasShopOpen)
@@ -294,6 +314,15 @@ public sealed class HumanRouteRecorder : MonoBehaviour
 
     private void Finish()
     {
+        if (terrain != null)
+        {
+            // リザルト表示用に、消す前に残しておく
+            lastRoute.Clear();
+            lastRoute.AddRange(samples);
+            lastRouteSeed = seed;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (terrain != null && !touchedByBot && samples.Count >= MinSamples)
         {
             try
@@ -306,6 +335,7 @@ public sealed class HumanRouteRecorder : MonoBehaviour
                 Debug.LogWarning($"[HumanRouteRecorder] ルートを保存できませんでした。{e.Message}");
             }
         }
+#endif
 
         finishedTerrain = terrain;
         terrain = null;
@@ -317,4 +347,3 @@ public sealed class HumanRouteRecorder : MonoBehaviour
         Finish();
     }
 }
-#endif
