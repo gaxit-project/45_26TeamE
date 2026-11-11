@@ -215,14 +215,21 @@ public class TimerManager : MonoBehaviour
             SoundManager.Instance.StopLoopSE();
         }
 
-        StartCoroutine(ReturnToTitleAfterTimeUp());
+        float zoomDuration = 0f;
+        if (CameraController.Instance != null)
+        {
+            zoomDuration = CameraController.Instance.StartGameOverZoom();
+        }
+
+        StartCoroutine(ReturnToTitleAfterTimeUp(zoomDuration));
     }
 
-    private System.Collections.IEnumerator ReturnToTitleAfterTimeUp()
+    private System.Collections.IEnumerator ReturnToTitleAfterTimeUp(float zoomDuration)
     {
         if (SoundManager.Instance != null) SoundManager.Instance.PlaySE("つるはしで掘る1");
 
-        yield return new WaitForSecondsRealtime(timeUpToTitleDelay);
+        float waitSeconds = Mathf.Max(timeUpToTitleDelay, zoomDuration);
+        yield return new WaitForSecondsRealtime(waitSeconds);
 
         Time.timeScale = 1f;
         UnityEngine.SceneManagement.SceneManager.LoadScene("FinalResult");
